@@ -1,0 +1,11 @@
+node_modules/
+.vscode/
+public/
+public2/
+public2.tar.gz
+assets/video
+files/
+.DS_Store
+app/.DS_Store
+assets/.DS_Store
+.leancloud/
