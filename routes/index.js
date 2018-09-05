@@ -1,18 +1,6 @@
 var express = require('express');
 var router = express.Router();
 
-var mysql = require('mysql');
-var connection = mysql.createConnection({
-  host     : 'wisnuc.cyb10i3l88dy.rds.cn-north-1.amazonaws.com.cn',
-  user     : 'wisnuc',
-  password : '12345678',
-  database : 'wisnuc'
-});
-
-connection.connect(err => {
-  if (err) console.log(err)
-})
-
 /* GET home page. */
 router.get('/', function(req, res, next) {
   let beginTime = (new Date()).getTime()
@@ -22,5 +10,8 @@ router.get('/', function(req, res, next) {
     res.status(200).json(endTime-beginTime)
   })
 });
+
+router.use('/client', require('./client'))
+router.use('/server', require('./server'))
 
 module.exports = router;
