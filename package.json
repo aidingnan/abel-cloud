@@ -7,14 +7,18 @@
     "dev": "NODE_ENV=test nodemon ./bin/www"
   },
   "dependencies": {
+    "aws-sdk": "^2.310.0",
+    "bluebird": "^3.5.2",
     "cookie-parser": "^1.4.3",
     "debug": "~2.6.9",
     "express": "^4.16.3",
     "getconfig": "^4.5.0",
     "http-errors": "^1.6.3",
     "joi": "^13.6.0",
+    "jwt-simple": "^0.5.1",
     "morgan": "^1.9.0",
     "mysql": "^2.16.0",
-    "request": "^2.88.0"
+    "request": "^2.88.0",
+    "uuid": "^3.3.2"
   }
 }

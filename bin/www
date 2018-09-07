@@ -9,22 +9,35 @@ var debug = require('debug')('abel:server');
 var http = require('http');
 const db = require('mysql')
 const config = require('getconfig')
+const promise = require('bluebird')
+const AWS = require('aws-sdk')
 
 const { mysql } = require('getconfig')
 
-var connection = db.createConnection({
+/**
+ * 初始化 mysql
+ */
+var pool = db.createPool({
   host     : mysql.host,
   user     : mysql.username,
   password : mysql.password,
-  database : mysql.database
+  database : mysql.database,
+  multipleStatements:true
 });
 
-connection.connect(err => {
-  if (err) console.log(err)
+global.pool = promise.promisifyAll(pool)
 
-  // console.log(connection)
+/**
+ * 初始化AWS tokenKeys cloudKeys
+ */
+
+const ssm = new AWS.SSM({
+  accessKeyId: 'AKIAPGPXTKFNHUA4GRAQ',
+  secretAccessKey: '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',
+  region: 'cn-north-1'
 })
 
+global.getParameterAsync = promise.promisify(ssm.getParameter).bind(ssm)
 
 
 /**
