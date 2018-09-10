@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-07 18:45:56
+ * @Last Modified time: 2018-09-10 13:32:47
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -22,7 +22,7 @@ class UserService {
       let res = await request.postAsync({
         uri: 'https://abel.leanapp.cn/v1/user/requestSmsCode',
         json: true,
-        body: {phone}
+        body: { phone }
       })
       
       // 判断请求是否成功
@@ -49,26 +49,38 @@ class UserService {
       // 插入用户/手机数据
       await User.signUpWithPhone(connect, id, phone, password)
 
-      return { token: jwt.encode({id, phone})}
-      return 
+      return { token: jwt.encode({ id, type: 'phone'})}
     } catch (error) {  throw error }
   }
 
-  async token(connect, username, password) {
+  async token(connect, u, p) {
     try {
       
-      // 判断username类型(手机/邮箱) todo 
+      // 判断username类型(手机/邮箱) todo
+      
       // 使用邮箱登录 todo
+
       // 使用手机号登录
-      let user = await User.loginWithPhone(connect, username, password)
+      let result = await User.loginWithPhone(connect, u, p)
+      if (result.length !== 1) throw new E.UserNotExist()
+      let { id } = result[0]
+      let user = { id, type: 'phone' }
+
       return { token: jwt.encode(user)}
-      console.log(user)
+      
 
     } catch (error) { throw error }
   }
 
-
+  async findUserById(id) {
+    try {
+      let user = await User.getUserById(id)
+      return user
+    } catch (error) { throw error}
+  }
 }
+
+
 
 module.exports = new UserService()
 

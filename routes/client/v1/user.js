@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-07 15:46:50
+ * @Last Modified time: 2018-09-10 13:01:01
  */
 const express = require('express')
 const router = express.Router()
@@ -52,7 +52,9 @@ router.post('/token', joiValidator({
   } catch (e) { res.error(e) }
 })
 
-router.post('/wechat')
+// router.post('/wechat')
+
+
 
 
 

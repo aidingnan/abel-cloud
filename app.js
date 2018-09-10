@@ -6,6 +6,7 @@ var logger = require('morgan')
 
 var app = express()
 
+
 app.use(async (req, res, next) => {
   let connect = promise.promisifyAll(await pool.getConnectionAsync())
   req.db = connect

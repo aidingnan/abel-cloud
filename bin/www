@@ -31,13 +31,18 @@ global.pool = promise.promisifyAll(pool)
  * 初始化AWS tokenKeys cloudKeys
  */
 
-const ssm = new AWS.SSM({
+const AWSOption = {
   accessKeyId: 'AKIAPGPXTKFNHUA4GRAQ',
   secretAccessKey: '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',
   region: 'cn-north-1'
-})
+}
+
+const ssm = new AWS.SSM(AWSOption)
+
+const iot = new AWS.Iot(AWSOption)
 
 global.getParameterAsync = promise.promisify(ssm.getParameter).bind(ssm)
+global.describeCertificateAsync = promise.promisify(iot.describeCertificate).bind(iot)
 
 
 /**
