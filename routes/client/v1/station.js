@@ -26,12 +26,6 @@ router.get('/bind', async (req, res) => {
     let encrypted = cipher.update(JSON.stringify(user), 'utf8', 'hex')
     encrypted += cipher.final('hex')
 
-    
-    // 解密
-    let decipher = crypto.createDecipher('aes128', key)
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8')
-    decrypted += decipher.final('utf8')
-
     let result = { encrypted: `${latest}@${encrypted}`}
     return res.success(result)
   } catch (error) {  res.error(error) }

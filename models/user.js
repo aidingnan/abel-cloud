@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-10 13:36:03
+ * @Last Modified time: 2018-09-13 18:22:50
  */
 
 const user = {
@@ -37,6 +37,40 @@ const user = {
     let sql = `
       SELECT * FROM user
       WHERE id='${id}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  getWechatByUnionid: (connect, unionid) => {
+    let sql = `
+      SELECT * FROM wechat
+      WHERE unionid='${unionid}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  insertIntoWechat: (connect, unionid, nickname, avatarUrl) => {
+    let sql = `
+      INSERT INTO wechat
+      SET unionid='${unionid}',nickname='${nickname}',avatarUrl='${avatarUrl}'
+      ON DUPLICATE KEY UPDATE nickname='${nickname}',avatarUrl='${avatarUrl}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  findWechatAndUserByUnionId: (connect, unionid) => {
+    let sql = `
+      SELECT unionId,user,u.id,u.username FROM wechat as w
+      LEFT JOIN user as u on w.user=u.id
+      WHERE unionid='${unionid}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  addWechat: (connect, id, unionid) => {
+    let sql = `
+      UPDATE wechat SET user='${id}'
+      WHERE user IS NULL && unionid='${unionid}'
     `
     return connect.queryAsync(sql)
   }

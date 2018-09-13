@@ -10,8 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+const promise = require('bluebird')
 const jwt = require('../lib/jwt')
 const User = require('../models/user')
+const WechatInfo = require('../lib/wechatInfo')
 
 module.exports = {
 	/**
@@ -31,7 +33,7 @@ module.exports = {
       // expire
       if (!decoded.exp || decoded.exp <= Date.now())
         return res.error(new Error('token overdue, login again please！'), 401)
-
+      
       if (!decoded.id)
         return res.error(new Error('authentication failed'), 401, false)
 
@@ -43,6 +45,36 @@ module.exports = {
       next()
 
     } catch (error) {
+      console.log(error)
+      return res.error(new Error('authentication failed'), 401, false)
+    }
+  },
+
+  async weAuth(req, res, next) {
+    let { wechattoken } = req.headers
+    // decode
+    try {
+      // 微信用户不存在
+      if (!wechattoken) next()
+      // 微信用户存在
+      let decoded = jwt.decode(wechattoken)
+      if (!decoded) res.error('decode failed', 401, false)
+      // 获取微信用户信息
+      let { access_token, openid } = decoded
+      let wechatInfo = new WechatInfo()
+      let getUserInfo = promise.promisify(wechatInfo.userInfo).bind(wechatInfo)
+      let userInfo = await getUserInfo( access_token, openid )
+      // 检查数据库是否存在对应用户
+      console.log(userInfo.unionid)
+      let { unionid } = userInfo
+      let user = await User.findWechatAndUserByUnionId(req.db, unionid)
+      if (user.length !== 1) return res.error(new Error('wechat user not exist'), 401, false)
+      req.wechat = user
+
+      next()
+
+    } catch (error) {
+      console.error(error)
       return res.error(new Error('authentication failed'), 401, false)
     }
   },
@@ -53,15 +85,18 @@ module.exports = {
 	 * @param {any} next 
 	 */
   async sAuth(req, res, next) {
-    const aut = req.headers.authorization
-    let arr = aut.split('@')
-    let latest = arr[0]
-    let token = arr[1]
-    let secretResult = await getParameterAsync({Name:'tokenKeys'})
-    let { keys } = JSON.parse(secretResult.Parameter.Value)
-    let secret = keys[latest]
-    // decode
+    
+    
     try {
+      const aut = req.headers.authorization
+      let arr = aut.split('@')
+      let latest = arr[0]
+      let token = arr[1]
+      let secretResult = await getParameterAsync({Name:'tokenKeys'})
+      let { keys } = JSON.parse(secretResult.Parameter.Value)
+      let secret = keys[latest]
+
+      // decode
       const decoded = jwt.decode(token, secret)
       if (!decoded)
         return res.error(new Error('decode failed'), 401, false)

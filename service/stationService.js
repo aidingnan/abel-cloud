@@ -13,7 +13,9 @@ class StationService {
       // 通过公钥验证签名
       let verify = crypto.createVerify('SHA256').update(encrypted)
       let verifyResult = verify.verify(certificatePem, signature, 'hex')
+
       if (status !== 'ACTIVE') throw new E.StationCertInactive()
+      if (!verifyResult) throw new E.StationVerifyFailed()
 
       // 解密encrypted
       let arr = encrypted.split('@')
@@ -28,9 +30,14 @@ class StationService {
       decrypted += decipher.final('utf8')
 
       let { id } = JSON.parse(decrypted)
+
       // 绑定用户
-      await Station.bindUser(connect, sn, id)
-      return verifyResult
+      let device = await Station.findDevice(connect, sn)
+      console.log(device)
+      let result = await Station.bindUser(connect, sn, id)
+      
+      console.log(result)
+      return result
     } catch (error) { throw(error) }
   }
 }
