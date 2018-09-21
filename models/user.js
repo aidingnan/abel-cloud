@@ -2,15 +2,17 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-13 18:22:50
+ * @Last Modified time: 2018-09-17 16:54:05
  */
 
 const user = {
+  // 查询手机号是否被注册
   getUserByPhone: (connect, phone) => {
     let sql = `SELECT * FROM phone 
       WHERE phoneNumber = ${phone} AND user IS NOT NULL`
     return connect.queryAsync(sql)
   },
+
 
   signUpWithPhone: (connect, id, phone, password) => {
     let sql = `
@@ -19,7 +21,8 @@ const user = {
       INSERT INTO user
       VALUES('${id}', '${phone}', PASSWORD('${password}'), @now, @now, 1);
       INSERT INTO phone
-      VALUES('${phone}', 1, '${id}', @now, @now);
+      VALUES('${phone}', '${id}', @now, @now)
+      ON DUPLICATE KEY UPDATE user='${id}';
       COMMIT;`
     return connect.queryAsync(sql)
   },
@@ -41,6 +44,7 @@ const user = {
     return connect.queryAsync(sql)
   },
 
+  // 通过unionid查找微信用户
   getWechatByUnionid: (connect, unionid) => {
     let sql = `
       SELECT * FROM wechat
@@ -49,6 +53,7 @@ const user = {
     return connect.queryAsync(sql)
   },
 
+  // 创建微信用户或更新用户信息
   insertIntoWechat: (connect, unionid, nickname, avatarUrl) => {
     let sql = `
       INSERT INTO wechat
@@ -58,19 +63,30 @@ const user = {
     return connect.queryAsync(sql)
   },
 
+  // 查找微信用户及关联用户信息
   findWechatAndUserByUnionId: (connect, unionid) => {
     let sql = `
-      SELECT unionId,user,u.id,u.username FROM wechat as w
+      SELECT unionid,user,u.id,u.username FROM wechat as w
       LEFT JOIN user as u on w.user=u.id
       WHERE unionid='${unionid}'
     `
     return connect.queryAsync(sql)
   },
 
+  // 绑定微信
   addWechat: (connect, id, unionid) => {
     let sql = `
       UPDATE wechat SET user='${id}'
       WHERE user IS NULL && unionid='${unionid}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 绑定手机
+  addPhone: (connect, id, phone) => {
+    let sql = `
+      INSERT INTO phone(phoneNumber, user)
+      VALUES('${phone}', '${id}');
     `
     return connect.queryAsync(sql)
   }

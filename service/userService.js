@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-13 18:23:31
+ * @Last Modified time: 2018-09-17 16:52:29
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -17,20 +17,23 @@ class UserService {
   /**
    * 请求验证码
    */
-  async requestSmsCode(connect, phone) {
+  async requestSmsCode(connect, phone, wechat) {
     try {
+      // 检查微信是否已关联
+      if (wechat && wechat.user !== null) throw new E.WechatAlreadyAssociated()
       // 检查是否已注册
       let result = await User.getUserByPhone(connect, phone)
-      if (result.length !== 0) throw new E.UserAlreadyExist()
+      if (result.length !== 0 && !wechat) throw new E.UserAlreadyExist()
       // 请求验证码
       let res = await request.postAsync({
         uri: 'https://abel.leanapp.cn/v1/user/requestSmsCode',
         json: true,
         body: { phone }
       })
-      
-      // 判断请求是否成功
-      if (res.statusCode !== 200) throw new E.InvalidPhoneNumber()
+      // // 判断请求是否成功
+      if (res.statusCode !== 200) throw new Error(res.body)
+
+      return { userExist: result.length == 0 ? false : true }
 
     } catch (error) { throw error }
   }
@@ -38,20 +41,10 @@ class UserService {
   /**
    * 使用手机号注册
    */
-  async signUpWithPhone(connect, phone, password, code, wechat) {
+  async signUpWithPhone(connect, phone, password, code) {
     try {
       // 生产id
       let id = uuid.v4()
-      let user
-
-      // 检验微信token 
-      if (wechat) {
-        console.log(wechat)
-      }
-
-      return
-
-      // 检验微信号是否已有绑定
 
       // 校验验证码
       let res = await request.postAsync({
@@ -64,22 +57,13 @@ class UserService {
       if (res.statusCode !== 200) throw new E.SmsCodeError()
       // 检查是否已注册
       let result = await User.getUserByPhone(connect, phone)
-      // 用户已注册 && 没有绑定微信参数 ==> 错误
-      if (result.length !== 0 && !refresh_token) throw new E.UserAlreadyExist()
-      // 用户已注册 && 存在绑定微信参数 ==> 获取用户
-      if (result.length == 1 && refresh_token) user = result[0]
       // 用户不存在 ==> 注册 ==> 获取用户
-      if (result.length == 0) user = await User.signUpWithPhone(connect, id, phone, password)
+      if (result.length == 0) await User.signUpWithPhone(connect, id, phone, password)
+      else throw new E.UserAlreadyExist()
 
-      
-      
-      
+      return { token: jwt.encode({ id, type: 'phone' }) }
 
-      
-      
-
-      return { token: jwt.encode({ id, type: 'phone'})}
-    } catch (error) {  throw error }
+    } catch (error) { throw error }
   }
 
   /**
@@ -87,9 +71,9 @@ class UserService {
    */
   async token(connect, u, p) {
     try {
-      
+
       // 判断username类型(手机/邮箱) todo
-      
+
       // 使用邮箱登录 todo
 
       // 使用手机号登录
@@ -98,18 +82,41 @@ class UserService {
       let { id } = result[0]
       let user = { id, type: 'phone' }
 
-      return { token: jwt.encode(user)}
-      
+      return { token: jwt.encode(user) }
+
 
     } catch (error) { throw error }
   }
 
-  async findUserById(id) {
+  /**
+   * 添加手机
+   */
+  async bindPhone(connect, id, phone, code) {
     try {
-      let user = await User.getUserById(id)
-      return user
+      // 校验验证码
+      let res = await request.postAsync({
+        uri: 'https://abel.leanapp.cn/v1/user/verifySmsCode',
+        json: true,
+        body: { phone, code }
+      })
+
+      // 验证码失败 ==> 错误
+      if (res.statusCode !== 200) throw new E.SmsCodeError()
+      
+      let result = await User.addPhone(connect, id, phone)
+      console.log(result)
+    } catch (error) { throw error }
+  }
+
+  /**
+   * 解绑手机
+   */
+  async unbindPhone(connect, id, phone) {
+    try {
+      
     } catch (error) { throw error}
   }
+
 
   /**
    * 添加微信账号
@@ -131,7 +138,7 @@ class UserService {
       // 添加绑定
       let result = await User.addWechat(connect, id, unionid)
       return result
-    } catch (error) { throw error}
+    } catch (error) { throw error }
   }
 
   /**
@@ -152,17 +159,64 @@ class UserService {
       if (wechatUserResult.length !== 1) throw new Error('find wechat user error')
       let { user, id } = wechatUserResult[0]
 
-      if ( user == null) {
+      if (user == null) {
         // 微信用户没有绑定注册用户
         let obj = { access_token, refresh_token, openid }
-        return { wechatToken: jwt.encode(obj) }
+        return { token: jwt.encode(obj), user: false }
       } else {
         // 微信用户绑定了注册用户
-        return { token: jwt.encode({ id, type: 'wechat'})}
+        return { token: jwt.encode({ id, type: 'wechat' }), user: true }
       }
-      
+
     } catch (error) { throw error }
   }
+
+  /**
+   * 微信账号关联用户
+   * 账号存在则关联、不存在则创建
+   */
+  async wechatAssociateUser(req, phone, code, password) {
+    try {
+      let user, id
+      let { wechat, db } = req
+      let { unionid } = wechat
+      let users = await User.getUserByPhone(db, phone)
+      if (!wechat) throw new Error('wechat is required')
+      // 检查微信账号是否有关联账号
+      if (wechat.user !== null) throw new E.WechatAlreadyAssociated()
+      // 检查password参数是否正确
+      if (users.length == 0 && !password) throw new Error('password is required')
+      if (users.length == 1 && password) throw new Error('password is not required')
+      // 校验验证码
+      let res = await request.postAsync({
+        uri: 'https://abel.leanapp.cn/v1/user/verifySmsCode',
+        json: true,
+        body: { phone, code }
+      })
+
+      // 验证码失败 ==> 错误
+      if (res.statusCode !== 200) throw new E.SmsCodeError()
+
+      // 用户不存在 => 注册
+      // 用户存在 => do nothing
+      if (users.length == 0) {
+        id = uuid.v4()
+        let newUser = await User.signUpWithPhone(db, id, phone, password)
+      } else {
+        id = users[0].user
+      }
+      // 关联
+      let result = await User.addWechat(db, id, unionid)
+
+
+      // console.log('result')
+      console.log(result)
+
+
+    } catch (error) { throw error }
+  }
+
+
 }
 
 
