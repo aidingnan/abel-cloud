@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-17 18:05:53
+ * @Last Modified time: 2018-09-26 14:18:23
  */
 const express = require('express')
 const router = express.Router()
@@ -55,6 +55,18 @@ router.get('/token', joiValidator({
 })
 
 /**
+ * 查询绑定手机号
+ */
+
+ router.get('/phone', cAuth, async (req, res) => {
+   try {
+    let { id } = req.auth
+    let result = await userService.getPhone(req.db, id)
+    res.success(result)
+   } catch (e) { res.error(e)}
+ })
+
+/**
  * 添加绑定手机号
  */
 router.post('/phone', joiValidator({
@@ -71,6 +83,7 @@ router.post('/phone', joiValidator({
     res.success()
   } catch (error) { res.error(error)}
 })
+
 
 /**
  * 登录状态下
@@ -107,6 +120,8 @@ router.post('/wechat', joiValidator({
 
    } catch (error) { res.error(error) }
  })
+
+
 
 
 

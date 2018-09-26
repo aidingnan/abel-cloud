@@ -8,9 +8,50 @@ const station = {
     return connect.queryAsync(sql)
   },
 
-  findDevice: (connect, sn) => {
+  // 通过sn查询设备
+  findDeviceBySn: (connect, sn) => {
     let sql = `
-      SELECT * from device as d JOIN user as u ON d.owner=u.id where sn='${sn}'
+      SELECT * from device where sn='${sn}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 查找设备与用户的分享关系
+  findDeviceShareBySnAndId: (connect, sn, id) => {
+    let sql = `
+      SELECT * FROM device_user WHERE sn='${sn}' AND user='${id}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 创建设备与用户的分享关系
+  createShare: (connect, sn, id) => {
+    let sql = `
+      INSERT INTO device_user
+      SET sn='${sn}',user='${id}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 查询用户拥有的设备
+  getStationBelongToUser: (connect, id) => {
+    let sql = `
+      SELECT d.sn,i.online,i.onlineTime,i.offlineTime FROM device AS d 
+      LEFT JOIN deviceInfo AS i
+      ON d.sn=i.sn
+      WHERE owner='${id}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 查询分享给用户的设备
+  getStationSharedToUser: (connect, id) => {
+    let sql = `
+      SELECT d.sn,du.createdAt,d.owner,i.online,i.onlineTime,i.offlineTime
+      FROM device_user AS du
+      JOIN device AS d ON du.sn=d.sn
+      LEFT JOIN deviceInfo as i ON du.sn=i.sn
+      WHERE user='${id}'
     `
     return connect.queryAsync(sql)
   }

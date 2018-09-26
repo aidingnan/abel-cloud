@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-17 16:52:29
+ * @Last Modified time: 2018-09-26 11:17:07
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -84,6 +84,15 @@ class UserService {
 
       return { token: jwt.encode(user) }
 
+
+    } catch (error) { throw error }
+  }
+
+  async getPhone(connect, id) {
+    try {
+      let result = await User.getPhone(connect, id)
+      console.log(result)
+      return result
 
     } catch (error) { throw error }
   }

@@ -1,5 +1,6 @@
 const crypto = require('crypto')
 const Station = require('../models/station')
+const User = require('../models/user')
 const E = require('../lib/error')
 const jwt = require('../lib/jwt')
 
@@ -32,13 +33,42 @@ class StationService {
       let { id } = JSON.parse(decrypted)
 
       // 绑定用户
-      let device = await Station.findDevice(connect, sn)
-      console.log(device)
+      // let device = await Station.findDeviceBySn(connect, sn)
+
       let result = await Station.bindUser(connect, sn, id)
-      
-      console.log(result)
+    
       return result
-    } catch (error) { throw(error) }
+    } catch (error) { throw error }
+  }
+
+  // 分享设备
+  async addUser(connect, owner, sn, phone) {
+    try {
+      // 检查owner 与 device 关系
+      let deviceResult = await Station.findDeviceBySn(connect, sn)
+      if (deviceResult.length !== 1) throw new E.StationNotExist()
+      if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
+      // 检查username
+      let userResult = await User.getUserByPhone(connect, phone)
+      if (userResult.length !== 1) throw new E.UserNotExist()
+      let { user } = userResult[0]
+      // 禁止分享给自己
+      if (owner == user) throw new Error('station can not share to owner')
+      // 检查sn 与 username 关系
+      let relationResult = await Station.findDeviceShareBySnAndId(connect, sn, user)
+      if (relationResult.length > 0) throw new E.ShareExist()
+      // 建立绑定关系
+      return await Station.createShare(connect, sn, user)
+    } catch (error) { throw error }
+  }
+
+  // 查询所有设备
+  async getStations(connect, id) {
+    try {
+      let ownStations = await Station.getStationBelongToUser(connect, id)
+      let sharedStations = await Station.getStationSharedToUser(connect, id)
+      return { ownStations, sharedStations }
+    } catch (error) { throw error}
   }
 }
 

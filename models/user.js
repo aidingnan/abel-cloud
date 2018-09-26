@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-17 16:54:05
+ * @Last Modified time: 2018-09-26 11:16:48
  */
 
 const user = {
@@ -12,7 +12,6 @@ const user = {
       WHERE phoneNumber = ${phone} AND user IS NOT NULL`
     return connect.queryAsync(sql)
   },
-
 
   signUpWithPhone: (connect, id, phone, password) => {
     let sql = `
@@ -87,6 +86,15 @@ const user = {
     let sql = `
       INSERT INTO phone(phoneNumber, user)
       VALUES('${phone}', '${id}');
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 查询绑定手机
+  getPhone: (connect, id) => {
+    let sql = `
+      SELECT phoneNumber,createdAt FROM phone
+      WHERE user='${id}'
     `
     return connect.queryAsync(sql)
   }
