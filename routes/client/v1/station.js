@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-26 13:23:49
+ * @Last Modified time: 2018-09-27 14:55:18
  */
 
 const express = require('express')
@@ -12,7 +12,8 @@ const Joi = require('joi')
 const joiValidator = require('../../../middlewares/joiValidator')
 const stationService = require('../../../service/stationService')
 
-router.get('/bind', async (req, res) => {
+// 绑定设备
+router.post('/', async (req, res) => {
   try {
     // 获取 user id
     let { id } = req.auth

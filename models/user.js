@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-26 11:16:48
+ * @Last Modified time: 2018-09-30 16:54:49
  */
 
 const user = {
@@ -98,8 +98,6 @@ const user = {
     `
     return connect.queryAsync(sql)
   }
-
-
 }
 
 module.exports = user

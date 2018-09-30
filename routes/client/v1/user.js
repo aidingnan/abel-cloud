@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-26 14:18:23
+ * @Last Modified time: 2018-09-27 16:26:08
  */
 const express = require('express')
 const router = express.Router()
@@ -58,13 +58,13 @@ router.get('/token', joiValidator({
  * 查询绑定手机号
  */
 
- router.get('/phone', cAuth, async (req, res) => {
-   try {
+router.get('/phone', cAuth, async (req, res) => {
+  try {
     let { id } = req.auth
     let result = await userService.getPhone(req.db, id)
     res.success(result)
-   } catch (e) { res.error(e)}
- })
+  } catch (e) { res.error(e) }
+})
 
 /**
  * 添加绑定手机号
@@ -81,7 +81,7 @@ router.post('/phone', joiValidator({
     userService.bindPhone(req.db, id, phone, code)
 
     res.success()
-  } catch (error) { res.error(error)}
+  } catch (error) { res.error(error) }
 })
 
 
@@ -95,13 +95,13 @@ router.post('/wechat', joiValidator({
     code: Joi.string().required(),
     type: Joi.string().required()
   }
-}),cAuth, async (req, res) => {
+}), cAuth, async (req, res) => {
   try {
     let { id } = req.auth
     let { code, type } = req.body
     let result = await userService.addWechat(req.db, id, code, type)
     res.success(result)
-  } catch (e) { 
+  } catch (e) {
     res.error(e)
   }
 })
@@ -110,16 +110,16 @@ router.post('/wechat', joiValidator({
  * 修改密码
  */
 
- router.patch('/password', joiValidator({
-   body: {
-     oldPassword: Joi.string().min(6).required(),
-     newPassword: Joi.string().min(6).required()
-   }
- }), async (req, res) => {
-   try {
+router.patch('/password', joiValidator({
+  body: {
+    oldPassword: Joi.string().min(6).required(),
+    newPassword: Joi.string().min(6).required()
+  }
+}), async (req, res) => {
+  try {
 
-   } catch (error) { res.error(error) }
- })
+  } catch (error) { res.error(error) }
+})
 
 
 
