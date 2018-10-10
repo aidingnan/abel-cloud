@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-27 14:55:18
+ * @Last Modified time: 2018-10-10 14:03:30
  */
 
 const express = require('express')
@@ -11,6 +11,8 @@ const crypto = require('crypto')
 const Joi = require('joi')
 const joiValidator = require('../../../middlewares/joiValidator')
 const stationService = require('../../../service/stationService')
+const transformJson = require('../../../service/transformJson')
+const Station = require('../../../models/station')
 
 // 绑定设备
 router.post('/', async (req, res) => {
@@ -60,6 +62,29 @@ router.get('/', async (req, res) => {
     res.success(result)
   } catch (e) { res.error(e)}
 })
+
+router.get('/:sn/json', checkUserAndStation, async (req, res) => {
+  transformJson.createServer(req, res)
+})
+
+router.post('/:sn/json', checkUserAndStation, async (req, res) => {
+  
+  res.success()
+})
+
+async function checkUserAndStation(req, res, next) {
+  try {
+    let userId = req.auth.id
+    let sn = req.params.sn
+    let connect = req.db
+    let ownStations = await Station.getStationBelongToUser(connect, userId)
+    let sharedStations = await Station.getStationSharedToUser(connect, userId)
+    let sameOwnStation = ownStations.find(item => item.sn == sn)
+    let sameSharedStations = sharedStations.find(item => item.sn == sn)
+    if (!sameOwnStation && !sameSharedStations) throw new Error('sn error')
+    next()
+  } catch (e) { res.error(e)}
+}
 
 
 

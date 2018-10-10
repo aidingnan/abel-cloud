@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const stationService = require('../../../service/stationService')
+const transformJson = require('../../../service/transformJson')
 const Joi = require('joi')
 const joiValidator = require('../../../middlewares/joiValidator')
 
@@ -17,6 +18,12 @@ router.post('/bind', joiValidator({
     res.success(result)
 
   } catch (error) { res.error(error) }
+})
+
+router.post('/:id/response/:jobId/json', async (req, res) => {
+  try {
+    transformJson.request(req, res)
+  } catch(e) { res.error(e)}
 })
 
 module.exports = router
