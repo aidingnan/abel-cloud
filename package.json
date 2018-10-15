@@ -11,6 +11,7 @@
     "bluebird": "^3.5.2",
     "cookie-parser": "^1.4.3",
     "debug": "~2.6.9",
+    "dicer": "^0.2.5",
     "express": "^4.16.3",
     "getconfig": "^4.5.0",
     "http-errors": "^1.6.3",

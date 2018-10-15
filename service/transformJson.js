@@ -1,12 +1,18 @@
-// cloud/:sn/pipe
-// 1
+/*
+ * @Author: harry.liu 
+ * @Date: 2018-10-10 16:49:15 
+ * @Last Modified by: harry.liu
+ * @Last Modified time: 2018-10-15 18:23:33
+ */
 
 const EventEmitter = require('events').EventEmitter
 const uuid = require('uuid')
 const E = require('../lib/error')
 
-
-// server state: init -> notice -> pending -> finish
+/**
+ * 状态机基类
+ * server state: init -> notice -> pending -> finish
+ */
 class State {
   constructor(ctx, ...args) {
     this.ctx = ctx
@@ -25,6 +31,9 @@ class State {
   exit() {}
 }
 
+/**
+ * 初始化：获取参数
+ */
 class Init extends State {
   constructor(ctx) {
     super(ctx)
@@ -33,8 +42,8 @@ class Init extends State {
 
   enter() {
     let server = this.ctx
-    let id = this.ctx.jobId
-    this.ctx.ctx.map.set(id, server)
+    let jobId = this.ctx.jobId
+    this.ctx.ctx.map.set(jobId, server)
     let body
     if (server.req.method == 'GET') body = server.req.query
     else if (server.req.method == 'POST') body = server.req.body
@@ -42,7 +51,7 @@ class Init extends State {
 
     this.ctx.manifest = {
       method, resource, body,
-      sessionId: id,
+      sessionId: jobId,
       user: { id: this.ctx.req.auth.id }
     }
 
@@ -50,13 +59,16 @@ class Init extends State {
   }
 }
 
+/**
+ * 通知：发布消息
+ */
 class Notice extends State {
   constructor(ctx) {
     super(ctx)
     this.name = 'notice'
   }
 
-  async enter(...args) {
+  async enter() {
     try {
       let sn = this.ctx.req.params.sn
       let topic = `cloud/${sn}/pipe`
@@ -70,12 +82,18 @@ class Notice extends State {
   }
 }
 
+/**
+ * 等待： 等待NAS请求
+ */
 class Pending extends State {
   constructor(ctx) {
     super(ctx)
   }
 }
 
+/**
+ * 完成： 获取NAS返回数据
+ */
 class Finish extends State {
   constructor(ctx, ...args) {
     super(ctx, ...args)
@@ -86,6 +104,9 @@ class Finish extends State {
   }
 }
 
+/**
+ * 错误： NAS返回错误或执行出错
+ */
 class Error extends State {
   constructor(ctx, ...args) {
     super(ctx, ...args)
@@ -97,6 +118,9 @@ class Error extends State {
   }
 }
 
+/**
+ * 客户端请求
+ */
 class Server extends EventEmitter {
   constructor(req, res, ctx) {
     super()
@@ -104,9 +128,12 @@ class Server extends EventEmitter {
     this.res = res
     this.ctx = ctx
     this.manifest = null
-    this.timer = Date.now() + 150*1000
+    this.timer = Date.now() + 15*1000
     this.jobId = uuid.v4()
     this.state = null
+    this.req.on('error', err => this.error(err))
+    this.req.on('close', this.abort)
+    
     new Init(this)
   }
 
@@ -119,6 +146,7 @@ class Server extends EventEmitter {
     return false
   }
 
+  // 获取res状态
   finished() {
     return this.res.finished
   }
@@ -138,6 +166,9 @@ class Server extends EventEmitter {
   }
 }
 
+/**
+ * server 管理容器
+ */
 class TransformJson extends EventEmitter {
   constructor(limit) {
     super()
@@ -146,44 +177,49 @@ class TransformJson extends EventEmitter {
   }
 
   schedule() {
+    // timeout todo
     this.map.forEach((value, key) => {
       if (value.finished()) this.map.delete(key)
     })
   }
 
-  close(id) {
-    this.map.delete(id)
-  }
+  close(id) { this.map.delete(id) }
 
+  // 创建客户端请求
   createServer(req, res) {
+    console.log(this.map.size)
     this.schedule()
+    console.log(this.map.size)
     if (this.map.size > this.limit) throw new E.PipeTooMuchTask()
-    let server = new Server(req, res, this)
+    new Server(req, res, this)
   }
 
+  // 对客户端请求进行返回
   request(req, res) {
     let { jobId } = req.params
     let server = this.map.get(jobId)
     if (!server) return res.error(new E.TransformJsonQueueNoServer(), 403, false)
 
+    // 超时
     if (server.isTimeOut()) {
       let e = new E.PipeResponseTimeout()
       server.state.setState(Error, e)
       return res.error(e)
     }
+    // 重复发送或者客户端撤销请求
     if (server.finished()) {
       let e = new E.PipeResponseHaveFinished()
       server.state.setState(Error, e)
       return res.error(e)
     }
 
-    // client response 
     let responseError = req.body.error
     if (responseError) {
+      // 将station错误返回至客户端
       server.state.setState(Error, responseError.message, responseError.code)
     }
     else {
-      // backwards compatible
+      // 将station数据返回至客户端
       let data = (Object.keys(req.body).length === 1 && req.body.data) ? req.body.data : req.body
       server.state.setState(Finish, data)
     }

@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-10-10 14:03:30
+ * @Last Modified time: 2018-10-15 16:33:51
  */
 
 const express = require('express')
@@ -12,6 +12,7 @@ const Joi = require('joi')
 const joiValidator = require('../../../middlewares/joiValidator')
 const stationService = require('../../../service/stationService')
 const transformJson = require('../../../service/transformJson')
+const storeFile = require('../../../service/storeFile')
 const Station = require('../../../models/station')
 
 // 绑定设备
@@ -63,13 +64,23 @@ router.get('/', async (req, res) => {
   } catch (e) { res.error(e)}
 })
 
-router.get('/:sn/json', checkUserAndStation, async (req, res) => {
+// json操作
+router.get('/:sn/json', checkUserAndStation, (req, res) => {
   transformJson.createServer(req, res)
 })
 
-router.post('/:sn/json', checkUserAndStation, async (req, res) => {
+router.post('/:sn/json', checkUserAndStation, (req, res) => {
+  transformJson.createServer(req, res)
+})
+
+// 上传文件
+router.post('/:sn/pipe', checkUserAndStation, (req, res) => {
+  storeFile.createServer(req, res)
+})
+
+// 下载文件
+router.get('/:sn/pipe', checkUserAndStation, (req, res) => {
   
-  res.success()
 })
 
 async function checkUserAndStation(req, res, next) {
@@ -82,8 +93,14 @@ async function checkUserAndStation(req, res, next) {
     let sameOwnStation = ownStations.find(item => item.sn == sn)
     let sameSharedStations = sharedStations.find(item => item.sn == sn)
     if (!sameOwnStation && !sameSharedStations) throw new Error('sn error')
+
+    try {
+      req.db.release()
+    } catch (e) {}
     next()
-  } catch (e) { res.error(e)}
+  } catch (e) { 
+    res.error(e)
+  }
 }
 
 

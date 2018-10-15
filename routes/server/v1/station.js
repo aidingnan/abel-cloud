@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const stationService = require('../../../service/stationService')
 const transformJson = require('../../../service/transformJson')
+const storeFile = require('../../../service/storeFile')
 const Joi = require('joi')
 const joiValidator = require('../../../middlewares/joiValidator')
 
@@ -20,9 +21,24 @@ router.post('/bind', joiValidator({
   } catch (error) { res.error(error) }
 })
 
+// json 返回
 router.post('/:id/response/:jobId/json', async (req, res) => {
   try {
     transformJson.request(req, res)
+  } catch(e) { res.error(e)}
+})
+
+// station接收文件
+router.get('/:id/response/:jobId', (req, res) => {
+  try {
+    storeFile.request(req, res)
+  } catch(e) { res.error(e)}
+})
+
+// station处理文件返回
+router.post('/:id/response/:jobId/pipe/store', (req, res) => {
+  try {
+    storeFile.response(req, res)
   } catch(e) { res.error(e)}
 })
 
