@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-10-15 16:33:51
+ * @Last Modified time: 2018-10-17 17:28:12
  */
 
 const express = require('express')
@@ -13,6 +13,7 @@ const joiValidator = require('../../../middlewares/joiValidator')
 const stationService = require('../../../service/stationService')
 const transformJson = require('../../../service/transformJson')
 const storeFile = require('../../../service/storeFile')
+const fetchFile = require('../../../service/fetchFile')
 const Station = require('../../../models/station')
 
 // 绑定设备
@@ -80,7 +81,7 @@ router.post('/:sn/pipe', checkUserAndStation, (req, res) => {
 
 // 下载文件
 router.get('/:sn/pipe', checkUserAndStation, (req, res) => {
-  
+  fetchFile.createServer(req, res)
 })
 
 async function checkUserAndStation(req, res, next) {

@@ -20,6 +20,36 @@ class State {
   exit() {}
 }
 
+/**
+ * 初始化：获取参数
+ */
+class Init extends State {
+  constructor(ctx) {
+    super(ctx)
+    this.name = 'init'
+  }
+
+  enter() {
+    let server = this.ctx
+    let jobId = this.ctx.jobId
+    this.ctx.ctx.map.set(jobId, server)
+    let body
+    if (server.req.method == 'GET') body = server.req.query
+    else if (server.req.method == 'POST') body = server.req.body
+    let { method, resource } = body
+    delete body.method
+    delete body.resource
+
+    this.ctx.manifest = {
+      method, resource, body,
+      sessionId: jobId,
+      user: { id: this.ctx.req.auth.id }
+    }
+
+    this.setState(Notice)
+  }
+}
+
 class Notice extends State {
   constructor(ctx) {
     super(ctx)
@@ -96,12 +126,8 @@ class Server extends EventEmitter {
   }
 
   isTimeOut() {
-    if (Date.now() > this.timer) {
-      let e = new E.PipeResponseTimeout()
-      this.error(e)
-      return true
-    }
-    return false
+    if (Date.now() > this.timer) return true
+    else return false
   }
   
   finished() {
@@ -123,5 +149,18 @@ class Server extends EventEmitter {
   }
 }
 
+class Container {
+  constructor(limit) {
+    this.limit = limit || 1024
+    this.map = new Map()
+  }
 
-module.exports = { State, Pending, Notice, Finish, Err, Server }
+  schedule() {
+    this.map.forEach((v, k) => {
+      if (v.finished()) this.map.delete(k)
+    })
+  }
+}
+
+
+module.exports = { State, Pending, Notice, Finish, Err, Server, Container, Init }

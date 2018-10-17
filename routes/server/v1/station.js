@@ -3,6 +3,7 @@ const router = express.Router()
 const stationService = require('../../../service/stationService')
 const transformJson = require('../../../service/transformJson')
 const storeFile = require('../../../service/storeFile')
+const fetchFile = require('../../../service/fetchFile')
 const Joi = require('joi')
 const joiValidator = require('../../../middlewares/joiValidator')
 
@@ -39,6 +40,18 @@ router.get('/:id/response/:jobId', (req, res) => {
 router.post('/:id/response/:jobId/pipe/store', (req, res) => {
   try {
     storeFile.response(req, res)
+  } catch(e) { res.error(e)}
+})
+
+router.post('/:id/response/:jobId', (req, res) => {
+  try {
+    fetchFile.request(req, res)
+  } catch(e) { res.error(e)}
+})
+
+router.post('/:id/response/:jobId/pipe/fetch', (req, res) => {
+  try {
+    fetchFile.response(req, res)
   } catch(e) { res.error(e)}
 })
 

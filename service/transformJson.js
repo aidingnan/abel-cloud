@@ -2,11 +2,11 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 16:49:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-10-16 17:48:01
+ * @Last Modified time: 2018-10-17 15:00:40
  */
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
-const { State, Notice, Finish, Err, Server } = require('./base')
+const { Init, Finish, Err, Server, Container } = require('./base')
 
 /**
  * 状态机
@@ -14,54 +14,14 @@ const { State, Notice, Finish, Err, Server } = require('./base')
  */
 
 
-/**
- * 初始化：获取参数
- */
-class Init extends State {
-  constructor(ctx) {
-    super(ctx)
-    this.name = 'init'
-  }
-
-  enter() {
-    let server = this.ctx
-    let jobId = this.ctx.jobId
-    this.ctx.ctx.map.set(jobId, server)
-    let body
-    if (server.req.method == 'GET') body = server.req.query
-    else if (server.req.method == 'POST') body = server.req.body
-    let { method, resource } = body
-    delete body.method
-    delete body.resource
-
-    this.ctx.manifest = {
-      method, resource, body,
-      sessionId: jobId,
-      user: { id: this.ctx.req.auth.id }
-    }
-
-    this.setState(Notice)
-  }
-}
-
 
 /**
  * server 管理容器
  */
-class TransformJson {
+class TransformJson extends Container {
   constructor(limit) {
-    this.limit = limit || 1024
-    this.map = new Map()
+    super(limit)
   }
-
-  schedule() {
-    // timeout todo
-    this.map.forEach((value, key) => {
-      if (value.finished()) this.map.delete(key)
-    })
-  }
-
-  close(id) { this.map.delete(id) }
 
   // 创建客户端请求
   createServer(req, res) {
