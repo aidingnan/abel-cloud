@@ -11,7 +11,7 @@ router.get('/', function(req, res, next) {
   })
 });
 
-router.use('/client', require('./client'))
-router.use('/server', require('./server'))
+router.use('/c', require('./client'))
+router.use('/s', require('./server'))
 
 module.exports = router;

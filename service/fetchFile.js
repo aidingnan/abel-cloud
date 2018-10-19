@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-10-17 17:57:22
+ * @Last Modified time: 2018-10-18 16:50:14
  */
 
 const debug = require('debug')('app:store')
@@ -31,11 +31,19 @@ class Init extends State {
     delete body.method
     delete body.resource
 
+    let range = this.ctx.req.headers['range']
+    let contentRange = this.ctx.req.headers['content-range']
+
+
     this.ctx.manifest = {
       method, resource, body,
       sessionId: jobId,
-      user: { id: this.ctx.req.auth.id }
+      user: { id: this.ctx.req.auth.id },
+      range,
     }
+
+    console.log(this.ctx.manifest)
+    
 
     this.setState(Notice)
   }
@@ -117,7 +125,6 @@ class FetchFile extends Container {
     }
     res.success()
   }
-
 
 }
 

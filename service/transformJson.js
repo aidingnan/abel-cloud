@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 16:49:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-10-17 15:00:40
+ * @Last Modified time: 2018-10-18 14:17:16
  */
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
@@ -26,6 +26,7 @@ class TransformJson extends Container {
   // 创建客户端请求
   createServer(req, res) {
     this.schedule()
+    debug(this.map.size)
     if (this.map.size > this.limit) throw new E.PipeTooMuchTask()
     debug(this.map.size)
     new Server(req, res, this, Init)

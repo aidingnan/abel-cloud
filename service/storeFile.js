@@ -2,17 +2,46 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-10-17 16:57:00
+ * @Last Modified time: 2018-10-18 15:24:12
  */
 
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
-const { State, Init, Finish, Err, Server, Container } = require('./base')
+const { State, Notice, Finish, Err, Server, Container } = require('./base')
 
 /**
  * 状态机
  * server state: init -> notice -> pending -> pipe -> pending -> finish
  */
+
+
+/**
+ * 初始化：获取参数
+ */
+class Init extends State {
+  constructor(ctx) {
+    super(ctx)
+    this.name = 'init'
+  }
+
+  enter() {
+    let server = this.ctx
+    let jobId = this.ctx.jobId
+    this.ctx.ctx.map.set(jobId, server)
+    let body = server.req.query
+    let { method, resource } = body
+    delete body.method
+    delete body.resource
+
+    this.ctx.manifest = {
+      method, resource, body,
+      sessionId: jobId,
+      user: { id: this.ctx.req.auth.id }
+    }
+
+    this.setState(Notice)
+  }
+}
 
 class Pipe extends State {
   constructor(ctx, res) {
@@ -35,6 +64,12 @@ class StoreFile extends Container {
 
   constructor(limit) {
     super(limit)
+  }
+
+  schedule() {
+    this.map.forEach((v, k) => {
+      if (v.finished()) this.map.delete(k)
+    })
   }
 
   createServer(req, res) {
