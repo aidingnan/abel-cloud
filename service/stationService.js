@@ -62,12 +62,21 @@ class StationService {
     } catch (error) { throw error }
   }
 
-  // 查询所有设备
+  // 查询用户所有设备
   async getStations(connect, id) {
     try {
       let ownStations = await Station.getStationBelongToUser(connect, id)
       let sharedStations = await Station.getStationSharedToUser(connect, id)
       return { ownStations, sharedStations }
+    } catch (error) { throw error}
+  }
+
+  // 设备下所有用户
+  async getStationUsers(connect, sn) {
+    try {
+      let owner = await Station.getStationOwner(connect, sn)
+      let sharer = await Station.getStationSharer(connect, sn)
+      return { owner, sharer }
     } catch (error) { throw error}
   }
 }

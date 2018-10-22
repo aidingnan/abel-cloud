@@ -33,6 +33,29 @@ const station = {
     return connect.queryAsync(sql)
   },
 
+  // 查询设备拥有者
+  getStationOwner: (connect, sn) => {
+    let sql = `
+      SELECT u.id, u.username, u.createdAt from device as d 
+      LEFT JOIN user AS u
+      ON d.owner = u.id
+      where sn='${sn}' AND owner IS NOT NULL
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 查询设备分享者
+  getStationSharer: (connect, sn) => {
+    let sql = `
+      SELECT u.id, u.username, u.createdAt from device_user AS du
+      LEFT JOIN user AS u
+      on du.user=u.id
+      where sn='${sn}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+
   // 查询用户拥有的设备
   getStationBelongToUser: (connect, id) => {
     let sql = `
