@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-30 16:54:49
+ * @Last Modified time: 2018-11-02 15:07:41
  */
 
 const user = {
@@ -13,12 +13,12 @@ const user = {
     return connect.queryAsync(sql)
   },
 
-  signUpWithPhone: (connect, id, phone, password) => {
+  signUpWithPhone: (connect, id, phone, password, safety) => {
     let sql = `
       BEGIN;
       SET @now = NOW();
       INSERT INTO user
-      VALUES('${id}', '${phone}', PASSWORD('${password}'), @now, @now, 1);
+      VALUES('${id}', '${phone}', PASSWORD('${password}'), @now, @now, 1, '${safety}');
       INSERT INTO phone
       VALUES('${phone}', '${id}', @now, @now)
       ON DUPLICATE KEY UPDATE user='${id}';
@@ -26,11 +26,34 @@ const user = {
     return connect.queryAsync(sql)
   },
 
+  // 使用账号密码登录
   loginWithPhone: (connect, username, password) => {
     let sql = `
       SELECT id,username,phoneNumber FROM user,phone WHERE user.id=phone.user 
       AND user.password=PASSWORD('${password}')
       AND phone.phoneNumber='${username}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 记录登录信息
+  recordLoginInfo: (connect, userId, clientId, type) => {
+    let sql = `
+      INSERT INTO userLoginInfo 
+      (userId, clientId, type)
+      VALUES ('${userId}', '${clientId}', '${type}')
+
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 记录使用信息
+  recordUseInfo: (connect, userId, clientId, type, sn) => {
+    console.log(userId, clientId, type, sn)
+    let sql = `
+      INSERT INTO userDeviceUseInfo
+      (userId, clientId, type, sn)
+      VALUES('${userId}', '${clientId}', '${type}', '${sn}')
     `
     return connect.queryAsync(sql)
   },

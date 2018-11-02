@@ -71,7 +71,7 @@ class StationService {
     } catch (error) { throw error}
   }
 
-  // 设备下所有用户
+  // 查询设备所有用户
   async getStationUsers(connect, sn) {
     try {
       let owner = await Station.getStationOwner(connect, sn)

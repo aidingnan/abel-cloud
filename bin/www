@@ -3,16 +3,16 @@
 /**
  * Module dependencies.
  */
-
 var app = require('../app');
 var debug = require('debug')('abel:server');
 var http = require('http');
 const db = require('mysql')
 const config = require('getconfig')
+const { mysql } = require('getconfig')
 const promise = require('bluebird')
 const AWS = require('aws-sdk')
 
-const { mysql } = require('getconfig')
+
 
 /**
  * 初始化 mysql
@@ -130,3 +130,5 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
+
+module.exports = server

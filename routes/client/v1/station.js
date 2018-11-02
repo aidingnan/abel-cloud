@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-10-17 17:28:12
+ * @Last Modified time: 2018-11-02 16:47:45
  */
 
 const express = require('express')
@@ -15,6 +15,7 @@ const transformJson = require('../../../service/transformJson')
 const storeFile = require('../../../service/storeFile')
 const fetchFile = require('../../../service/fetchFile')
 const Station = require('../../../models/station')
+const nodemailer = require('nodemailer')
 
 // 绑定设备
 router.post('/', async (req, res) => {
@@ -66,21 +67,22 @@ router.get('/', async (req, res) => {
 })
 
 // json操作
-router.get('/:sn/json', checkUserAndStation, (req, res) => {
-  transformJson.createServer(req, res)
-})
 
 router.post('/:sn/json', checkUserAndStation, (req, res) => {
   transformJson.createServer(req, res)
 })
 
 // 上传文件
-router.post('/:sn/pipe', checkUserAndStation, (req, res) => {
+router.post('/:sn/pipe', checkUserAndStation, joiValidator({
+  query: { data: Joi.string().required() }
+}), (req, res) => {
   storeFile.createServer(req, res)
 })
 
 // 下载文件
-router.get('/:sn/pipe', checkUserAndStation, (req, res) => {
+router.get('/:sn/pipe', checkUserAndStation, joiValidator({
+  query: { data: Joi.string().required() }
+}), (req, res) => {
   fetchFile.createServer(req, res)
 })
 
@@ -95,9 +97,13 @@ async function checkUserAndStation(req, res, next) {
     let sameSharedStations = sharedStations.find(item => item.sn == sn)
     if (!sameOwnStation && !sameSharedStations) throw new Error('sn error')
 
+    let station = sameOwnStation || sharedStations
+    if (!station.online) throw new Error('Station is not online')
+
     try {
       req.db.release()
     } catch (e) {}
+    
     next()
   } catch (e) { 
     res.error(e)

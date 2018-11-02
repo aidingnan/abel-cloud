@@ -6,15 +6,15 @@
     "db": 0
   },
   "mysql": {
-    "database": "drop_prod",
-    "host": "10.66.196.202",
+    "database": "wisnuc",
+    "host": "wisnuc.cyb10i3l88dy.rds.cn-north-1.amazonaws.com.cn",
     "port": 3306,
-    "username": "root",
-    "password": "nw9zuwMgN6fjs6$S",
+    "username": "wisnuc",
+    "password": "12345678",
     "dialect": "mysql",
     "isolationLevel": "READ COMMITTED",
     "timezone": "+08:00",
-    "logging": false,
+    "logging": true,
     "pool": {
       "max": 60,
       "min": 5,

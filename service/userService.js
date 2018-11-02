@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-26 11:17:07
+ * @Last Modified time: 2018-11-02 14:32:32
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -16,6 +16,8 @@ const WechatInfo = require('../lib/wechatInfo')
 class UserService {
   /**
    * 请求验证码
+   * 1. 请求头不带wechat,使用手机号注册
+   * 2. 请求头带wechat, 将
    */
   async requestSmsCode(connect, phone, wechat) {
     try {
@@ -41,7 +43,7 @@ class UserService {
   /**
    * 使用手机号注册
    */
-  async signUpWithPhone(connect, phone, password, code) {
+  async signUpWithPhone(connect, phone, password, code, safety) {
     try {
       // 生产id
       let id = uuid.v4()
@@ -58,7 +60,8 @@ class UserService {
       // 检查是否已注册
       let result = await User.getUserByPhone(connect, phone)
       // 用户不存在 ==> 注册 ==> 获取用户
-      if (result.length == 0) await User.signUpWithPhone(connect, id, phone, password)
+      safety = safety || null
+      if (result.length == 0) await User.signUpWithPhone(connect, id, phone, password, safety)
       else throw new E.UserAlreadyExist()
 
       return { token: jwt.encode({ id, type: 'phone' }) }
@@ -69,7 +72,7 @@ class UserService {
   /**
    * 常规登录
    */
-  async token(connect, u, p) {
+  async token(connect, u, p, clientId, type) {
     try {
 
       // 判断username类型(手机/邮箱) todo
@@ -80,11 +83,23 @@ class UserService {
       let result = await User.loginWithPhone(connect, u, p)
       if (result.length !== 1) throw new E.UserNotExist()
       let { id } = result[0]
-      let user = { id, type: 'phone' }
+      let user = { id, type: 'phone', clientId, type }
+
+      // 记录登录信息
+      await User.recordLoginInfo(connect, id, clientId, type)
 
       return { token: jwt.encode(user) }
 
+    } catch (error) { throw error }
+  }
 
+  /**
+   * 设备使用记录
+   */
+  async recordDeviceUseInfo (connect, userId, clientId, type, sn) {
+    try {
+      // 记录
+      await User.recordUseInfo(connect, userId, clientId, type, sn)
     } catch (error) { throw error }
   }
 
@@ -153,7 +168,6 @@ class UserService {
   /**
    * 微信登录
    */
-
   async loginWithWechat(connect, code, type) {
     try {
       // 解析code => userinfo
@@ -225,10 +239,7 @@ class UserService {
     } catch (error) { throw error }
   }
 
-
 }
-
-
 
 module.exports = new UserService()
 

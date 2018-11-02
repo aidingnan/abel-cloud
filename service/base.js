@@ -33,18 +33,13 @@ class Init extends State {
     let server = this.ctx
     let jobId = this.ctx.jobId
     this.ctx.ctx.map.set(jobId, server)
-    let body
-    if (server.req.method == 'GET') body = server.req.query
-    else if (server.req.method == 'POST') body = server.req.body
-    let { method, resource } = body
-    delete body.method
-    delete body.resource
+    
+    let body = server.req.body
 
-    this.ctx.manifest = {
-      method, resource, body,
+    this.ctx.manifest = Object.assign({
       sessionId: jobId,
       user: { id: this.ctx.req.auth.id }
-    }
+    }, body)
 
     this.setState(Notice)
   }

@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-10-18 15:24:12
+ * @Last Modified time: 2018-11-02 17:09:11
  */
 
 const debug = require('debug')('app:store')
@@ -28,18 +28,19 @@ class Init extends State {
     let server = this.ctx
     let jobId = this.ctx.jobId
     this.ctx.ctx.map.set(jobId, server)
-    let body = server.req.query
-    let { method, resource } = body
-    delete body.method
-    delete body.resource
+    
+    try {
+      let body = JSON.parse(server.req.query.data)
 
-    this.ctx.manifest = {
-      method, resource, body,
-      sessionId: jobId,
-      user: { id: this.ctx.req.auth.id }
-    }
+      this.ctx.manifest = Object.assign({
+        sessionId: jobId,
+        user: { id: this.ctx.req.auth.id }
+      }, body)
+  
+      this.setState(Notice)
 
-    this.setState(Notice)
+    } catch (e) { return this.setState(Err, e) }
+    
   }
 }
 

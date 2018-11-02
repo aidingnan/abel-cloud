@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-10-18 16:50:14
+ * @Last Modified time: 2018-11-02 17:08:06
  */
 
 const debug = require('debug')('app:store')
@@ -25,27 +25,21 @@ class Init extends State {
     let server = this.ctx
     let jobId = this.ctx.jobId
     this.ctx.ctx.map.set(jobId, server)
-    let body
-    if (server.req.method == 'GET') body = server.req.query
-    let { method, resource } = body
-    delete body.method
-    delete body.resource
+    try {
+      var body = JSON.parse(server.req.query.data)
+      let range = this.ctx.req.headers['range']
 
-    let range = this.ctx.req.headers['range']
-    let contentRange = this.ctx.req.headers['content-range']
+      this.ctx.manifest = Object.assign({
+        sessionId: jobId,
+        user: { id: this.ctx.req.auth.id },
+        header: { range }
+      }, body)
 
+      console.log(this.ctx.manifest)
 
-    this.ctx.manifest = {
-      method, resource, body,
-      sessionId: jobId,
-      user: { id: this.ctx.req.auth.id },
-      range,
-    }
-
-    console.log(this.ctx.manifest)
+      this.setState(Notice)
+    } catch (e) { this.setState(Err, e) }
     
-
-    this.setState(Notice)
   }
 }
 

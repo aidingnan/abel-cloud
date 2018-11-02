@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-09-27 16:26:08
+ * @Last Modified time: 2018-11-01 18:52:48
  */
 const express = require('express')
 const router = express.Router()
@@ -12,10 +12,14 @@ const joiValidator = require('../../../middlewares/joiValidator')
 const userService = require('../../../service/userService')
 const { weAuth, cAuth } = require('../../../middlewares/jwt')
 
-//请求验证码
+/**
+ * 1. 注册新用户
+ * 2. 微信关联账号
+ */
+
 router.get('/smsCode', weAuth(), joiValidator({
   query: {
-    phone: Joi.string().min(11).max(11)
+    phone: Joi.string().min(11).max(11).required()
   }
 }), async (req, res) => {
   try {
@@ -34,8 +38,8 @@ router.post('/', joiValidator({
   }
 }), async (req, res) => {
   try {
-    let { phone, code, password } = req.body
-    let result = await userService.signUpWithPhone(req.db, phone, password, code)
+    let { phone, code, password, safety } = req.body
+    let result = await userService.signUpWithPhone(req.db, phone, password, code, safety)
     return res.success(result)
   } catch (e) { res.error(e) }
 })
@@ -44,14 +48,32 @@ router.post('/', joiValidator({
 router.get('/token', joiValidator({
   query: {
     username: Joi.string(),
-    password: Joi.string().min(6)
+    password: Joi.string().min(6),
+    clientId: Joi.string().required(),
+    type: Joi.string().required()
   }
 }), async (req, res) => {
   try {
-    let { username, password } = req.query
-    let result = await userService.token(req.db, username, password)
+    let { username, password, clientId, type } = req.query
+    let result = await userService.token(req.db, username, password, clientId, type)
     res.success(result)
   } catch (e) { res.error(e) }
+})
+
+/**
+ * 用户设备使用记录
+ */
+router.post('/deviceInfo', cAuth, joiValidator({
+  body: {
+    sn: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { sn } = req.body
+    let { id, clientId, type } = req.auth
+    let result = await userService.recordDeviceUseInfo(req.db, id, clientId, type, sn)
+    res.success()
+  } catch (e) { console.log(e);res.error(e) }
 })
 
 /**
@@ -109,7 +131,6 @@ router.post('/wechat', joiValidator({
 /**
  * 修改密码
  */
-
 router.patch('/password', joiValidator({
   body: {
     oldPassword: Joi.string().min(6).required(),
