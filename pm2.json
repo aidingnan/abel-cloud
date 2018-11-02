@@ -1,0 +1,10 @@
+{
+    "name": "abel",
+    "script": "./bin/www",
+    "cwd": "./",
+
+
+    "env": {
+        "NODE_ENV": "production" 
+    }
+}
