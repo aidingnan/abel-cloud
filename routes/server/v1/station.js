@@ -19,7 +19,7 @@ router.post('/bind', joiValidator({
     let result = await stationService.bindUser(req.db, sn, certId, signature, encrypted)
     res.success(result)
 
-  } catch (error) { res.error(error) }
+  } catch (error) { console.log(sn);res.error(error) }
 })
 
 router.get('/user', async (req, res) => {
