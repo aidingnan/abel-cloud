@@ -45,7 +45,11 @@ const ssm = new AWS.SSM({
   region: 'cn-north-1'
 })
 
-const iot = new AWS.Iot(AWSOption)
+const iot = new AWS.Iot({
+  accessKeyId: 'AKIAPGPXTKFNHUA4GRAQ',
+  secretAccessKey: '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',
+  region: 'cn-north-1'
+})
 
 const iotData = new AWS.IotData(AWSOption)
 
