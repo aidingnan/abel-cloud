@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-02 17:09:11
+ * @Last Modified time: 2018-11-05 10:52:37
  */
 
 const debug = require('debug')('app:store')
@@ -50,8 +50,9 @@ class Pipe extends State {
   }
 
   enter(res) {
-    console.log(this.ctx.req.headers['content-type'])
-    res.setHeader('content-type', this.ctx.req.headers['content-type'])
+    for(let key in this.ctx.req.headers) {
+      res.setHeader(key, this.ctx.req.headers[key])
+    }
     this.ctx.req.pipe(res)
   }
 }

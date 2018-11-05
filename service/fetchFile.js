@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-02 17:08:06
+ * @Last Modified time: 2018-11-05 10:49:54
  */
 
 const debug = require('debug')('app:store')
@@ -32,7 +32,7 @@ class Init extends State {
       this.ctx.manifest = Object.assign({
         sessionId: jobId,
         user: { id: this.ctx.req.auth.id },
-        header: { range }
+        headers: { range }
       }, body)
 
       console.log(this.ctx.manifest)
