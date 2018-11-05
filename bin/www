@@ -39,7 +39,11 @@ const AWSOption = {
   endpoint: 'a3dc7azfqxif0n.iot.cn-north-1.amazonaws.com.cn'
 }
 
-const ssm = new AWS.SSM(AWSOption)
+const ssm = new AWS.SSM({
+  accessKeyId: 'AKIAPGPXTKFNHUA4GRAQ',
+  secretAccessKey: '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',
+  region: 'cn-north-1'
+})
 
 const iot = new AWS.Iot(AWSOption)
 

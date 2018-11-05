@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-02 16:47:45
+ * @Last Modified time: 2018-11-05 15:15:08
  */
 
 const express = require('express')
@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
 
     let result = { encrypted: `${latest}@${encrypted}`}
     res.success(result)
-  } catch (error) {  res.error(error) }
+  } catch (error) {  console.log(error);res.error(error) }
 })
 
 // 分享设备

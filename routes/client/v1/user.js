@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-01 18:52:48
+ * @Last Modified time: 2018-11-05 13:57:33
  */
 const express = require('express')
 const router = express.Router()
@@ -56,6 +56,16 @@ router.get('/token', joiValidator({
   try {
     let { username, password, clientId, type } = req.query
     let result = await userService.token(req.db, username, password, clientId, type)
+    res.success(result)
+  } catch (e) { res.error(e) }
+})
+
+/**
+ * 查询用户信息
+ */
+router.get('/', cAuth, async (req, res) => {
+  try {
+    let result = await userService.getUserInfo(req.db, req.auth.id)
     res.success(result)
   } catch (e) { res.error(e) }
 })

@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-02 15:07:41
+ * @Last Modified time: 2018-11-05 14:01:17
  */
 
 const user = {
@@ -36,6 +36,13 @@ const user = {
     return connect.queryAsync(sql)
   },
 
+  getUserInfo: (connect, userId) => {
+    let sql = `
+      SELECT * FROM user WHERE id = '${userId}'
+    `
+    return connect.queryAsync(sql)
+  },
+
   // 记录登录信息
   recordLoginInfo: (connect, userId, clientId, type) => {
     let sql = `
@@ -49,7 +56,6 @@ const user = {
 
   // 记录使用信息
   recordUseInfo: (connect, userId, clientId, type, sn) => {
-    console.log(userId, clientId, type, sn)
     let sql = `
       INSERT INTO userDeviceUseInfo
       (userId, clientId, type, sn)
@@ -58,6 +64,7 @@ const user = {
     return connect.queryAsync(sql)
   },
 
+  // 查询用户信息
   getUserById: (connect, id) => {
     let sql = `
       SELECT * FROM user
