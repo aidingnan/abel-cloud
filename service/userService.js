@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-06 10:57:01
+ * @Last Modified time: 2018-11-06 11:40:08
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -88,7 +88,9 @@ class UserService {
       // 记录登录信息
       await User.recordLoginInfo(connect, id, clientId, type)
 
-      return { token: jwt.encode(user) }
+      let obj = Object.assign((await User.getUserInfo(connect, id))[0], {password: undefined})
+
+      return { token: jwt.encode(user), ...obj }
 
     } catch (error) { throw error }
   }
