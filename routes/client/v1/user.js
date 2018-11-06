@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-05 13:57:33
+ * @Last Modified time: 2018-11-06 10:57:13
  */
 const express = require('express')
 const router = express.Router()
@@ -34,7 +34,9 @@ router.post('/', joiValidator({
   body: {
     phone: Joi.string().min(11).max(11).required(),
     code: Joi.string().min(6).max(6).required(),
-    password: Joi.string().min(6).required()
+    password: Joi.string().min(6).required(),
+    clientId: Joi.string().required(),
+    type: Joi.string().required()
   }
 }), async (req, res) => {
   try {

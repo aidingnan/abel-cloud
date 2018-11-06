@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-06 10:11:06
+ * @Last Modified time: 2018-11-06 10:57:01
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -43,7 +43,7 @@ class UserService {
   /**
    * 使用手机号注册
    */
-  async signUpWithPhone(connect, phone, password, code, safety) {
+  async signUpWithPhone(connect, phone, password, code, safety, clientId, type) {
     try {
       // 生产id
       let id = uuid.v4()
@@ -60,11 +60,11 @@ class UserService {
       // 检查是否已注册
       let result = await User.getUserByPhone(connect, phone)
       // 用户不存在 ==> 注册 ==> 获取用户
-      safety = safety || null
+      safety = safety || 1
       if (result.length == 0) await User.signUpWithPhone(connect, id, phone, password, safety)
       else throw new E.UserAlreadyExist()
 
-      return { token: jwt.encode({ id, type: 'phone' }) }
+      return { token: jwt.encode({ id, clientId, type }) }
 
     } catch (error) { throw error }
   }
@@ -83,7 +83,7 @@ class UserService {
       let result = await User.loginWithPhone(connect, u, p)
       if (result.length !== 1) throw new E.UserNotExist()
       let { id } = result[0]
-      let user = { id, type: 'phone', clientId, type }
+      let user = { id, clientId, type }
 
       // 记录登录信息
       await User.recordLoginInfo(connect, id, clientId, type)

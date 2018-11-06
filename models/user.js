@@ -17,7 +17,7 @@ const user = {
     let sql = `
       BEGIN;
       SET @now = NOW();
-      INSERT INTO user
+      INSERT INTO user (id, username, password, createdAt, updatedAt, status, safety)
       VALUES('${id}', '${phone}', PASSWORD('${password}'), @now, @now, 1, '${safety}');
       INSERT INTO phone
       VALUES('${phone}', '${id}', @now, @now)
