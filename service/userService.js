@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-05 13:52:34
+ * @Last Modified time: 2018-11-06 10:11:06
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -95,8 +95,8 @@ class UserService {
 
   async getUserInfo(connect, userId) {
     try {
-      let result = await User.getUserInfo(connect, userId)
-      return result
+      let result = (await User.getUserInfo(connect, userId))[0]
+      return Object.assign(result, { password: undefined})
     } catch (error) { throw error}
   }
 
