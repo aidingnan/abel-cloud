@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-06 12:23:20
+ * @Last Modified time: 2018-11-06 15:18:11
  */
 
 const debug = require('debug')('app:store')
@@ -52,6 +52,11 @@ class Pipe extends State {
     this.ctx.res.on('finish', () => {
       res.success()
     })
+
+    for(let key in req.headers) {
+      this.ctx.res.setHeader(key, req.headers[key])
+    }
+
     req.pipe(this.ctx.res)
   }
 }

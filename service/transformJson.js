@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 16:49:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-06 12:21:30
+ * @Last Modified time: 2018-11-06 14:28:03
  */
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
@@ -12,8 +12,6 @@ const { Init, Finish, Err, Server, Container } = require('./base')
  * 状态机
  * server state: init -> notice -> pending -> finish
  */
-
-
 
 /**
  * server 管理容器
