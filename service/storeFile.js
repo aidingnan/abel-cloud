@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-05 10:52:37
+ * @Last Modified time: 2018-11-06 12:23:32
  */
 
 const debug = require('debug')('app:store')
@@ -135,7 +135,7 @@ class StoreFile extends Container {
     
     if (error) {
       let { message, code } = error
-      server.state.setState(Err, message, code)
+      server.state.setState(Err, error)
     }
     else {
       server.state.setState(Finish, data)

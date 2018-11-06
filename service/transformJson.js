@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 16:49:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-10-18 14:17:16
+ * @Last Modified time: 2018-11-06 12:21:30
  */
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
@@ -55,7 +55,7 @@ class TransformJson extends Container {
     let responseError = req.body.error
     if (responseError) {
       // 将station错误返回至客户端
-      server.state.setState(Err, responseError.message, responseError.code)
+      server.state.setState(Err, responseError)
     }
     else {
       // 将station数据返回至客户端

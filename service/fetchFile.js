@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-05 10:49:54
+ * @Last Modified time: 2018-11-06 12:23:20
  */
 
 const debug = require('debug')('app:store')
@@ -112,7 +112,7 @@ class FetchFile extends Container {
     
     if (error) {
       let { message, code } = error
-      server.state.setState(Err, message, code)
+      server.state.setState(Err, error)
     }
     else {
       server.state.setState(Finish, data)
