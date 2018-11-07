@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-07 16:21:53
+ * @Last Modified time: 2018-11-07 17:26:08
  */
 const express = require('express')
 const router = express.Router()
@@ -170,13 +170,13 @@ router.put('/avatar', cAuth, async (req, res) => {
  */
 router.patch('/nickname', cAuth, joiValidator({
   body: {
-    nickname: Joi.string().required()
+    nickName: Joi.string().required()
   }
 }), async (req, res) => {
   try {
     let { id } = req.auth
     let { nickname } = req.body
-    let result = await userService.updateNickname(req.db, id, nickname)
+    let result = await userService.updateNickname(req.db, id, nickName)
     res.success(result)
   } catch (error) { res.error(error) }
 })

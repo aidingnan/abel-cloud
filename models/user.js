@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-07 16:30:59
+ * @Last Modified time: 2018-11-07 17:26:35
  */
 
 const user = {
@@ -149,9 +149,9 @@ const user = {
   },
 
   // 更新昵称
-  updateNickName: (connect, userId, nickname) => {
+  updateNickName: (connect, userId, nickName) => {
     let sql = `
-      UPDATE user SET nickName='${nickname}'
+      UPDATE user SET nickName='${nickName}'
       WHERE id='${userId}'
     `
     return connect.queryAsync(sql)

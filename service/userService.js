@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-07 15:00:34
+ * @Last Modified time: 2018-11-07 17:26:22
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -264,9 +264,9 @@ class UserService {
     } catch (error) { throw error }
   }
 
-  async updateNickname(connect, userId, userName) {
+  async updateNickname(connect, userId, nickName) {
     try {
-      let result = await User.updateNickName(connect, userId, userName)
+      let result = await User.updateNickName(connect, userId, nickName)
       return result
     } catch (error) { throw error }
   }
