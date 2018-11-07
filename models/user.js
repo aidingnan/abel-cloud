@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-05 14:01:17
+ * @Last Modified time: 2018-11-07 16:30:59
  */
 
 const user = {
@@ -60,6 +60,16 @@ const user = {
       INSERT INTO userDeviceUseInfo
       (userId, clientId, type, sn)
       VALUES('${userId}', '${clientId}', '${type}', '${sn}')
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 查询使用记录
+  getUseRecordInfo: (connect, userId, clientId, type) => {
+    let sql = `
+      SELECT * FROM userDeviceUseInfo
+      WHERE userId='${userId}' AND clientId='${clientId}' AND type='${type}'
+      ORDER BY time DESC LIMIT 1 
     `
     return connect.queryAsync(sql)
   },
@@ -125,6 +135,24 @@ const user = {
     let sql = `
       SELECT phoneNumber,createdAt FROM phone
       WHERE user='${id}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 更新头像
+  updateAvatar: (connect, userId, location) => {
+    let sql = `
+      UPDATE user SET avatarUrl='${location}'
+      WHERE id='${userId}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 更新昵称
+  updateNickName: (connect, userId, nickname) => {
+    let sql = `
+      UPDATE user SET nickName='${nickname}'
+      WHERE id='${userId}'
     `
     return connect.queryAsync(sql)
   }

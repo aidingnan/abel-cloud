@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-06 10:57:13
+ * @Last Modified time: 2018-11-07 16:21:53
  */
 const express = require('express')
 const router = express.Router()
@@ -151,6 +151,33 @@ router.patch('/password', joiValidator({
 }), async (req, res) => {
   try {
 
+  } catch (error) { res.error(error) }
+})
+
+/**
+ * 修改头像
+ */
+router.put('/avatar', cAuth, async (req, res) => {
+  try {
+    let { id } = req.auth
+    let result = await userService.updateAvatar(req.db, req, id)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
+
+/**
+ * 修改昵称
+ */
+router.patch('/nickname', cAuth, joiValidator({
+  body: {
+    nickname: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { id } = req.auth
+    let { nickname } = req.body
+    let result = await userService.updateNickname(req.db, id, nickname)
+    res.success(result)
   } catch (error) { res.error(error) }
 })
 

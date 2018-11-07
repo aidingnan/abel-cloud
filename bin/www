@@ -50,11 +50,25 @@ const iot = new AWS.Iot({
   region: 'cn-north-1'
 })
 
+const s3 = new AWS.S3({
+  accessKeyId: 'AKIAPGPXTKFNHUA4GRAQ',
+  secretAccessKey: '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',
+  region: 'cn-north-1'
+})
+
 const iotData = new AWS.IotData(AWSOption)
 
 global.getParameterAsync = promise.promisify(ssm.getParameter).bind(ssm)
 global.describeCertificateAsync = promise.promisify(iot.describeCertificate).bind(iot)
 global.publishAsync = promise.promisify(iotData.publish).bind(iotData)
+global.uploadAsync = promise.promisify(s3.upload).bind(s3)
+
+// s3.upload({
+//   Bucket: 'wisnuc', Key: 'b/test', Body: new Buffer('test obj')
+// }, (err, data) => {
+//   console.log(err, data)
+// })
+
 
 // console.log((new AWS.IotData(AWSOption)).publish)
 

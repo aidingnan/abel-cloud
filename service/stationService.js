@@ -70,11 +70,16 @@ class StationService {
   }
 
   // 查询用户所有设备
-  async getStations(connect, id) {
+  async getStations(connect, userId, clientId, type) {
     try {
-      let ownStations = await Station.getStationBelongToUser(connect, id)
-      let sharedStations = await Station.getStationSharedToUser(connect, id)
-      return { ownStations, sharedStations }
+      let ownStations = await Station.getStationBelongToUser(connect, userId)
+      let sharedStations = await Station.getStationSharedToUser(connect, userId)
+      let lastUseDevice = await User.getUseRecordInfo(connect, userId, clientId, type)
+      let lastUseDeviceSn = null
+      if (lastUseDevice.length == 1 && lastUseDevice[0].sn) {
+        lastUseDeviceSn = lastUseDevice[0].sn
+      } 
+      return { ownStations, sharedStations, lastUseDeviceSn }
     } catch (error) { throw error}
   }
 

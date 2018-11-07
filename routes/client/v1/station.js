@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-05 15:15:08
+ * @Last Modified time: 2018-11-07 16:21:52
  */
 
 const express = require('express')
@@ -59,8 +59,8 @@ router.post('/:sn/user', joiValidator({
 // 查询所有设备
 router.get('/', async (req, res) => {
   try {
-    let { id } = req.auth
-    let result = await stationService.getStations(req.db, id)
+    let { id, clientId, type } = req.auth
+    let result = await stationService.getStations(req.db, id, clientId, type)
 
     res.success(result)
   } catch (e) { res.error(e)}

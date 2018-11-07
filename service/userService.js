@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-06 11:40:08
+ * @Last Modified time: 2018-11-07 15:00:34
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -245,6 +245,29 @@ class UserService {
       console.log(result)
 
 
+    } catch (error) { throw error }
+  }
+
+  async updateAvatar(connect, req, userId) {
+    try {
+      let id = uuid.v4()
+
+      let result = await uploadAsync({
+        Bucket: 'wisnuc', Key: `avatar/${id}`, Body: req, ACL: 'public-read'
+      })
+
+      let { Location } = result
+
+      await User.updateAvatar(connect, userId, Location)
+      
+      return Location
+    } catch (error) { throw error }
+  }
+
+  async updateNickname(connect, userId, userName) {
+    try {
+      let result = await User.updateNickName(connect, userId, userName)
+      return result
     } catch (error) { throw error }
   }
 
