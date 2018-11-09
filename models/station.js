@@ -59,7 +59,7 @@ const station = {
   // 查询用户拥有的设备
   getStationBelongToUser: (connect, id) => {
     let sql = `
-      SELECT d.sn,i.online,i.onlineTime,i.offlineTime,i.LANIP FROM device AS d 
+      SELECT d.sn,i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name FROM device AS d 
       LEFT JOIN deviceInfo AS i
       ON d.sn=i.sn
       WHERE owner='${id}'
@@ -70,7 +70,7 @@ const station = {
   // 查询分享给用户的设备
   getStationSharedToUser: (connect, id) => {
     let sql = `
-      SELECT d.sn,du.createdAt,d.owner,i.online,i.onlineTime,i.offlineTime,i.LANIP
+      SELECT d.sn,du.createdAt,d.owner,i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name
       FROM device_user AS du
       JOIN device AS d ON du.sn=d.sn
       LEFT JOIN deviceInfo as i ON du.sn=i.sn

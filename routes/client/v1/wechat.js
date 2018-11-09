@@ -11,12 +11,14 @@ const { weAuth, cAuth } = require('../../../middlewares/jwt')
 router.get('/token', joiValidator({
   query: {
     code: Joi.string(),
-    type: Joi.string()
+    loginType: Joi.string(),
+    clientId: Joi.string().required(),
+    type: Joi.string().required()
   }
 }), async (req, res) => {
   try {
-    let { code, type } = req.query
-    let user = await userService.loginWithWechat(req.db, code, type)
+    let { code, loginType, clientId, type} = req.query
+    let user = await userService.loginWithWechat(req.db, code, loginType, clientId, type)
     res.success(user)
   } catch (e) {
     res.error(e)

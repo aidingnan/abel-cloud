@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-07 17:26:08
+ * @Last Modified time: 2018-11-09 16:59:00
  */
 const express = require('express')
 const router = express.Router()
@@ -143,14 +143,50 @@ router.post('/wechat', joiValidator({
 /**
  * 修改密码
  */
-router.patch('/password', joiValidator({
+router.patch('/password', cAuth, joiValidator({
   body: {
     oldPassword: Joi.string().min(6).required(),
     newPassword: Joi.string().min(6).required()
   }
 }), async (req, res) => {
   try {
+    let { oldPassword, newPassword} = req.body
+    let result = await userService.updatePassword(req.db, req.auth, oldPassword, newPassword)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
 
+/**
+ * 验证码换取token
+ */
+router.post('/smsCode', joiValidator({
+  body: {
+    phone: Joi.string().required(),
+    code: Joi.string().required(),
+    type: ['password']
+  }
+}), async (req, res) => {
+  try {
+    let { phone, code } = req.body
+    let result = await userService.getPasswordToken(req.db, phone, code)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
+
+/**
+ * 修改密码
+ */
+router.post('/password', joiValidator({
+  body: {
+    token: Joi.string().required(),
+    phone: Joi.string().required(),
+    password: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { token, phone, password } = req.body
+    await userService.updatePasswordWithToken(req.db, token, phone, password)
+    res.success()
   } catch (error) { res.error(error) }
 })
 
@@ -180,9 +216,5 @@ router.patch('/nickname', cAuth, joiValidator({
     res.success(result)
   } catch (error) { res.error(error) }
 })
-
-
-
-
 
 module.exports = router

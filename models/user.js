@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-07 17:26:35
+ * @Last Modified time: 2018-11-09 17:03:18
  */
 
 const user = {
@@ -29,7 +29,7 @@ const user = {
   // 使用账号密码登录
   loginWithPhone: (connect, username, password) => {
     let sql = `
-      SELECT id,username,phoneNumber FROM user,phone WHERE user.id=phone.user 
+      SELECT id,username,phoneNumber,password FROM user,phone WHERE user.id=phone.user 
       AND user.password=PASSWORD('${password}')
       AND phone.phoneNumber='${username}'
     `
@@ -39,6 +39,16 @@ const user = {
   getUserInfo: (connect, userId) => {
     let sql = `
       SELECT * FROM user WHERE id = '${userId}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 使用手机号查询用户
+  getUserWithPhone: (connect, phone) => {
+    let sql = `
+      SELECT * FROM phone as p
+      LEFT JOIN user as u ON p.user=u.id
+      WHERE phoneNumber='${phone}'
     `
     return connect.queryAsync(sql)
   },
@@ -153,6 +163,50 @@ const user = {
     let sql = `
       UPDATE user SET nickName='${nickName}'
       WHERE id='${userId}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 记录验证码
+  addPasswordCodeRecord: (connect, id, phone, code, type, status) => {
+    let sql = `
+      INSERT INTO userSmsCodeRecord(id, phone, code, type, status)
+      VALUES('${id}', '${phone}', '${code}', '${type}', '${status}');
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 查询验证码
+  getSmsCodeUserRecord: (connect, id, phone) => {
+    let sql = `
+      SELECT * FROM userSmsCodeRecord
+      WHERE id='${id}' AND phone='${phone}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 修改密码
+  setNewPassword: (connect, userId, password) => {
+    let sql = `
+      UPDATE user SET password=PASSWORD('${password}')
+      WHERE id='${userId}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 更新修改密码token状态
+  updateSmsRecordStatus: (connect, id, phone, status) => {
+    let sql = `
+      UPDATE userSmsCodeRecord SET status='${status}'
+      WHERE id='${id}' AND phone='${phone}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  updatePassword: (connect, userId, oldPassword, newPassword) => {
+    let sql = `
+      UPDATE user SET password=PASSWORD('${newPassword}')
+      WHERE id='${userId}' AND password=PASSWORD('${oldPassword}')
     `
     return connect.queryAsync(sql)
   }

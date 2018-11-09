@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-07 17:26:22
+ * @Last Modified time: 2018-11-09 17:05:48
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -64,7 +64,7 @@ class UserService {
       if (result.length == 0) await User.signUpWithPhone(connect, id, phone, password, safety)
       else throw new E.UserAlreadyExist()
 
-      return { token: jwt.encode({ id, clientId, type }) }
+      return { token: jwt.encode({ id, password, clientId, type }) }
 
     } catch (error) { throw error }
   }
@@ -82,8 +82,8 @@ class UserService {
       // 使用手机号登录
       let result = await User.loginWithPhone(connect, u, p)
       if (result.length !== 1) throw new E.UserNotExist()
-      let { id } = result[0]
-      let user = { id, clientId, type }
+      let { id, password } = result[0]
+      let user = { id, clientId, type, password }
 
       // 记录登录信息
       await User.recordLoginInfo(connect, id, clientId, type)
@@ -177,10 +177,10 @@ class UserService {
   /**
    * 微信登录
    */
-  async loginWithWechat(connect, code, type) {
+  async loginWithWechat(connect, code, loginType, clientId, type) {
     try {
       // 解析code => userinfo
-      let wechatInfo = new WechatInfo(type)
+      let wechatInfo = new WechatInfo(loginType)
       let oth = promise.promisify(wechatInfo.oauth2UserInfo).bind(wechatInfo)
       let userInfo = await oth(null, code)
       let { unionid, nickname, headimgurl, refresh_token, access_token, openid } = userInfo
@@ -189,7 +189,7 @@ class UserService {
       // 查询微信用户绑定信息
       let wechatUserResult = await User.findWechatAndUserByUnionId(connect, unionid)
       if (wechatUserResult.length !== 1) throw new Error('find wechat user error')
-      let { user, id } = wechatUserResult[0]
+      let { user, id, password } = wechatUserResult[0]
 
       if (user == null) {
         // 微信用户没有绑定注册用户
@@ -197,7 +197,7 @@ class UserService {
         return { token: jwt.encode(obj), user: false }
       } else {
         // 微信用户绑定了注册用户
-        return { token: jwt.encode({ id, type: 'wechat' }), user: true }
+        return { token: jwt.encode({ id, password, clientId, type }), user: true }
       }
 
     } catch (error) { throw error }
@@ -248,6 +248,7 @@ class UserService {
     } catch (error) { throw error }
   }
 
+  // 更新头像
   async updateAvatar(connect, req, userId) {
     try {
       let id = uuid.v4()
@@ -264,6 +265,7 @@ class UserService {
     } catch (error) { throw error }
   }
 
+  // 更新昵称
   async updateNickname(connect, userId, nickName) {
     try {
       let result = await User.updateNickName(connect, userId, nickName)
@@ -271,7 +273,57 @@ class UserService {
     } catch (error) { throw error }
   }
 
+  // 修改密码token
+  async getPasswordToken(connect, phone, code) {
+    try {
+      // 检查是否已注册
+      let u = await User.getUserByPhone(connect, phone)
+      if (u.length == 0) throw new E.UserNotExist()
+
+      // 校验验证码
+      let res = await request.postAsync({
+        uri: 'https://abel.leanapp.cn/v1/user/verifySmsCode',
+        json: true,
+        body: { phone, code }
+      })
+
+      // 验证码失败 ==> 错误
+      if (res.statusCode !== 200) throw new E.SmsCodeError()
+      
+      let id = uuid.v4()
+      await User.addPasswordCodeRecord(connect, id, phone, code, 'password', 'toConsumed')
+      return id
+      
+    } catch (error) { throw error }
+  }
+
+  // 使用token设置密码
+  async updatePasswordWithToken(connect, token, phone, password) {
+    try {
+      // 检验token
+      let record = await User.getSmsCodeUserRecord(connect, token, phone)
+      if (record.length == 0) throw new Error('token error')
+      if (record[0].status == 'consumed') throw new Error('token has been consumed')
+      // 获取user
+      let userResult = await User.getUserWithPhone(connect, phone)
+      if (userResult.length == 0 || !userResult[0].id) throw new Error('user not exist')
+      let userId = userResult[0].id
+      // 更新密码
+      await User.setNewPassword(connect, userId, password)
+      // 更新验证码状态
+      let r = await User.updateSmsRecordStatus(connect, token, phone, 'consumed')
+    } catch (error) { throw error }
+  }
+
+  // 修改密码
+  async updatePassword(connect, auth, oldPassword, newPassword) {
+    try {
+      let { id, clientId, type } = auth
+      await User.updatePassword(connect, id, oldPassword, newPassword)
+      return { token: jwt.encode({ id, clientId, type }) }
+    } catch (error) { throw error }
+  }
+
 }
 
 module.exports = new UserService()
-
