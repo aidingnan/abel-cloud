@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-09 16:59:00
+ * @Last Modified time: 2018-11-12 15:28:51
  */
 const express = require('express')
 const router = express.Router()
@@ -212,9 +212,16 @@ router.patch('/nickname', cAuth, joiValidator({
   try {
     let { id } = req.auth
     let { nickname } = req.body
-    let result = await userService.updateNickname(req.db, id, nickName)
+    let result = await userService.updateNickname(req.db, id, nickname)
     res.success(result)
   } catch (error) { res.error(error) }
 })
+
+/**添加绑定邮箱 */
+router.post('/mail', cAuth, joiValidator({
+  body: {
+    mail: Joi.string().required()
+  }
+}))
 
 module.exports = router

@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-09 17:05:48
+ * @Last Modified time: 2018-11-12 14:36:43
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -12,6 +12,7 @@ const User = require('../models/user')
 const E = require('../lib/error')
 const jwt = require('../lib/jwt')
 const WechatInfo = require('../lib/wechatInfo')
+const nodemailer = require('nodemailer')
 
 class UserService {
   /**

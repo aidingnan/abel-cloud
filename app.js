@@ -1,5 +1,4 @@
 var express = require('express')
-var path = require('path')
 const promise = require('bluebird')
 var cookieParser = require('cookie-parser')
 var logger = require('morgan')

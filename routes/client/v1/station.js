@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-07 16:21:52
+ * @Last Modified time: 2018-11-12 14:36:03
  */
 
 const express = require('express')
@@ -15,7 +15,6 @@ const transformJson = require('../../../service/transformJson')
 const storeFile = require('../../../service/storeFile')
 const fetchFile = require('../../../service/fetchFile')
 const Station = require('../../../models/station')
-const nodemailer = require('nodemailer')
 
 // 绑定设备
 router.post('/', async (req, res) => {
