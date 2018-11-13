@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-12 17:56:43
+ * @Last Modified time: 2018-11-13 17:02:29
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -12,7 +12,8 @@ const User = require('../models/user')
 const E = require('../lib/error')
 const jwt = require('../lib/jwt')
 const WechatInfo = require('../lib/wechatInfo')
-const nodemailer = require('nodemailer')
+const sendMail = require('../lib/sendMail')
+
 
 class UserService {
   /**
@@ -318,7 +319,7 @@ class UserService {
 
 
   // 邮件验证码
-  async createMailCode(connect, mail, type) {
+  async createMailCode(connect, mail, type, userId) {
     try {
       let obj = await User.getMail(connect, mail)
       if (type == 'password') {
@@ -327,48 +328,69 @@ class UserService {
       }
 
       if (type == 'bind') {
-
+        // 查询邮箱是否已被绑定
+        let mailResult = await User.getMail(connect, mail)
+        if (mailResult.length !== 0) throw new E.MailAlreadyBound()  
       }
-
-      
 
       let id = uuid.v4()
       let r = (Math.random()).toString()
       let code = r.slice(-4, r.length)
       console.log(code)
 
-
-      var transporter = nodemailer.createTransport({
-        "host": "smtpdm.aliyun.com",
-        "port": 25,
-        "secureConnection": true, // use SSL
-        "auth": {
-            "user": 'wisnuc@mail.nodetribe.com', // user name
-            "pass": 'WIsnuc33199889'         // password
-        }
-    });
-  
-  
-      var mailOptions = {
-        from: 'wisnuc@mail.nodetribe.com', // sender address mailfrom must be same with the user
-        to: `${mail}`, // list of receivers
-        subject: 'abel验证码', // Subject line
-        html: `<b>您的验证码是: ${code}</b><img src="cid:01" style="width:200px;height:auto">`, // html body
-    };
-    // send mail with defined transport object
-    transporter.sendMail(mailOptions, function(error, info){
-        if(error){
-            return console.log(error);
-        }
-        console.log('Message sent: ' + info.response);
-    });
-
-
+      // await sendMail(mail, code)
     
       let result = await User.createMailCode(connect, id, mail, code, type)
       return result
     } catch (error) { throw error }
   }
+
+  // 绑定邮箱
+  async bindMail(connect, mail, code, userId) {
+    try {
+      // 查询用户是否已绑定邮箱
+      let userMail = await User.getUserMail(connect, userId)
+      if (userMail.length > 0) throw new E.UserHasBoundMail()
+      // 查询邮箱是否已被绑定
+      let mailResult = await User.getMail(connect, mail)
+      if (mailResult.length !== 0) throw new E.MailAlreadyBound()
+      // 检查验证码
+      let codeResult = await User.getMailCode(connect, mail, code, 'bind')
+      if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
+      // 绑定
+      await User.bindMail(connect, mail, code, userId)
+    } catch (error) {
+        if (error.errno == 1062) throw new E.MailAlreadyBound()
+        else throw error
+     }
+  }
+
+  // 解绑邮箱
+  async unBindMail(connect, mail, code, userId) {
+    try {
+      // 查询用户是否已绑定邮箱
+      let userMail = await User.getUserMail(connect, userId)
+      if (userMail.length == 0) throw new Error('user has not bound mail')
+      // 检查邮箱是否属于用户
+      let mailInList = userMail.findIndex(item => item.mail == mail)
+      if (mailInList == -1) throw new Error('mail is not belong to user')
+      // 检查验证码
+      let codeResult = await User.getMailCode(connect, mail, code, 'unbind')
+      if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
+      // 解绑
+      await User.unBindMail(connect, mail, code, userId)
+    } catch (error) { throw error }
+  }
+
+  // 查询绑定邮箱
+  async getUserMail(connect, userId) {
+    try {
+      let result = await User.getUserMail(connect, userId)
+      return result
+    } catch (error) { throw error }
+  }
+
+  // 
 
 }
 

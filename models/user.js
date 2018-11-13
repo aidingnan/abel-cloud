@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-13 11:13:50
+ * @Last Modified time: 2018-11-13 17:13:45
  */
 
 const user = {
@@ -219,7 +219,61 @@ const user = {
       VALUES('${id}', '${mail}', '${code}', '${type}', 'toConsumed')
     `
     return connect.queryAsync(sql)
+  },
+
+  // 查询有效验证码
+  getMailCode: (connect, mail, code, type) => {
+    let sql = `
+      SET @end = unix_timestamp(NOW());
+      SET @start = unix_timestamp(SUBTIME(NOW(), 15 * 60));
+      SELECT * FROM userMailCodeRecord
+      WHERE mail='${mail}' AND code='${code}' AND verified=0 AND type='${type}'
+      AND unix_timestamp(time) BETWEEN @start AND @end;
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 绑定邮箱
+  bindMail: (connect, mail, code, userId) => {
+    let sql = `
+      BEGIN;
+      SET @end = unix_timestamp(NOW());
+      SET @start = unix_timestamp(SUBTIME(NOW(), 15 * 60));
+      UPDATE userMailCodeRecord SET verified=1,status='consumed'
+      WHERE mail='${mail}' AND code='${code}' AND verified=0 AND type='bind'
+      AND unix_timestamp(time) BETWEEN @start AND @end;
+      INSERT INTO mail(mail, user)
+      VALUES('${mail}', '${userId}');
+      COMMIT;
+    `
+    return connect.queryAsync(sql)
+  },
+
+  unBindMail: (connect, mail, code, userId) => {
+    let sql = `
+      BEGIN;
+      SET @end = unix_timestamp(NOW());
+      SET @start = unix_timestamp(SUBTIME(NOW(), 15 * 60));
+      UPDATE userMailCodeRecord SET verified=1,status='consumed'
+      WHERE mail='${mail}' AND code='${code}' AND verified=0 AND type='unbind'
+      AND unix_timestamp(time) BETWEEN @start AND @end;
+      DELETE FROM mail
+      WHERE mail='${mail}' AND user='${userId}';
+      COMMIT;
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 查询绑定邮箱
+  getUserMail: (connect, userId) => {
+    let sql = `
+      SELECT * FROM mail
+      WHERE user='${userId}'
+    `
+    return connect.queryAsync(sql)
   }
+
+  // 更新验证码
 
 
 }

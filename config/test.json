@@ -48,5 +48,14 @@
   "mqtt": {
     "host": "test.siyouqun.com",
     "port": 1883
+  },
+  "mail": {
+    "host": "smtpdm.aliyun.com",
+    "port": 25,
+    "secureConnection": true,
+    "auth": {
+      "user": "wisnuc@mail.nodetribe.com",
+      "pass": "WIsnuc33199889"
+    }
   }
 }

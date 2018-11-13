@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-12 18:39:50
+ * @Last Modified time: 2018-11-13 16:58:37
  */
 const express = require('express')
 const router = express.Router()
@@ -205,7 +205,7 @@ router.patch('/nickname', cAuth, joiValidator({
 })
 
 /**
- * 邮箱验证码 
+ * 发送邮箱验证码: 绑定， 解绑， 修改密码
  */
 router.post('/mail/code', joiValidator({
   body: {
@@ -224,14 +224,47 @@ router.post('/mail/code', joiValidator({
 /**
  * 绑定邮箱 
  */
+router.post('/mail', cAuth, joiValidator({
+  body: {
+    mail: Joi.string().required(),
+    code: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { id } = req.auth
+    let { mail, code } = req.body
+    let result = await userService.bindMail(req.db, mail, code, id)
+    res.success(result)
+  } catch (error) { res.error(error)}
+})
 
 /**
 * 解绑邮箱 
 */
+router.delete('/mail', cAuth, joiValidator({
+  body: {
+    mail: Joi.string().required(),
+    code: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { id } = req.auth
+    let { mail, code } = req.body
+    let result = await userService.unBindMail(req.db, mail, code, id)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
 
 /**
- * 重置密码
+ * 用户绑定邮箱查询
  */
+router.get('/mail', cAuth, async (req, res) => {
+  try {
+    let { id } = req.auth
+    let result = await userService.getUserMail(req.db, id)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
 
 
 
