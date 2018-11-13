@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-09 17:03:18
+ * @Last Modified time: 2018-11-13 11:13:50
  */
 
 const user = {
@@ -203,13 +203,25 @@ const user = {
     return connect.queryAsync(sql)
   },
 
-  updatePassword: (connect, userId, oldPassword, newPassword) => {
+  // 查询邮件绑定信息
+  getMail: (connect, mail) => {
     let sql = `
-      UPDATE user SET password=PASSWORD('${newPassword}')
-      WHERE id='${userId}' AND password=PASSWORD('${oldPassword}')
+      SELECT * FROM mail
+      WHERE mail='${mail}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 创建邮件验证码
+  createMailCode: (connect, id, mail, code, type) => {
+    let sql = `
+      INSERT INTO userMailCodeRecord(id, mail, code, type, status)
+      VALUES('${id}', '${mail}', '${code}', '${type}', 'toConsumed')
     `
     return connect.queryAsync(sql)
   }
+
+
 }
 
 module.exports = user

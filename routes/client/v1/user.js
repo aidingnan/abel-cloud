@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-12 15:28:51
+ * @Last Modified time: 2018-11-12 18:39:50
  */
 const express = require('express')
 const router = express.Router()
@@ -11,6 +11,7 @@ const Joi = require('joi')
 const joiValidator = require('../../../middlewares/joiValidator')
 const userService = require('../../../service/userService')
 const { weAuth, cAuth } = require('../../../middlewares/jwt')
+const nodemailer = require('nodemailer');
 
 /**
  * 1. 注册新用户
@@ -85,7 +86,7 @@ router.post('/deviceInfo', cAuth, joiValidator({
     let { id, clientId, type } = req.auth
     let result = await userService.recordDeviceUseInfo(req.db, id, clientId, type, sn)
     res.success()
-  } catch (e) { console.log(e);res.error(e) }
+  } catch (e) { console.log(e); res.error(e) }
 })
 
 /**
@@ -140,21 +141,7 @@ router.post('/wechat', joiValidator({
   }
 })
 
-/**
- * 修改密码
- */
-router.patch('/password', cAuth, joiValidator({
-  body: {
-    oldPassword: Joi.string().min(6).required(),
-    newPassword: Joi.string().min(6).required()
-  }
-}), async (req, res) => {
-  try {
-    let { oldPassword, newPassword} = req.body
-    let result = await userService.updatePassword(req.db, req.auth, oldPassword, newPassword)
-    res.success(result)
-  } catch (error) { res.error(error) }
-})
+
 
 /**
  * 验证码换取token
@@ -217,11 +204,35 @@ router.patch('/nickname', cAuth, joiValidator({
   } catch (error) { res.error(error) }
 })
 
-/**添加绑定邮箱 */
-router.post('/mail', cAuth, joiValidator({
+/**
+ * 邮箱验证码 
+ */
+router.post('/mail/code', joiValidator({
   body: {
-    mail: Joi.string().required()
+    mail: Joi.string().required(),
+    type: ['bind', 'unbind', 'password']
   }
-}))
+}), async (req, res) => {
+  try {
+    let { mail, type } = req.body
+
+    let result = await userService.createMailCode(req.db, mail, type)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
+
+/**
+ * 绑定邮箱 
+ */
+
+/**
+* 解绑邮箱 
+*/
+
+/**
+ * 重置密码
+ */
+
+
 
 module.exports = router

@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-12 14:36:43
+ * @Last Modified time: 2018-11-12 17:56:43
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -316,12 +316,57 @@ class UserService {
     } catch (error) { throw error }
   }
 
-  // 修改密码
-  async updatePassword(connect, auth, oldPassword, newPassword) {
+
+  // 邮件验证码
+  async createMailCode(connect, mail, type) {
     try {
-      let { id, clientId, type } = auth
-      await User.updatePassword(connect, id, oldPassword, newPassword)
-      return { token: jwt.encode({ id, clientId, type }) }
+      let obj = await User.getMail(connect, mail)
+      if (type == 'password') {
+        // if (obj.length == 0) throw new Error('mail not exist')
+        // if (!obj[1].user) throw new Error('mail has not bind user')
+      }
+
+      if (type == 'bind') {
+
+      }
+
+      
+
+      let id = uuid.v4()
+      let r = (Math.random()).toString()
+      let code = r.slice(-4, r.length)
+      console.log(code)
+
+
+      var transporter = nodemailer.createTransport({
+        "host": "smtpdm.aliyun.com",
+        "port": 25,
+        "secureConnection": true, // use SSL
+        "auth": {
+            "user": 'wisnuc@mail.nodetribe.com', // user name
+            "pass": 'WIsnuc33199889'         // password
+        }
+    });
+  
+  
+      var mailOptions = {
+        from: 'wisnuc@mail.nodetribe.com', // sender address mailfrom must be same with the user
+        to: `${mail}`, // list of receivers
+        subject: 'abel验证码', // Subject line
+        html: `<b>您的验证码是: ${code}</b><img src="cid:01" style="width:200px;height:auto">`, // html body
+    };
+    // send mail with defined transport object
+    transporter.sendMail(mailOptions, function(error, info){
+        if(error){
+            return console.log(error);
+        }
+        console.log('Message sent: ' + info.response);
+    });
+
+
+    
+      let result = await User.createMailCode(connect, id, mail, code, type)
+      return result
     } catch (error) { throw error }
   }
 
