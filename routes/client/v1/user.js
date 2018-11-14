@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-13 16:58:37
+ * @Last Modified time: 2018-11-13 18:14:09
  */
 const express = require('express')
 const router = express.Router()
@@ -262,6 +262,23 @@ router.get('/mail', cAuth, async (req, res) => {
   try {
     let { id } = req.auth
     let result = await userService.getUserMail(req.db, id)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
+
+/**
+ * 邮箱验证码换取token
+ */
+router.get('/mail/token', joiValidator({
+  query: {
+    mail: Joi.string().required(),
+    code: Joi.string().required(),
+    type: ['password']
+  }
+}),async (req, res) => {
+  try {
+    let { mail, code, type } = req.query
+    let result = await userService.getMailToken(req.db, mail, code, type)
     res.success(result)
   } catch (error) { res.error(error) }
 })

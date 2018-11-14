@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-13 17:13:45
+ * @Last Modified time: 2018-11-13 18:20:00
  */
 
 const user = {
@@ -233,6 +233,18 @@ const user = {
     return connect.queryAsync(sql)
   },
 
+  // 更新验证码状态
+  getMailToken: (connect, mail, code, type, verified, status) => {
+    let sql = `
+      SET @end = unix_timestamp(NOW());
+      SET @start = unix_timestamp(SUBTIME(NOW(), 15 * 60));
+      UPDATE userMailCodeRecord SET verified=${verified}, status='${status}'
+      WHERE mail='${mail}' AND code='${code}' AND verified=0 AND type='${type}'
+      AND unix_timestamp(time) BETWEEN @start AND @end;
+    `
+    return connect.queryAsync(sql)
+  },
+
   // 绑定邮箱
   bindMail: (connect, mail, code, userId) => {
     let sql = `
@@ -249,6 +261,7 @@ const user = {
     return connect.queryAsync(sql)
   },
 
+  // 解绑邮箱
   unBindMail: (connect, mail, code, userId) => {
     let sql = `
       BEGIN;
@@ -272,8 +285,6 @@ const user = {
     `
     return connect.queryAsync(sql)
   }
-
-  // 更新验证码
 
 
 }

@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-13 17:02:29
+ * @Last Modified time: 2018-11-13 18:31:25
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -317,7 +317,6 @@ class UserService {
     } catch (error) { throw error }
   }
 
-
   // 邮件验证码
   async createMailCode(connect, mail, type, userId) {
     try {
@@ -338,10 +337,23 @@ class UserService {
       let code = r.slice(-4, r.length)
       console.log(code)
 
-      // await sendMail(mail, code)
+      await sendMail(mail, code)
     
       let result = await User.createMailCode(connect, id, mail, code, type)
       return result
+    } catch (error) { throw error }
+  }
+
+  // 换取token
+  async getMailToken(connect, mail, code, type) {
+    try {
+      let codeResult = await User.getMailCode(connect, mail, code, type)
+      let codeRecord = codeResult[2]
+      if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
+
+      await User.getMailToken(connect, mail, code, type, 1, 'toConsumed')
+
+      return codeRecord[0].id
     } catch (error) { throw error }
   }
 
@@ -368,10 +380,8 @@ class UserService {
   // 解绑邮箱
   async unBindMail(connect, mail, code, userId) {
     try {
-      // 查询用户是否已绑定邮箱
-      let userMail = await User.getUserMail(connect, userId)
-      if (userMail.length == 0) throw new Error('user has not bound mail')
       // 检查邮箱是否属于用户
+      let userMail = await User.getUserMail(connect, userId)
       let mailInList = userMail.findIndex(item => item.mail == mail)
       if (mailInList == -1) throw new Error('mail is not belong to user')
       // 检查验证码
@@ -389,8 +399,6 @@ class UserService {
       return result
     } catch (error) { throw error }
   }
-
-  // 
 
 }
 
