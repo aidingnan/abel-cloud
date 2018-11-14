@@ -57,5 +57,9 @@
       "user": "wisnuc@mail.nodetribe.com",
       "pass": "WIsnuc33199889"
     }
+  },
+  "smsCode": {
+    "accessKeyId": "LTAIfa45PTzlmY2F",
+    "secretAccessKey": "NZ1YD8vlrGxJzi0OxSPJbTX3rHeNOo"
   }
 }

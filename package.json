@@ -8,6 +8,7 @@
     "test": "NODE_PATH=. NODE_ENV=test mocha --recursive -t 5000"
   },
   "dependencies": {
+    "@alicloud/sms-sdk": "^1.1.6",
     "aws-sdk": "^2.310.0",
     "bluebird": "^3.5.2",
     "cookie-parser": "^1.4.3",

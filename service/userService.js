@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-13 18:31:25
+ * @Last Modified time: 2018-11-14 17:48:26
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -13,6 +13,7 @@ const E = require('../lib/error')
 const jwt = require('../lib/jwt')
 const WechatInfo = require('../lib/wechatInfo')
 const sendMail = require('../lib/sendMail')
+const sendSmsCode = require('../lib/sendSmsCode')
 
 
 class UserService {
@@ -28,14 +29,16 @@ class UserService {
       // 检查是否已注册
       let result = await User.getUserByPhone(connect, phone)
       if (result.length !== 0 && !wechat) throw new E.UserAlreadyExist()
-      // 请求验证码
-      let res = await request.postAsync({
-        uri: 'https://abel.leanapp.cn/v1/user/requestSmsCode',
-        json: true,
-        body: { phone }
-      })
+      // 生成验证码
+      let id = uuid.v4()
+      let r = (Math.random()).toString()
+      let code = r.slice(-4, r.length)
+      console.log(code)
+      await User.createSmsCode(connect, id, phone, code, 'register')
+      // 发送验证码
+      // let res = await sendSmsCode(phone, code, 'SMS_151010078')
       // // 判断请求是否成功
-      if (res.statusCode !== 200) throw new Error(res.body)
+      // if (res !== 'OK') throw new Error(res)
 
       return { userExist: result.length == 0 ? false : true }
 
@@ -51,24 +54,26 @@ class UserService {
       let id = uuid.v4()
 
       // 校验验证码
-      let res = await request.postAsync({
-        uri: 'https://abel.leanapp.cn/v1/user/verifySmsCode',
-        json: true,
-        body: { phone, code }
-      })
+      let smsResult = await User.getSmsCode(connect, phone, code, 'register')
+      console.log(smsResult[2])
+      // 验证码失败
+      if (smsResult[2].length == 0) throw new E.SmsCodeError()
 
-      // 验证码失败 ==> 错误
-      if (res.statusCode !== 200) throw new E.SmsCodeError()
       // 检查是否已注册
       let result = await User.getUserByPhone(connect, phone)
-      // 用户不存在 ==> 注册 ==> 获取用户
+      if (result.length !== 0) throw new E.UserAlreadyExist()
+
+      // 注册 ==> 获取用户
       safety = safety || 1
-      if (result.length == 0) await User.signUpWithPhone(connect, id, phone, password, safety)
-      else throw new E.UserAlreadyExist()
+      await User.signUpWithPhone(connect, id, phone, code, password, safety, 'register')
+
+      // 修改验证码状态
+      // let updateResult = await User.updateSmsCode(connect, phone, code, 'register')
+      // console.log(updateResult)
 
       return { token: jwt.encode({ id, password, clientId, type }) }
 
-    } catch (error) { throw error }
+    } catch (error) { console.log(error);throw error }
   }
 
   /**
@@ -151,7 +156,6 @@ class UserService {
       
     } catch (error) { throw error}
   }
-
 
   /**
    * 添加微信账号

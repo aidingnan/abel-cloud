@@ -41,7 +41,7 @@ module.exports = {
         return res.error(new Error('authentication failed'), 401, false)
 
       // 检查用户
-      let user = await User.getUserById(req.db, decoded.id)
+      let user = await User.getUserInfo(req.db, decoded.id)
       if (user.length !== 1) 
         return res.error(new E.UserNotExist(), 401, false)
 

@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-13 18:20:00
+ * @Last Modified time: 2018-11-14 17:49:12
  */
 
 const user = {
@@ -13,15 +13,21 @@ const user = {
     return connect.queryAsync(sql)
   },
 
-  signUpWithPhone: (connect, id, phone, password, safety) => {
+  // 使用手机号注册用户
+  signUpWithPhone: (connect, id, phone, code, password, safety, type) => {
     let sql = `
       BEGIN;
       SET @now = NOW();
+      SET @end = unix_timestamp(NOW());
+      SET @start = unix_timestamp(SUBTIME(NOW(), 15 * 60));
       INSERT INTO user (id, username, password, createdAt, updatedAt, status, safety)
       VALUES('${id}', '${phone}', PASSWORD('${password}'), @now, @now, 1, '${safety}');
       INSERT INTO phone
       VALUES('${phone}', '${id}', @now, @now)
       ON DUPLICATE KEY UPDATE user='${id}';
+      UPDATE userSmsCodeRecord SET verified=1,status='consumed'
+      WHERE phone='${phone}' AND code='${code}' AND verified=0 AND type='${type}'
+      AND unix_timestamp(time) BETWEEN @start AND @end;
       COMMIT;`
     return connect.queryAsync(sql)
   },
@@ -36,6 +42,7 @@ const user = {
     return connect.queryAsync(sql)
   },
 
+  // 使用userId查询用户
   getUserInfo: (connect, userId) => {
     let sql = `
       SELECT * FROM user WHERE id = '${userId}'
@@ -80,15 +87,6 @@ const user = {
       SELECT * FROM userDeviceUseInfo
       WHERE userId='${userId}' AND clientId='${clientId}' AND type='${type}'
       ORDER BY time DESC LIMIT 1 
-    `
-    return connect.queryAsync(sql)
-  },
-
-  // 查询用户信息
-  getUserById: (connect, id) => {
-    let sql = `
-      SELECT * FROM user
-      WHERE id='${id}'
     `
     return connect.queryAsync(sql)
   },
@@ -238,7 +236,7 @@ const user = {
     let sql = `
       SET @end = unix_timestamp(NOW());
       SET @start = unix_timestamp(SUBTIME(NOW(), 15 * 60));
-      UPDATE userMailCodeRecord SET verified=${verified}, status='${status}'
+      UPDATE userMailCodeRecord SET verified=1
       WHERE mail='${mail}' AND code='${code}' AND verified=0 AND type='${type}'
       AND unix_timestamp(time) BETWEEN @start AND @end;
     `
@@ -284,8 +282,40 @@ const user = {
       WHERE user='${userId}'
     `
     return connect.queryAsync(sql)
-  }
+  },
 
+  // 创建短信验证码
+  createSmsCode: (connect, id, phone, code, type) => {
+    let sql = `
+      INSERT INTO userSmsCodeRecord(id, phone, code, type, status)
+      VALUES('${id}', '${phone}', '${code}', '${type}', 'toConsumed')
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 查询短信验证码有效
+  getSmsCode: (connect, phone, code, type) => {
+    let sql = `
+    SET @end = unix_timestamp(NOW());
+    SET @start = unix_timestamp(SUBTIME(NOW(), 15 * 60));
+    SELECT * FROM userSmsCodeRecord
+    WHERE phone='${phone}' AND code='${code}' AND verified=0 AND type='${type}'
+    AND unix_timestamp(time) BETWEEN @start AND @end;
+  `
+  return connect.queryAsync(sql)
+  },
+
+  // 更新验证码状态
+  updateSmsCode: (connect, phone, code, type) => {
+    let sql = `
+      SET @end = unix_timestamp(NOW());
+      SET @start = unix_timestamp(SUBTIME(NOW(), 15 * 60));
+      UPDATE userSmsCodeRecord SET verified=1
+      WHERE phone='${phone}' AND code='${code}' AND verified=0 AND type='${type}'
+      AND unix_timestamp(time) BETWEEN @start AND @end;
+    `
+    return connect.queryAsync(sql)
+  }
 
 }
 
