@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-15 16:57:00
+ * @Last Modified time: 2018-11-15 17:16:26
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -391,9 +391,9 @@ class UserService {
       console.log(code, type)
       await User.createSmsCode(connect, id, phone, code, type)
       // 发送验证码
-      // let res = await sendSmsCode(phone, code, 'SMS_151010078')
+      let res = await sendSmsCode(phone, code, 'SMS_151010078')
       // // 判断请求是否成功
-      // if (res !== 'OK') throw new Error(res)
+      if (res !== 'OK') throw new Error(res)
 
       return { userExist: result.length == 0 ? false : true }
 
