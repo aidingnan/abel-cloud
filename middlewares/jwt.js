@@ -14,6 +14,7 @@ const promise = require('bluebird')
 const jwt = require('../lib/jwt')
 const User = require('../models/user')
 const WechatInfo = require('../lib/wechatInfo')
+const E = require('../lib/error')
 
 module.exports = {
 	/**
@@ -39,10 +40,10 @@ module.exports = {
       // 解码内容错误
       if (!decoded.id)
         return res.error(new Error('authentication failed'), 401, false)
-
+      
       // 检查用户
       let user = await User.getUserInfo(req.db, decoded.id)
-      if (user.length !== 1) 
+      if (user.length !== 1)
         return res.error(new E.UserNotExist(), 401, false)
 
       // 附加验证结果
@@ -50,37 +51,38 @@ module.exports = {
       next()
 
     } catch (error) {
+      console.log(error)
       res.error(new Error('authentication failed'), 401, false)
     }
   },
 
-  weAuth(necessary) {
-    return async (req, res, next) => {
-      let { wechat } = req.headers
-      // 解码
-      try {
-        // 微信用户不存在
-        if (!wechat && !necessary) return next()
-        // 微信用户存在
-        let decoded = jwt.decode(wechat)
-        if (!decoded) res.error('decode failed', 401, false)
-        // 获取微信用户信息
-        let { access_token, openid } = decoded
-        let wechatInfo = new WechatInfo()
-        let getUserInfo = promise.promisify(wechatInfo.userInfo).bind(wechatInfo)
-        let userInfo = await getUserInfo(access_token, openid)
-        // 检查数据库是否存在对应用户
-        let { unionid } = userInfo
-        let user = await User.findWechatAndUserByUnionId(req.db, unionid)
-        if (user.length !== 1) return res.error(new Error('wechat user not exist'), 401, false)
-        req.wechat = user[0]
+  async weAuth(req, res, next) {
+    let { wechat } = req.body
+    // 解码
+    try {
+      // 微信用户不存在
+      if (!wechat) return res.error('wechat is required')
+      // 微信用户存在
+      let decoded = jwt.decode(wechat)
+      if (!decoded) return res.error('decode failed', 401, false)
+      // 获取微信用户信息
+      let { access_token, openid } = decoded
+      let wechatInfo = new WechatInfo()
+      let getUserInfo = promise.promisify(wechatInfo.userInfo).bind(wechatInfo)
+      let userInfo = await getUserInfo(access_token, openid)
+      // 检查数据库是否存在对应用户
+      let { unionid } = userInfo
+      let user = await User.findWechatAndUserByUnionId(req.db, unionid)
+      if (user.length !== 1) return res.error(new Error('wechat user not exist'), 401, false)
+      req.wechat = user[0]
 
-        next()
+      next()
 
-      } catch (error) {
-        res.error(new Error('authentication failed'), 401, false)
-      }
+    } catch (error) {
+      console.log(error)
+      res.error(new Error('authentication failed'), 401, false)
     }
+
   },
 
 	/**

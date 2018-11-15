@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-14 17:49:12
+ * @Last Modified time: 2018-11-15 14:14:20
  */
 
 const user = {
@@ -14,14 +14,14 @@ const user = {
   },
 
   // 使用手机号注册用户
-  signUpWithPhone: (connect, id, phone, code, password, safety, type) => {
+  signUpWithPhone: (connect, id, phone, code, password, type) => {
     let sql = `
       BEGIN;
       SET @now = NOW();
       SET @end = unix_timestamp(NOW());
       SET @start = unix_timestamp(SUBTIME(NOW(), 15 * 60));
-      INSERT INTO user (id, username, password, createdAt, updatedAt, status, safety)
-      VALUES('${id}', '${phone}', PASSWORD('${password}'), @now, @now, 1, '${safety}');
+      INSERT INTO user (id, username, password, createdAt, updatedAt, status)
+      VALUES('${id}', '${phone}', PASSWORD('${password}'), @now, @now, 1);
       INSERT INTO phone
       VALUES('${phone}', '${id}', @now, @now)
       ON DUPLICATE KEY UPDATE user='${id}';
@@ -35,7 +35,7 @@ const user = {
   // 使用账号密码登录
   loginWithPhone: (connect, username, password) => {
     let sql = `
-      SELECT id,username,phoneNumber,password FROM user,phone WHERE user.id=phone.user 
+      SELECT * FROM user,phone WHERE user.id=phone.user 
       AND user.password=PASSWORD('${password}')
       AND phone.phoneNumber='${username}'
     `
@@ -113,7 +113,7 @@ const user = {
   // 查找微信用户及关联用户信息
   findWechatAndUserByUnionId: (connect, unionid) => {
     let sql = `
-      SELECT unionid,user,u.id,u.username FROM wechat as w
+      SELECT unionid,user FROM wechat as w
       LEFT JOIN user as u on w.user=u.id
       WHERE unionid='${unionid}'
     `

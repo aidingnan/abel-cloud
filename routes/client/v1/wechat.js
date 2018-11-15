@@ -29,16 +29,14 @@ router.get('/token', joiValidator({
  * 微信登录下关联用户
  */
 
-router.patch('/user', weAuth(true), joiValidator({
+router.patch('/user', cAuth,  joiValidator({
   body: {
-    phone: Joi.string().required(),
-    code: Joi.string().required(),
-    password: Joi.string()
+    wechat: Joi.string().required(),
   }
-}), async (req, res) => {
+}), weAuth, async (req, res) => {
   try {
-    let { phone, code, password } = req.body
-    let result = await userService.wechatAssociateUser(req, phone, code, password)
+    let { id } = req.auth
+    let result = await userService.wechatAssociateUser(req.db, id, req.wechat)
     res.status(200).json(result)
   } catch (error) {
     console.log(error)

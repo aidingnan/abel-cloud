@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-14 17:48:26
+ * @Last Modified time: 2018-11-15 16:57:00
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -15,47 +15,30 @@ const WechatInfo = require('../lib/wechatInfo')
 const sendMail = require('../lib/sendMail')
 const sendSmsCode = require('../lib/sendSmsCode')
 
+const getToken = (userResult, clientId, type) => {
+  // 提取id, password, clientId, type 作为token
+  let { id, password, nickName, avatarUrl, safety } = userResult[0]
+  let user = Object.assign({}, { id, password }, {clientId, type})
+
+  // 提取用户其他信息
+  let obj = { nickName, avatarUrl, safety }
+  
+  return { token: jwt.encode(user), ...obj }
+}
+
 
 class UserService {
   /**
-   * 请求验证码
-   * 1. 请求头不带wechat,使用手机号注册
-   * 2. 请求头带wechat, 将
-   */
-  async requestSmsCode(connect, phone, wechat) {
-    try {
-      // 检查微信是否已关联
-      if (wechat && wechat.user !== null) throw new E.WechatAlreadyAssociated()
-      // 检查是否已注册
-      let result = await User.getUserByPhone(connect, phone)
-      if (result.length !== 0 && !wechat) throw new E.UserAlreadyExist()
-      // 生成验证码
-      let id = uuid.v4()
-      let r = (Math.random()).toString()
-      let code = r.slice(-4, r.length)
-      console.log(code)
-      await User.createSmsCode(connect, id, phone, code, 'register')
-      // 发送验证码
-      // let res = await sendSmsCode(phone, code, 'SMS_151010078')
-      // // 判断请求是否成功
-      // if (res !== 'OK') throw new Error(res)
-
-      return { userExist: result.length == 0 ? false : true }
-
-    } catch (error) { throw error }
-  }
-
-  /**
    * 使用手机号注册
    */
-  async signUpWithPhone(connect, phone, password, code, safety, clientId, type) {
+  async signUpWithPhone(connect, phone, p, code, clientId, type) {
     try {
       // 生产id
-      let id = uuid.v4()
+      let userId = uuid.v4()
 
       // 校验验证码
       let smsResult = await User.getSmsCode(connect, phone, code, 'register')
-      console.log(smsResult[2])
+      
       // 验证码失败
       if (smsResult[2].length == 0) throw new E.SmsCodeError()
 
@@ -64,14 +47,11 @@ class UserService {
       if (result.length !== 0) throw new E.UserAlreadyExist()
 
       // 注册 ==> 获取用户
-      safety = safety || 1
-      await User.signUpWithPhone(connect, id, phone, code, password, safety, 'register')
+      await User.signUpWithPhone(connect, userId, phone, code, p, 'register')
 
-      // 修改验证码状态
-      // let updateResult = await User.updateSmsCode(connect, phone, code, 'register')
-      // console.log(updateResult)
+      let userResult = await User.getUserInfo(connect, userId)      
 
-      return { token: jwt.encode({ id, password, clientId, type }) }
+      return getToken(userResult, clientId, type)
 
     } catch (error) { console.log(error);throw error }
   }
@@ -82,26 +62,43 @@ class UserService {
   async token(connect, u, p, clientId, type) {
     try {
 
-      // 判断username类型(手机/邮箱) todo
-
-      // 使用邮箱登录 todo
-
-      // 使用手机号登录
-      let result = await User.loginWithPhone(connect, u, p)
-      if (result.length !== 1) throw new E.UserNotExist()
-      let { id, password } = result[0]
-      let user = { id, clientId, type, password }
+      // 判断用户名密码
+      let userResult = await User.loginWithPhone(connect, u, p)
+      if (userResult.length !== 1) throw new E.UserNotExist()
 
       // 记录登录信息
-      await User.recordLoginInfo(connect, id, clientId, type)
+      await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
 
-      let obj = Object.assign((await User.getUserInfo(connect, id))[0], {password: undefined})
-
-      return { token: jwt.encode(user), ...obj }
+      return getToken(userResult, clientId, type)
 
     } catch (error) { throw error }
   }
 
+  // 使用验证码登录
+  async getTokenWithCode(connect, phone, code, clientId, type) {
+    try {
+      // 检查验证码
+      let smsResult = await User.getSmsCode(connect, phone, code, 'login')
+      // 验证码失败
+      if (smsResult[2].length == 0) throw new E.SmsCodeError()
+
+      // 获取用户信息
+      let userResult = await User.getUserWithPhone(connect, phone)
+      if (userResult.length !== 1) throw new E.UserNotExist()
+
+      // 记录登录信息
+      await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
+
+      // 更新验证码
+      await User.updateSmsCode(connect, phone, code, type)
+
+      return getToken(userResult, clientId, type)
+
+
+    } catch (error) { throw error }
+  }
+
+  // 查询用户信息
   async getUserInfo(connect, userId) {
     try {
       let result = (await User.getUserInfo(connect, userId))[0]
@@ -144,7 +141,6 @@ class UserService {
       if (res.statusCode !== 200) throw new E.SmsCodeError()
       
       let result = await User.addPhone(connect, id, phone)
-      console.log(result)
     } catch (error) { throw error }
   }
 
@@ -189,67 +185,45 @@ class UserService {
       let wechatInfo = new WechatInfo(loginType)
       let oth = promise.promisify(wechatInfo.oauth2UserInfo).bind(wechatInfo)
       let userInfo = await oth(null, code)
+      console.log(userInfo)
+      
       let { unionid, nickname, headimgurl, refresh_token, access_token, openid } = userInfo
       // 插入或更新微信用户
-      let result = await User.insertIntoWechat(connect, unionid, nickname, headimgurl)
+      await User.insertIntoWechat(connect, unionid, nickname, headimgurl)
       // 查询微信用户绑定信息
       let wechatUserResult = await User.findWechatAndUserByUnionId(connect, unionid)
       if (wechatUserResult.length !== 1) throw new Error('find wechat user error')
-      let { user, id, password } = wechatUserResult[0]
+      let { user } = wechatUserResult[0]
+
+      console.log(wechatUserResult[0])
 
       if (user == null) {
         // 微信用户没有绑定注册用户
-        let obj = { access_token, refresh_token, openid }
-        return { token: jwt.encode(obj), user: false }
+        let obj = { unionid, access_token, refresh_token, openid }
+        return { wechat: jwt.encode(obj), user: false }
       } else {
         // 微信用户绑定了注册用户
-        return { token: jwt.encode({ id, password, clientId, type }), user: true }
+        let userResult = await User.getUserInfo(connect, user)
+        
+        await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
+        return getToken(userResult, clientId, type)
       }
 
     } catch (error) { throw error }
   }
 
-  /**
-   * 微信账号关联用户
-   * 账号存在则关联、不存在则创建
-   */
-  async wechatAssociateUser(req, phone, code, password) {
+  // /**
+  //  * 微信账号关联用户
+  //  * 账号存在则关联、不存在则创建
+  //  */
+  async wechatAssociateUser(connect, userId, wechat) {
     try {
-      let user, id
-      let { wechat, db } = req
-      let { unionid } = wechat
-      let users = await User.getUserByPhone(db, phone)
       if (!wechat) throw new Error('wechat is required')
       // 检查微信账号是否有关联账号
       if (wechat.user !== null) throw new E.WechatAlreadyAssociated()
-      // 检查password参数是否正确
-      if (users.length == 0 && !password) throw new Error('password is required')
-      if (users.length == 1 && password) throw new Error('password is not required')
-      // 校验验证码
-      let res = await request.postAsync({
-        uri: 'https://abel.leanapp.cn/v1/user/verifySmsCode',
-        json: true,
-        body: { phone, code }
-      })
-
-      // 验证码失败 ==> 错误
-      if (res.statusCode !== 200) throw new E.SmsCodeError()
-
-      // 用户不存在 => 注册
-      // 用户存在 => do nothing
-      if (users.length == 0) {
-        id = uuid.v4()
-        let newUser = await User.signUpWithPhone(db, id, phone, password)
-      } else {
-        id = users[0].user
-      }
+      
       // 关联
-      let result = await User.addWechat(db, id, unionid)
-
-
-      // console.log('result')
-      console.log(result)
-
+      let result = await User.addWechat(connect, userId, wechat.unionid)
 
     } catch (error) { throw error }
   }
@@ -280,27 +254,22 @@ class UserService {
   }
 
   // 修改密码token
-  async getPasswordToken(connect, phone, code) {
+  async getSmsCodeToken(connect, phone, code) {
     try {
       // 检查是否已注册
       let u = await User.getUserByPhone(connect, phone)
       if (u.length == 0) throw new E.UserNotExist()
 
       // 校验验证码
-      let res = await request.postAsync({
-        uri: 'https://abel.leanapp.cn/v1/user/verifySmsCode',
-        json: true,
-        body: { phone, code }
-      })
+      let codeResult = await User.getSmsCode(connect, phone, code, 'password')
 
-      // 验证码失败 ==> 错误
-      if (res.statusCode !== 200) throw new E.SmsCodeError()
+      let codeRecord = codeResult[2]
+      if (codeResult[2].length == 0) throw new E.SmsCodeError()
       
-      let id = uuid.v4()
-      await User.addPasswordCodeRecord(connect, id, phone, code, 'password', 'toConsumed')
-      return id
+      await User.updateSmsCode(connect, phone, code, 'password')
+      return codeRecord[0].id
       
-    } catch (error) { throw error }
+    } catch (error) { ;console.log(error);throw error }
   }
 
   // 使用token设置密码
@@ -320,6 +289,8 @@ class UserService {
       let r = await User.updateSmsRecordStatus(connect, token, phone, 'consumed')
     } catch (error) { throw error }
   }
+
+  // ---------------------邮件---------------------
 
   // 邮件验证码
   async createMailCode(connect, mail, type, userId) {
@@ -401,6 +372,31 @@ class UserService {
     try {
       let result = await User.getUserMail(connect, userId)
       return result
+    } catch (error) { throw error }
+  }
+
+  // ---------------------短信---------------------
+  async requestSmsCode(connect, phone, type) {
+    try {
+      let result = await User.getUserByPhone(connect, phone)
+      if (type == 'register') {
+        // 检查是否已注册
+        if (result.length !== 0) throw new E.UserAlreadyExist()
+      }
+      
+      // 生成验证码
+      let id = uuid.v4()
+      let r = (Math.random()).toString()
+      let code = r.slice(-4, r.length)
+      console.log(code, type)
+      await User.createSmsCode(connect, id, phone, code, type)
+      // 发送验证码
+      // let res = await sendSmsCode(phone, code, 'SMS_151010078')
+      // // 判断请求是否成功
+      // if (res !== 'OK') throw new Error(res)
+
+      return { userExist: result.length == 0 ? false : true }
+
     } catch (error) { throw error }
   }
 

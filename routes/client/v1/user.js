@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-14 16:53:07
+ * @Last Modified time: 2018-11-15 16:51:50
  */
 const express = require('express')
 const router = express.Router()
@@ -13,19 +13,17 @@ const userService = require('../../../service/userService')
 const { weAuth, cAuth } = require('../../../middlewares/jwt')
 const nodemailer = require('nodemailer');
 
-/**
- * 1. 注册新用户
- * 2. 微信关联账号
- */
 
-router.get('/smsCode', weAuth(), joiValidator({
-  query: {
-    phone: Joi.string().min(11).max(11).required()
+// 发送手机验证码
+router.post('/smsCode', joiValidator({
+  body: {
+    phone: Joi.string().min(11).max(11).required(),
+    type: ['register', 'password', 'replace', 'login']
   }
 }), async (req, res) => {
   try {
-    let { phone } = req.query
-    let result = await userService.requestSmsCode(req.db, phone, req.wechat)
+    let { phone, type } = req.body
+    let result = await userService.requestSmsCode(req.db, phone, type)
     res.success(result)
   } catch (e) { console.log(e); res.error(e) }
 })
@@ -41,17 +39,33 @@ router.post('/', joiValidator({
   }
 }), async (req, res) => {
   try {
-    let { phone, code, password, safety } = req.body
-    let result = await userService.signUpWithPhone(req.db, phone, password, code, safety)
+    let { phone, code, password, clientId, type } = req.body
+    let result = await userService.signUpWithPhone(req.db, phone, password, code, clientId, type)
     return res.success(result)
   } catch (e) { res.error(e) }
 })
 
-// 使用手机号/密码登录
-router.get('/token', joiValidator({
+// 使用手机号/验证码登录
+router.get('/smsCode/token', joiValidator({
   query: {
-    username: Joi.string(),
-    password: Joi.string().min(6),
+    phone: Joi.string().required(),
+    code: Joi.string().required(),
+    clientId: Joi.string().required(),
+    type: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { phone, code, clientId, type } = req.query
+    let result = await userService.getTokenWithCode(req.db, phone, code, clientId, type)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
+
+// 使用手机号/密码登录
+router.get('/password/token', joiValidator({
+  query: {
+    username: Joi.string().required(),
+    password: Joi.string().min(6).required(),
     clientId: Joi.string().required(),
     type: Joi.string().required()
   }
@@ -141,12 +155,10 @@ router.post('/wechat', joiValidator({
   }
 })
 
-
-
 /**
- * 验证码换取token
+ * 手机验证码换取ticket
  */
-router.post('/smsCode', joiValidator({
+router.post('/smsCode/ticket', joiValidator({
   body: {
     phone: Joi.string().required(),
     code: Joi.string().required(),
@@ -155,7 +167,7 @@ router.post('/smsCode', joiValidator({
 }), async (req, res) => {
   try {
     let { phone, code } = req.body
-    let result = await userService.getPasswordToken(req.db, phone, code)
+    let result = await userService.getSmsCodeToken(req.db, phone, code)
     res.success(result)
   } catch (error) { res.error(error) }
 })
@@ -207,7 +219,7 @@ router.patch('/nickname', cAuth, joiValidator({
 /**
  * 发送邮箱验证码: 绑定， 解绑， 修改密码
  */
-router.post('/mail/code', joiValidator({
+router.post('/mailCode', joiValidator({
   body: {
     mail: Joi.string().required(),
     type: ['bind', 'unbind', 'password']
@@ -269,15 +281,15 @@ router.get('/mail', cAuth, async (req, res) => {
 /**
  * 邮箱验证码换取token
  */
-router.get('/mail/token', joiValidator({
-  query: {
+router.post('/mail/ticket', joiValidator({
+  body: {
     mail: Joi.string().required(),
     code: Joi.string().required(),
     type: ['password']
   }
 }),async (req, res) => {
   try {
-    let { mail, code, type } = req.query
+    let { mail, code, type } = req.body
     let result = await userService.getMailToken(req.db, mail, code, type)
     res.success(result)
   } catch (error) { res.error(error) }

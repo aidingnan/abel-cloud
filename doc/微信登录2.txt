@@ -1,0 +1,7 @@
+微信登录：code -> 返回 wechatToken(string类型) + userExist(boolen类型)
+1. userExist为true, 返回的wechatToken可以正常使用
+2. userExist为false, 说明微信没有关联用户账号存在。
+
+微信账号没有对应用户：
+1. 调用发送注册验证码(register)  -> 已经注册（error code 为 60003） -> 调用手机号验证码登录接口 -> 使用手机号、验证码登录 -> loginToken -> 绑定(loginToken + wechatToken)
+2. 调用发送注册验证码(register)  -> 没有注册，发送成功 -> 注册（phone/code/password/clientId/type） -> loginToken -> 绑定(loginToken + wechatToken)
