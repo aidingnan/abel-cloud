@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-16 16:44:16
+ * @Last Modified time: 2018-11-16 16:55:53
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -406,14 +406,17 @@ class UserService {
       // // 判断请求是否成功
       if (res.Code !== 'OK') {
         console.log('in res')
-        throw new Error(res)
+        throw new Error(res.Message)
       }
 
       return { userExist: result.length == 0 ? false : true }
 
     } catch (error) {
-      console.log(error)
-      throw error
+      console.log(error.code)
+      let code = error.code
+      if (code == 'isv.MOBILE_NUMBER_ILLEGAL') throw new E.MobileError()
+      else if (code == 'isv.BUSINESS_LIMIT_CONTROL') throw new E.MobileLimit()
+      else throw error
     }
   }
 
