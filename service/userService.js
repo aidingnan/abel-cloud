@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-16 13:26:36
+ * @Last Modified time: 2018-11-16 14:23:41
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -28,6 +28,15 @@ const getToken = (userResult, clientId, type) => {
 
 
 class UserService {
+  // 判断手机是否注册
+  async userExist(connect, phone) {
+    try {
+      let userResult = await User.getUserByPhone(connect, phone)
+      if (userResult.length == 1) return { userExist: true}
+      else return { userExist: false}
+    } catch(error) { throw error}
+  }
+
   /**
    * 使用手机号注册
    */

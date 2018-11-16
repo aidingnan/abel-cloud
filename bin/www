@@ -7,6 +7,8 @@ var app = require('../app');
 var debug = require('debug')('abel:server');
 var http = require('http');
 const db = require('mysql')
+const { execFileSync } = require('child_process')
+const path = require('path')
 const config = require('getconfig')
 const { mysql } = require('getconfig')
 const promise = require('bluebird')
@@ -27,50 +29,37 @@ var pool = db.createPool({
 
 global.pool = promise.promisifyAll(pool)
 
+let cwd = path.join(process.cwd(), './lib/getAWSParams.js')
+
+const Parameters = execFileSync('node', [cwd], { encoding: 'utf8' })
+console.log(r)
+
 /**
  * 初始化AWS tokenKeys cloudKeys
  */
 
-const AWSOption = {
-  accessKeyId: 'AKIAPGPXTKFNHUA4GRAQ',
-  secretAccessKey: '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',
-  region: 'cn-north-1',
-  endpoint: 'a3dc7azfqxif0n.iot.cn-north-1.amazonaws.com.cn'
-}
-
 const ssm = new AWS.SSM({
-  accessKeyId: 'AKIAPGPXTKFNHUA4GRAQ',
-  secretAccessKey: '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',
   region: 'cn-north-1'
 })
 
 const iot = new AWS.Iot({
-  accessKeyId: 'AKIAPGPXTKFNHUA4GRAQ',
-  secretAccessKey: '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',
   region: 'cn-north-1'
 })
 
 const s3 = new AWS.S3({
-  accessKeyId: 'AKIAPGPXTKFNHUA4GRAQ',
-  secretAccessKey: '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',
   region: 'cn-north-1'
 })
 
-const iotData = new AWS.IotData(AWSOption)
+const iotData = new AWS.IotData({
+  region: 'cn-north-1',
+  endpoint: 'a3dc7azfqxif0n.iot.cn-north-1.amazonaws.com.cn'
+})
+
 
 global.getParameterAsync = promise.promisify(ssm.getParameter).bind(ssm)
 global.describeCertificateAsync = promise.promisify(iot.describeCertificate).bind(iot)
 global.publishAsync = promise.promisify(iotData.publish).bind(iotData)
 global.uploadAsync = promise.promisify(s3.upload).bind(s3)
-
-// s3.upload({
-//   Bucket: 'wisnuc', Key: 'b/test', Body: new Buffer('test obj')
-// }, (err, data) => {
-//   console.log(err, data)
-// })
-
-
-// console.log((new AWS.IotData(AWSOption)).publish)
 
 /**
  * Get port from environment and store in Express.

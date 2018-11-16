@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-15 16:51:50
+ * @Last Modified time: 2018-11-16 14:22:08
  */
 const express = require('express')
 const router = express.Router()
@@ -13,6 +13,17 @@ const userService = require('../../../service/userService')
 const { weAuth, cAuth } = require('../../../middlewares/jwt')
 const nodemailer = require('nodemailer');
 
+// 判断账号是否存在
+router.get('/', joiValidator({
+  jquery: {
+    phone: Joi.string().required()
+  }
+}), async (req, res) => {
+  let { phone } = req.query
+  let result = await userService.userExist(req.db, phone)
+  res.success(result)
+
+})
 
 // 发送手机验证码
 router.post('/smsCode', joiValidator({
