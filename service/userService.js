@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-15 17:16:26
+ * @Last Modified time: 2018-11-16 11:12:11
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -17,11 +17,11 @@ const sendSmsCode = require('../lib/sendSmsCode')
 
 const getToken = (userResult, clientId, type) => {
   // 提取id, password, clientId, type 作为token
-  let { id, password, nickName, avatarUrl, safety } = userResult[0]
+  let { id, password, nickName, avatarUrl, safety, username } = userResult[0]
   let user = Object.assign({}, { id, password }, {clientId, type})
 
   // 提取用户其他信息
-  let obj = { nickName, avatarUrl, safety }
+  let obj = { nickName, avatarUrl, safety, id, username }
   
   return { token: jwt.encode(user), ...obj }
 }
