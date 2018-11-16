@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-16 12:12:44
+ * @Last Modified time: 2018-11-16 13:26:36
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -206,7 +206,7 @@ class UserService {
         let userResult = await User.getUserInfo(connect, user)
         
         await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
-        return getToken(userResult, clientId, type)
+        return {...getToken(userResult, clientId, type), user: true}
       }
 
     } catch (error) { throw error }
