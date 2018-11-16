@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-16 16:55:53
+ * @Last Modified time: 2018-11-16 17:11:48
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -73,7 +73,7 @@ class UserService {
 
       // 判断用户名密码
       let userResult = await User.loginWithPhone(connect, u, p)
-      if (userResult.length !== 1) throw new E.UserNotExist()
+      if (userResult.length !== 1) throw new E.UsernameOrPasswordError()
 
       // 记录登录信息
       await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
@@ -93,7 +93,7 @@ class UserService {
 
       // 获取用户信息
       let userResult = await User.getUserWithPhone(connect, phone)
-      if (userResult.length !== 1) throw new E.UserNotExist()
+      if (userResult.length !== 1) throw new E.UsernameOrPasswordError()
 
       // 记录登录信息
       await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
