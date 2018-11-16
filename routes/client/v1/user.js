@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-16 14:22:08
+ * @Last Modified time: 2018-11-16 16:29:00
  */
 const express = require('express')
 const router = express.Router()
@@ -14,7 +14,7 @@ const { weAuth, cAuth } = require('../../../middlewares/jwt')
 const nodemailer = require('nodemailer');
 
 // 判断账号是否存在
-router.get('/', joiValidator({
+router.get('/check', joiValidator({
   jquery: {
     phone: Joi.string().required()
   }
