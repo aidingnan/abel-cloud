@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-16 16:29:00
+ * @Last Modified time: 2018-11-16 16:44:07
  */
 const express = require('express')
 const router = express.Router()
@@ -36,7 +36,7 @@ router.post('/smsCode', joiValidator({
     let { phone, type } = req.body
     let result = await userService.requestSmsCode(req.db, phone, type)
     res.success(result)
-  } catch (e) { console.log(e); res.error(e) }
+  } catch (e) { res.error(e) }
 })
 
 // 使用手机号注册用户

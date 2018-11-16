@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-16 14:23:41
+ * @Last Modified time: 2018-11-16 16:44:16
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -404,11 +404,17 @@ class UserService {
       // 发送验证码
       let res = await sendSmsCode(phone, code, 'SMS_151010078')
       // // 判断请求是否成功
-      if (res !== 'OK') throw new Error(res)
+      if (res.Code !== 'OK') {
+        console.log('in res')
+        throw new Error(res)
+      }
 
       return { userExist: result.length == 0 ? false : true }
 
-    } catch (error) { throw error }
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
   }
 
 }
