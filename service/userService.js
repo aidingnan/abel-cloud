@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-16 11:12:11
+ * @Last Modified time: 2018-11-16 12:12:44
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -224,6 +224,8 @@ class UserService {
       
       // 关联
       let result = await User.addWechat(connect, userId, wechat.unionid)
+
+      return {}
 
     } catch (error) { throw error }
   }

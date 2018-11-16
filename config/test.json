@@ -6,7 +6,7 @@
     "db": 0
   },
   "mysql": {
-    "database": "wisnuc",
+    "database": "wisnuc-test",
     "host": "wisnuc.cyb10i3l88dy.rds.cn-north-1.amazonaws.com.cn",
     "port": 3306,
     "username": "wisnuc",
