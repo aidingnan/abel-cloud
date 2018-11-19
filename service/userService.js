@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-16 17:11:48
+ * @Last Modified time: 2018-11-19 11:33:38
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -31,9 +31,12 @@ class UserService {
   // 判断手机是否注册
   async userExist(connect, phone) {
     try {
-      let userResult = await User.getUserByPhone(connect, phone)
-      if (userResult.length == 1) return { userExist: true}
-      else return { userExist: false}
+      let userResult = await User.getUserWithPhone(connect, phone)
+      if (userResult.length == 1) {
+        let { avatarUrl, nickName } = userResult[0]
+        return { userExist: true, avatarUrl, nickName }
+      }
+      else return { userExist: false }
     } catch(error) { throw error}
   }
 
