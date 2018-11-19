@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-15 14:14:20
+ * @Last Modified time: 2018-11-19 16:23:58
  */
 
 const user = {
@@ -254,6 +254,8 @@ const user = {
       AND unix_timestamp(time) BETWEEN @start AND @end;
       INSERT INTO mail(mail, user)
       VALUES('${mail}', '${userId}');
+      UPDATE user SET mail='${mail}'
+      WHERE id='${userId}';
       COMMIT;
     `
     return connect.queryAsync(sql)
@@ -270,6 +272,8 @@ const user = {
       AND unix_timestamp(time) BETWEEN @start AND @end;
       DELETE FROM mail
       WHERE mail='${mail}' AND user='${userId}';
+      UPDATE user SET mail=null
+      WHERE id='${userId}';
       COMMIT;
     `
     return connect.queryAsync(sql)
@@ -314,6 +318,20 @@ const user = {
       WHERE phone='${phone}' AND code='${code}' AND verified=0 AND type='${type}'
       AND unix_timestamp(time) BETWEEN @start AND @end;
     `
+    return connect.queryAsync(sql)
+  },
+
+  // 更新安全级别
+  updateSafeTy: (connect, userId, safeTy) => {
+    let addition = ``
+    if (safeTy !== 0) {
+      addition = `AND id in(SELECT user FROM mail)`
+    }
+    let sql = `
+      UPDATE user SET safeTy=${safeTy}
+      WHERE id='${userId}' 
+    `
+    sql += addition
     return connect.queryAsync(sql)
   }
 

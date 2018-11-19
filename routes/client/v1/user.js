@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-16 16:44:07
+ * @Last Modified time: 2018-11-19 17:00:14
  */
 const express = require('express')
 const router = express.Router()
@@ -186,16 +186,17 @@ router.post('/smsCode/ticket', joiValidator({
 /**
  * 修改密码
  */
-router.post('/password', joiValidator({
+router.patch('/password', joiValidator({
   body: {
-    token: Joi.string().required(),
     phone: Joi.string().required(),
-    password: Joi.string().required()
+    password: Joi.string().required(),
+    phoneTicket: Joi.string(),
+    mailTicket: Joi.string()
   }
 }), async (req, res) => {
   try {
-    let { token, phone, password } = req.body
-    await userService.updatePasswordWithToken(req.db, token, phone, password)
+    let { phone, password, phoneTicket, mailTicket } = req.body
+    await userService.updatePassword(req.db, phone, password, phoneTicket, mailTicket)
     res.success()
   } catch (error) { res.error(error) }
 })
@@ -223,6 +224,22 @@ router.patch('/nickname', cAuth, joiValidator({
     let { id } = req.auth
     let { nickname } = req.body
     let result = await userService.updateNickname(req.db, id, nickname)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
+
+/**
+ * 修改安全级别
+ */
+router.patch('/safety', cAuth, joiValidator({
+  body: {
+    safety: [0, 1, 2]
+  }
+}), async (req, res) => {
+  try {
+    let { safety } = req.body
+    let { id } = req.auth
+    let result = await userService.updateSafety(req.db, id, safety)
     res.success(result)
   } catch (error) { res.error(error) }
 })
