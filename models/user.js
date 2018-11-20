@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-20 16:33:33
+ * @Last Modified time: 2018-11-20 16:48:48
  */
 
 const user = {
@@ -244,14 +244,14 @@ const user = {
     return connect.queryAsync(sql)
   },
 
-    // 检验ticket
-    getMailCodeTicketInfo: (connect, ticket) => {
-      let sql = `
+  // 检验ticket
+  getMailCodeTicketInfo: (connect, ticket) => {
+    let sql = `
         SELECT * FROM userMailCodeRecord
         WHERE id='${ticket}' AND status='toConsumed'
       `
-      return connect.queryAsync(sql)
-    },
+    return connect.queryAsync(sql)
+  },
 
   // 绑定邮箱
   bindMail: (connect, mail, code, userId) => {
@@ -316,7 +316,7 @@ const user = {
     WHERE phone='${phone}' AND code='${code}' AND verified=0 AND type='${type}'
     AND unix_timestamp(time) BETWEEN @start AND @end;
   `
-  return connect.queryAsync(sql)
+    return connect.queryAsync(sql)
   },
 
   // 更新验证码状态

@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-20 16:46:02
+ * @Last Modified time: 2018-11-20 17:38:14
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -26,15 +26,14 @@ const getToken = (userResult, clientId, type) => {
   return { token: jwt.encode(user), ...obj }
 }
 
-
 class UserService {
   // 判断手机是否注册
   async userExist(connect, phone) {
     try {
       let userResult = await User.getUserWithPhone(connect, phone)
       if (userResult.length == 1) {
-        let { avatarUrl, nickName } = userResult[0]
-        return { userExist: true, avatarUrl, nickName }
+        let { avatarUrl, nickName, safety } = userResult[0]
+        return { userExist: true, avatarUrl, nickName, safety }
       }
       else return { userExist: false }
     } catch (error) { throw error }
@@ -127,7 +126,7 @@ class UserService {
     } catch (error) { throw error }
   }
 
-  // ---------------------设置用户---------------------
+  // ---------------------用户设置---------------------
 
   // 设备使用记录
   async recordDeviceUseInfo(connect, userId, clientId, type, sn) {
@@ -267,7 +266,7 @@ class UserService {
     } catch (error) { throw error }
   }
 
-  // 使用token设置密码
+  // 使用ticket设置密码
   async updatePassword(connect, phone, password, phoneTicket, mailTicket) {
     try {
       // 用户检查
@@ -303,6 +302,7 @@ class UserService {
     } catch (error) { throw error }
   }
 
+  // 更新安全设置
   async updateSafety(connect, userId, safety) {
     try {
       let mailResult = await User.getUserMail(connect, userId)
@@ -400,6 +400,7 @@ class UserService {
 
   // ---------------------短信---------------------
 
+  // 请求短信验证码
   async requestSmsCode(connect, phone, type) {
     try {
       let result = await User.getUserByPhone(connect, phone)
