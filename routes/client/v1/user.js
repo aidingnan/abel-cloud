@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-19 17:00:14
+ * @Last Modified time: 2018-11-20 13:43:51
  */
 const express = require('express')
 const router = express.Router()
@@ -196,8 +196,8 @@ router.patch('/password', joiValidator({
 }), async (req, res) => {
   try {
     let { phone, password, phoneTicket, mailTicket } = req.body
-    await userService.updatePassword(req.db, phone, password, phoneTicket, mailTicket)
-    res.success()
+    let result = await userService.updatePassword(req.db, phone, password, phoneTicket, mailTicket)
+    res.success(result)
   } catch (error) { res.error(error) }
 })
 
@@ -322,6 +322,23 @@ router.post('/mail/ticket', joiValidator({
     res.success(result)
   } catch (error) { res.error(error) }
 })
+
+console.log(process.env.NODE_ENV)
+
+if (process.env.NODE_ENV == 'test') {
+  router.delete('/', joiValidator({
+    body: {
+      phone: Joi.string().required()
+    }
+  }), async (req, res) => {
+    try {
+      let { phone } = req.body
+      let sql = `DELETE FROM user WHERE username='${phone}'`
+      let result = await req.db.queryAsync(sql)
+      res.success(result)
+    } catch (error) { res.error(error)}
+  })
+}
 
 
 

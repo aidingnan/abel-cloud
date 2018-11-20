@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-19 17:01:37
+ * @Last Modified time: 2018-11-20 13:58:22
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -102,7 +102,7 @@ class UserService {
       await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
 
       // 更新验证码
-      await User.updateSmsCode(connect, phone, code, type)
+      await User.updateSmsCode(connect, phone, code, 'login')
 
       return getToken(userResult, clientId, type)
 
@@ -268,17 +268,16 @@ class UserService {
   }
 
   // 使用token设置密码
-  async updatePassword(connect, token, phone, password) {
+  async updatePassword(connect, phone, password, phoneTicket, mailTicket) {
     try {
+      let userResult = await User.getUserByPhone(connect, phone)
+      if (userResult.length == 0) throw new E.UserNotExist()
+      let user = userResult[0]
+      let { id, safety } = user
+      console.log(id, safety)
+      return
       
-      // 检验token
-      let record = await User.getSmsCodeUserRecord(connect, token, phone)
-      if (record.length == 0) throw new Error('token error')
-      if (record[0].status == 'consumed') throw new Error('token has been consumed')
-      // 获取user
-      let userResult = await User.getUserWithPhone(connect, phone)
-      if (userResult.length == 0 || !userResult[0].id) throw new Error('user not exist')
-      let userId = userResult[0].id
+     
       // 更新密码
       await User.setNewPassword(connect, userId, password)
       // 更新验证码状态

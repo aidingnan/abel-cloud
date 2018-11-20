@@ -2,13 +2,14 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-19 16:23:58
+ * @Last Modified time: 2018-11-20 14:12:10
  */
 
 const user = {
   // 查询手机号是否被注册
   getUserByPhone: (connect, phone) => {
-    let sql = `SELECT * FROM phone 
+    let sql = `SELECT u.* FROM phone as p
+      LEFT JOIN user AS u ON u.id=p.user
       WHERE phoneNumber = ${phone} AND user IS NOT NULL`
     return connect.queryAsync(sql)
   },
@@ -236,7 +237,7 @@ const user = {
     let sql = `
       SET @end = unix_timestamp(NOW());
       SET @start = unix_timestamp(SUBTIME(NOW(), 15 * 60));
-      UPDATE userMailCodeRecord SET verified=1
+      UPDATE userMailCodeRecord SET verified=${verified}, status='${status}'
       WHERE mail='${mail}' AND code='${code}' AND verified=0 AND type='${type}'
       AND unix_timestamp(time) BETWEEN @start AND @end;
     `
