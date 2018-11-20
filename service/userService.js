@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-20 13:58:22
+ * @Last Modified time: 2018-11-20 16:46:02
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -102,7 +102,7 @@ class UserService {
       await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
 
       // 更新验证码
-      await User.updateSmsCode(connect, phone, code, 'login')
+      await User.updateSmsCode(connect, phone, code, 'login', 1, 'toConsumed')
 
       return getToken(userResult, clientId, type)
 
@@ -270,18 +270,36 @@ class UserService {
   // 使用token设置密码
   async updatePassword(connect, phone, password, phoneTicket, mailTicket) {
     try {
+      // 用户检查
       let userResult = await User.getUserByPhone(connect, phone)
       if (userResult.length == 0) throw new E.UserNotExist()
       let user = userResult[0]
       let { id, safety } = user
-      console.log(id, safety)
-      return
       
-     
+      // 参数检查
+      if (safety == 0 && !phoneTicket) throw new Error('phoneTicket is required')
+      else if (safety == 1 && !mailTicket) throw new Error('mailTicket is required')
+      else if (safety == 2 && (!phoneTicket || !mailTicket)) 
+        throw new Error('phoneTicket and mailTicket is required')
+
+      // 有效性检查
+      if (phoneTicket) {
+        let phoneResult = await User.getSmsCodeTicketInfo(connect, phoneTicket)
+        if (phoneResult.length !== 1) throw new E.PhoneTicketInvalid()
+      }
+
+      if (mailTicket) {
+        let userMail = await User.getUserMail(connect, id)
+        if (userMail.length == 0) throw new E.MailNotBelongToUser()
+        let mailResult = await User.getMailCodeTicketInfo(connect, mailTicket)
+        if (mailResult.length !== 1) throw new E.MailTicketInvalid()
+        if (mailResult[0].mail !== userMail[0].mail) throw new E.MailNotBelongToUser()
+      }
+      
       // 更新密码
-      await User.setNewPassword(connect, userId, password)
-      // 更新验证码状态
-      let r = await User.updateSmsRecordStatus(connect, token, phone, 'consumed')
+      await User.setNewPassword(connect, id, password)
+      // 更新验证码状态 todo
+      
     } catch (error) { throw error }
   }
 
@@ -428,7 +446,7 @@ class UserService {
       let codeRecord = codeResult[2]
       if (codeResult[2].length == 0) throw new E.SmsCodeError()
 
-      await User.updateSmsCode(connect, phone, code, 'password')
+      await User.updateSmsCode(connect, phone, code, 'password', 1, 'toConsumed')
       return codeRecord[0].id
 
     } catch (error) { ; console.log(error); throw error }

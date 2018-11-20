@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-20 14:12:10
+ * @Last Modified time: 2018-11-20 16:33:33
  */
 
 const user = {
@@ -244,6 +244,15 @@ const user = {
     return connect.queryAsync(sql)
   },
 
+    // 检验ticket
+    getMailCodeTicketInfo: (connect, ticket) => {
+      let sql = `
+        SELECT * FROM userMailCodeRecord
+        WHERE id='${ticket}' AND status='toConsumed'
+      `
+      return connect.queryAsync(sql)
+    },
+
   // 绑定邮箱
   bindMail: (connect, mail, code, userId) => {
     let sql = `
@@ -311,13 +320,22 @@ const user = {
   },
 
   // 更新验证码状态
-  updateSmsCode: (connect, phone, code, type) => {
+  updateSmsCode: (connect, phone, code, type, verified, status) => {
     let sql = `
       SET @end = unix_timestamp(NOW());
       SET @start = unix_timestamp(SUBTIME(NOW(), 15 * 60));
-      UPDATE userSmsCodeRecord SET verified=1
+      UPDATE userSmsCodeRecord SET verified=${verified}, status='${status}'
       WHERE phone='${phone}' AND code='${code}' AND verified=0 AND type='${type}'
       AND unix_timestamp(time) BETWEEN @start AND @end;
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 检验ticket
+  getSmsCodeTicketInfo: (connect, ticket) => {
+    let sql = `
+      SELECT * FROM userSmsCodeRecord
+      WHERE id='${ticket}' AND status='toConsumed'
     `
     return connect.queryAsync(sql)
   },
