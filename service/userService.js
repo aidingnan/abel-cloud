@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-20 17:38:14
+ * @Last Modified time: 2018-11-21 15:47:32
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -28,12 +28,24 @@ const getToken = (userResult, clientId, type) => {
 
 class UserService {
   // 判断手机是否注册
-  async userExist(connect, phone) {
+  async userPhoneExist(connect, phone) {
     try {
       let userResult = await User.getUserWithPhone(connect, phone)
       if (userResult.length == 1) {
-        let { avatarUrl, nickName, safety } = userResult[0]
-        return { userExist: true, avatarUrl, nickName, safety }
+        let { id, avatarUrl, nickName, safety } = userResult[0]
+        return { userExist: true, id, avatarUrl, nickName, safety }
+      }
+      else return { userExist: false }
+    } catch (error) { throw error }
+  }
+
+  // 判断邮箱是否注册
+  async userMailExist(connect, mail) {
+    try {
+      let userResult = await User.getUserWithMail(connect, mail)
+      if (userResult.length == 1) {
+        let { id, avatarUrl, nickName, safety } = userResult[0]
+        return { userExist: true, id, avatarUrl, nickName, safety }
       }
       else return { userExist: false }
     } catch (error) { throw error }
@@ -267,39 +279,40 @@ class UserService {
   }
 
   // 使用ticket设置密码
-  async updatePassword(connect, phone, password, phoneTicket, mailTicket) {
+  async updatePassword(connect, password, phoneTicket, mailTicket) {
     try {
-      // 用户检查
-      let userResult = await User.getUserByPhone(connect, phone)
-      if (userResult.length == 0) throw new E.UserNotExist()
-      let user = userResult[0]
-      let { id, safety } = user
       
-      // 参数检查
-      if (safety == 0 && !phoneTicket) throw new Error('phoneTicket is required')
-      else if (safety == 1 && !mailTicket) throw new Error('mailTicket is required')
-      else if (safety == 2 && (!phoneTicket || !mailTicket)) 
-        throw new Error('phoneTicket and mailTicket is required')
-
+      let phoneUser, mailUser
       // 有效性检查
+      if (!phoneTicket && !mailTicket ) throw new Error('ticket is required')
+
       if (phoneTicket) {
         let phoneResult = await User.getSmsCodeTicketInfo(connect, phoneTicket)
         if (phoneResult.length !== 1) throw new E.PhoneTicketInvalid()
+        let { phone } = phoneResult[0]
+        phoneUser = (await User.getUserWithPhone(connect, phone))[0]
       }
 
       if (mailTicket) {
-        let userMail = await User.getUserMail(connect, id)
-        if (userMail.length == 0) throw new E.MailNotBelongToUser()
         let mailResult = await User.getMailCodeTicketInfo(connect, mailTicket)
         if (mailResult.length !== 1) throw new E.MailTicketInvalid()
-        if (mailResult[0].mail !== userMail[0].mail) throw new E.MailNotBelongToUser()
+        let { mail } = mailResult[0]
+        mailUser = (await User.getUserWithMail(connect, mail))[0]
       }
+
+      if (phoneUser && mailUser && phoneUser.id !== mailUser.id) throw new Error('not same user')
+
+      let userId = phoneUser? phoneUser.id: mailUser.id
+
+      let safety = phoneUser? phoneUser.safety: mailUser.safety
+
+      if (safety !== 0 && !(phoneTicket && mailTicket)) throw new Error('double verify')
       
       // 更新密码
-      await User.setNewPassword(connect, id, password)
+      await User.setNewPassword(connect, userId, password)
       // 更新验证码状态 todo
       
-    } catch (error) { throw error }
+    } catch (error) { console.log(error);throw error }
   }
 
   // 更新安全设置

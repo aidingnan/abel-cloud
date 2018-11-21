@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-20 16:48:48
+ * @Last Modified time: 2018-11-21 14:16:05
  */
 
 const user = {
@@ -57,6 +57,16 @@ const user = {
       SELECT * FROM phone as p
       LEFT JOIN user as u ON p.user=u.id
       WHERE phoneNumber='${phone}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 使用邮箱查询用户
+  getUserWithMail: (connect, mail) => {
+    let sql = `
+      SELECT * FROM mail as m
+      LEFT JOIN user as u ON m.user=u.id
+      WHERE m.mail='${mail}'
     `
     return connect.queryAsync(sql)
   },
@@ -193,7 +203,7 @@ const user = {
     return connect.queryAsync(sql)
   },
 
-  // 更新修改密码token状态
+  // 更新修改密码token状态 todo
   updateSmsRecordStatus: (connect, id, phone, status) => {
     let sql = `
       UPDATE userSmsCodeRecord SET status='${status}'
@@ -206,6 +216,7 @@ const user = {
   getMail: (connect, mail) => {
     let sql = `
       SELECT * FROM mail
+      LEFT JOIN user ON mail.user=user.id
       WHERE mail='${mail}'
     `
     return connect.queryAsync(sql)

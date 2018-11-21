@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-20 13:43:51
+ * @Last Modified time: 2018-11-21 14:55:16
  */
 const express = require('express')
 const router = express.Router()
@@ -13,16 +13,28 @@ const userService = require('../../../service/userService')
 const { weAuth, cAuth } = require('../../../middlewares/jwt')
 const nodemailer = require('nodemailer');
 
-// 判断账号是否存在
-router.get('/check', joiValidator({
+// 判断手机号是否存在
+router.get('/phone/check', joiValidator({
   jquery: {
     phone: Joi.string().required()
   }
 }), async (req, res) => {
   let { phone } = req.query
-  let result = await userService.userExist(req.db, phone)
+  let result = await userService.userPhoneExist(req.db, phone)
   res.success(result)
+})
 
+// 判断邮箱号是否存在
+router.get('/mail/check', joiValidator({
+  jquery: {
+    mail: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { mail } = req.query
+    let result = await userService.userMailExist(req.db, mail)
+    res.success(result)
+  } catch (error) { res.error(error) }
 })
 
 // 发送手机验证码
@@ -188,15 +200,14 @@ router.post('/smsCode/ticket', joiValidator({
  */
 router.patch('/password', joiValidator({
   body: {
-    phone: Joi.string().required(),
     password: Joi.string().required(),
     phoneTicket: Joi.string(),
     mailTicket: Joi.string()
   }
 }), async (req, res) => {
   try {
-    let { phone, password, phoneTicket, mailTicket } = req.body
-    let result = await userService.updatePassword(req.db, phone, password, phoneTicket, mailTicket)
+    let { password, phoneTicket, mailTicket } = req.body
+    let result = await userService.updatePassword(req.db, password, phoneTicket, mailTicket)
     res.success(result)
   } catch (error) { res.error(error) }
 })
@@ -233,7 +244,7 @@ router.patch('/nickname', cAuth, joiValidator({
  */
 router.patch('/safety', cAuth, joiValidator({
   body: {
-    safety: [0, 1, 2]
+    safety: [0, 1]
   }
 }), async (req, res) => {
   try {
