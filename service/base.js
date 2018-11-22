@@ -36,7 +36,7 @@ class Init extends State {
     
     let body = server.req.body
     let SetCookie = this.ctx.req.headers['Set-Cookie']
-
+    console.log(SetCookie)
     this.ctx.manifest = Object.assign({
       sessionId: jobId,
       user: { id: this.ctx.req.auth.id },
