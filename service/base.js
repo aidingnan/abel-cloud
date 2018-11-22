@@ -35,12 +35,12 @@ class Init extends State {
     this.ctx.ctx.map.set(jobId, server)
     
     let body = server.req.body
-    let SetCookie = this.ctx.req.headers['Set-Cookie']
+    let SetCookie = this.ctx.req.headers['set-cookie']
     console.log(SetCookie)
     this.ctx.manifest = Object.assign({
       sessionId: jobId,
       user: { id: this.ctx.req.auth.id },
-      headers: { 'Set-Cookie': SetCookie }
+      headers: { 'set-cookie': SetCookie }
     }, body)
 
     this.setState(Notice)
