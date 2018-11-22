@@ -48,6 +48,18 @@ class StationService {
     } catch (error) { throw error }
   }
 
+  async unbindStation(connect, userId, sn) {
+    try {
+      let ownStations = await Station.getStationBelongToUser(connect, userId)
+      let sharedStations = await Station.getStationSharedToUser(connect, userId)
+      let ownStation = ownStations.find(item => item.sn == sn)
+      let sharedStation = sharedStations.find(item => item.sn == sn)
+      if (!ownStation && !sharedStation) throw new E.StationNotExist()
+      // if (ownStation) 
+      
+    } catch(error) { throw error}
+  }
+
   // 分享设备
   async addUser(connect, owner, sn, phone) {
     try {

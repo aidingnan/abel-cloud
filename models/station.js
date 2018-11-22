@@ -33,6 +33,14 @@ const station = {
     return connect.queryAsync(sql)
   },
 
+  // 取消分享
+
+  // 解绑拥有设备
+
+  // 解绑被分享设备
+
+  
+
   // 查询设备拥有者
   getStationOwner: (connect, sn) => {
     let sql = `

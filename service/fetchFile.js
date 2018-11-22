@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-06 15:18:11
+ * @Last Modified time: 2018-11-22 15:45:47
  */
 
 const debug = require('debug')('app:store')
@@ -28,14 +28,13 @@ class Init extends State {
     try {
       var body = JSON.parse(server.req.query.data)
       let range = this.ctx.req.headers['range']
+      let SetCookie = this.ctx.req.headers['Set-Cookie']
 
       this.ctx.manifest = Object.assign({
         sessionId: jobId,
         user: { id: this.ctx.req.auth.id },
-        headers: { range }
+        headers: { range, 'Set-Cookie': SetCookie }
       }, body)
-
-      console.log(this.ctx.manifest)
 
       this.setState(Notice)
     } catch (e) { this.setState(Err, e) }

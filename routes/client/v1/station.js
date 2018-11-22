@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-20 15:45:50
+ * @Last Modified time: 2018-11-22 14:43:16
  */
 
 const express = require('express')
@@ -35,6 +35,18 @@ router.post('/', async (req, res) => {
     let result = { encrypted: `${latest}@${encrypted}`}
     res.success(result)
   } catch (error) {  console.log(error);res.error(error) }
+})
+
+// 解绑设备
+router.delete('/:sn', joiValidator({
+  params: { sn: Joi.string().required() }
+}), async(req, res) => {
+  try {
+    let { id } = req.auth
+    let { sn } = req.params
+    let result = await stationService.unbindStation(req.db, id, sn)
+    return result
+  } catch (error) {res.error(error)}
 })
 
 // 分享设备
