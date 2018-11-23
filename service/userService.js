@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-23 15:26:53
+ * @Last Modified time: 2018-11-23 16:22:44
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -381,7 +381,8 @@ class UserService {
       let codeResult = await User.getMailCode(connect, mail, code, 'bind')
       if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
       // 绑定
-      await User.bindMail(connect, mail, code, userId)
+      let result = await User.bindMail(connect, mail, code, userId)
+      if (result[4].affectedRows == 0) throw new Error('bind failed')
     } catch (error) {
       if (error.errno == 1062) throw new E.MailAlreadyBound()
       else throw error

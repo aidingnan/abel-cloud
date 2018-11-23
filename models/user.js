@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-23 13:40:03
+ * @Last Modified time: 2018-11-23 16:20:32
  */
 
 const user = {
@@ -275,8 +275,6 @@ const user = {
       AND unix_timestamp(time) BETWEEN @start AND @end;
       INSERT INTO mail(mail, user)
       VALUES('${mail}', '${userId}');
-      UPDATE user SET mail='${mail}'
-      WHERE id='${userId}';
       COMMIT;
     `
     return connect.queryAsync(sql)
