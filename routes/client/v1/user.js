@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-21 14:55:16
+ * @Last Modified time: 2018-11-23 10:38:28
  */
 const express = require('express')
 const router = express.Router()
@@ -41,7 +41,7 @@ router.get('/mail/check', joiValidator({
 router.post('/smsCode', joiValidator({
   body: {
     phone: Joi.string().min(11).max(11).required(),
-    type: ['register', 'password', 'replace', 'login']
+    type: ['register', 'password', 'replace', 'login', 'mail']
   }
 }), async (req, res) => {
   try {
