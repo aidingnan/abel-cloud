@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-22 14:43:16
+ * @Last Modified time: 2018-11-23 14:12:23
  */
 
 const express = require('express')
@@ -84,16 +84,16 @@ router.post('/:sn/json', checkUserAndStation, (req, res) => {
 })
 
 // 上传文件
-router.post('/:sn/pipe', checkUserAndStation, joiValidator({
+router.post('/:sn/pipe', joiValidator({
   query: { data: Joi.string().required() }
-}), (req, res) => {
+}), checkUserAndStation, (req, res) => {
   storeFile.createServer(req, res)
 })
 
 // 下载文件
-router.get('/:sn/pipe', checkUserAndStation, joiValidator({
+router.get('/:sn/pipe', joiValidator({
   query: { data: Joi.string().required() }
-}), (req, res) => {
+}), checkUserAndStation, (req, res) => {
   fetchFile.createServer(req, res)
 })
 
@@ -102,6 +102,7 @@ async function checkUserAndStation(req, res, next) {
     let userId = req.auth.id
     let sn = req.params.sn
     let connect = req.db
+    // 查询station
     let ownStations = await Station.getStationBelongToUser(connect, userId)
     let sharedStations = await Station.getStationSharedToUser(connect, userId)
     let sameOwnStation = ownStations.find(item => item.sn == sn)

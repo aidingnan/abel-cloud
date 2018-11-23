@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-23 13:45:34
+ * @Last Modified time: 2018-11-23 15:26:53
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -428,8 +428,9 @@ class UserService {
       let code = r.slice(-4, r.length)
       console.log(code, type)
       await User.createSmsCode(connect, id, phone, code, type)
+      
       // 发送验证码
-      let res = await sendSmsCode(phone, code, 'SMS_151010078')
+      let res = await sendSmsCode(phone, code, type)
       // // 判断请求是否成功
       if (res.Code !== 'OK') {
         console.log('in res')
@@ -448,19 +449,19 @@ class UserService {
   }
 
   // 手机ticket
-  async getSmsCodeToken(connect, phone, code) {
+  async getSmsCodeToken(connect, phone, code, type) {
     try {
       // 检查是否已注册
       let u = await User.getUserByPhone(connect, phone)
       if (u.length == 0) throw new E.UserNotExist()
 
       // 校验验证码
-      let codeResult = await User.getSmsCode(connect, phone, code, 'password')
+      let codeResult = await User.getSmsCode(connect, phone, code, type)
 
       let codeRecord = codeResult[2]
       if (codeResult[2].length == 0) throw new E.SmsCodeError()
 
-      await User.updateSmsCode(connect, phone, code, 'password', 1, 'toConsumed')
+      await User.updateSmsCode(connect, phone, code, type, 1, 'toConsumed')
       return codeRecord[0].id
 
     } catch (error) { ; console.log(error); throw error }

@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-23 10:38:28
+ * @Last Modified time: 2018-11-23 15:26:32
  */
 const express = require('express')
 const router = express.Router()
@@ -13,7 +13,7 @@ const userService = require('../../../service/userService')
 const { weAuth, cAuth } = require('../../../middlewares/jwt')
 const nodemailer = require('nodemailer');
 
-// 判断手机号是否存在
+// 查询手机号
 router.get('/phone/check', joiValidator({
   jquery: {
     phone: Joi.string().required()
@@ -24,7 +24,7 @@ router.get('/phone/check', joiValidator({
   res.success(result)
 })
 
-// 判断邮箱号是否存在
+// 查询邮箱号是否存在
 router.get('/mail/check', joiValidator({
   jquery: {
     mail: Joi.string().required()
@@ -185,12 +185,12 @@ router.post('/smsCode/ticket', joiValidator({
   body: {
     phone: Joi.string().required(),
     code: Joi.string().required(),
-    type: ['password']
+    type: ['password', 'mail']
   }
 }), async (req, res) => {
   try {
-    let { phone, code } = req.body
-    let result = await userService.getSmsCodeToken(req.db, phone, code)
+    let { phone, code, type } = req.body
+    let result = await userService.getSmsCodeToken(req.db, phone, code, type)
     res.success(result)
   } catch (error) { res.error(error) }
 })
