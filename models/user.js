@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-21 14:16:05
+ * @Last Modified time: 2018-11-23 13:40:03
  */
 
 const user = {
@@ -217,7 +217,7 @@ const user = {
     let sql = `
       SELECT * FROM mail
       LEFT JOIN user ON mail.user=user.id
-      WHERE mail='${mail}'
+      WHERE mail.mail='${mail}'
     `
     return connect.queryAsync(sql)
   },

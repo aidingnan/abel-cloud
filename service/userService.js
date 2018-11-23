@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-21 15:47:32
+ * @Last Modified time: 2018-11-23 13:45:34
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -333,8 +333,8 @@ class UserService {
     try {
       let obj = await User.getMail(connect, mail)
       if (type == 'password') {
-        // if (obj.length == 0) throw new Error('mail not exist')
-        // if (!obj[1].user) throw new Error('mail has not bind user')
+        if (obj.length == 0) throw new Error('mail not exist')
+        if (!obj[0].user) throw new Error('mail has not bind user')
       }
 
       if (type == 'bind') {
