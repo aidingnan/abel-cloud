@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-23 15:26:32
+ * @Last Modified time: 2018-11-26 14:10:28
  */
 const express = require('express')
 const router = express.Router()
@@ -95,7 +95,7 @@ router.get('/password/token', joiValidator({
 }), async (req, res) => {
   try {
     let { username, password, clientId, type } = req.query
-    let result = await userService.token(req.db, username, password, clientId, type)
+    let result = await userService.getTokenWithPhone(req.db, username, password, clientId, type)
     res.success(result)
   } catch (e) { res.error(e) }
 })
@@ -332,6 +332,24 @@ router.post('/mail/ticket', joiValidator({
     let result = await userService.getMailToken(req.db, mail, code, type)
     res.success(result)
   } catch (error) { res.error(error) }
+})
+
+/**
+ * 邮箱登录
+ */
+router.get('/mail/token', joiValidator({
+  query: {
+    mail: Joi.string().required(),
+    password: Joi.string().required(),
+    clientId: Joi.string().required(),
+    type: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { mail, password, clientId, type } = req.query
+    let result = await userService.getTokenWithMail(req.db, mail, password, clientId, type)
+    res.success(result)
+  } catch(error) { throw error; }
 })
 
 console.log(process.env.NODE_ENV)

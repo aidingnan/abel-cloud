@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-23 16:20:32
+ * @Last Modified time: 2018-11-26 14:46:40
  */
 
 const user = {
@@ -39,6 +39,16 @@ const user = {
       SELECT * FROM user,phone WHERE user.id=phone.user 
       AND user.password=PASSWORD('${password}')
       AND phone.phoneNumber='${username}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 使用邮箱密码登录
+  loginWithMail: (connect, mail, password) => {
+    let sql = `
+      SELECT * FROM user,mail WHERE user.id=mail.user
+      AND user.password=PASSWORD('${password}')
+      AND mail.mail='${mail}'
     `
     return connect.queryAsync(sql)
   },
@@ -218,6 +228,15 @@ const user = {
       SELECT * FROM mail
       LEFT JOIN user ON mail.user=user.id
       WHERE mail.mail='${mail}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 根据userId查询mail
+  getMailWithUserId: (connect, userId) => {
+    let sql = `
+      SELECT mail FROM mail
+      WHERE user='${userId}'
     `
     return connect.queryAsync(sql)
   },

@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-23 16:22:44
+ * @Last Modified time: 2018-11-26 14:50:44
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -15,10 +15,15 @@ const WechatInfo = require('../lib/wechatInfo')
 const sendMail = require('../lib/sendMail')
 const sendSmsCode = require('../lib/sendSmsCode')
 
-const getToken = (userResult, clientId, type) => {
+const getToken = async (connect, userResult, clientId, type) => {
   // 提取id, password, clientId, type 作为token
-  let { id, password, nickName, avatarUrl, safety, username, mail } = userResult[0]
+  let { id, password, nickName, avatarUrl, safety, username } = userResult[0]
   let user = Object.assign({}, { id, password }, { clientId, type })
+
+  // 邮件
+  let mailResult = await User.getMailWithUserId(connect, id)
+  let mail
+  if (mailResult.length !== 0) mail = mailResult[0].mail
 
   // 提取用户其他信息
   let obj = { nickName, avatarUrl, safety, id, username, mail }
@@ -74,15 +79,13 @@ class UserService {
 
       let userResult = await User.getUserInfo(connect, userId)
 
-      return getToken(userResult, clientId, type)
+      return await getToken(connect, userResult, clientId, type)
 
     } catch (error) { console.log(error); throw error }
   }
 
-  /**
-   * 常规登录
-   */
-  async token(connect, u, p, clientId, type) {
+  // 使用用户名密码登录
+  async getTokenWithPhone(connect, u, p, clientId, type) {
     try {
 
       // 判断用户名密码
@@ -92,7 +95,7 @@ class UserService {
       // 记录登录信息
       await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
 
-      return getToken(userResult, clientId, type)
+      return await getToken(connect, userResult, clientId, type)
 
     } catch (error) { throw error }
   }
@@ -115,9 +118,24 @@ class UserService {
       // 更新验证码
       await User.updateSmsCode(connect, phone, code, 'login', 1, 'toConsumed')
 
-      return getToken(userResult, clientId, type)
+      return await getToken(connect, userResult, clientId, type)
 
 
+    } catch (error) { throw error }
+  }
+
+  // 使用邮箱密码登录
+  async getTokenWithMail(connect, mail, password, clientId, type) {
+    try {
+      // 判断
+      let userResult = await User.loginWithMail(connect, mail, password)
+      if (userResult.length !== 1) throw new E.MailOrPasswordError()
+      
+      // 记录登录信息
+      await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
+
+      return await getToken(connect, userResult, clientId, type)
+      
     } catch (error) { throw error }
   }
 
@@ -132,7 +150,6 @@ class UserService {
   async getPhone(connect, id) {
     try {
       let result = await User.getPhone(connect, id)
-      console.log(result)
       return result
 
     } catch (error) { throw error }
@@ -229,7 +246,7 @@ class UserService {
         let userResult = await User.getUserInfo(connect, user)
 
         await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
-        return { ...getToken(userResult, clientId, type), user: true }
+        return { ...(await getToken(connect, userResult, clientId, type)), user: true }
       }
 
     } catch (error) { throw error }
