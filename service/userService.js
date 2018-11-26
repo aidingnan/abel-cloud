@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-26 14:50:44
+ * @Last Modified time: 2018-11-26 18:12:15
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -75,7 +75,15 @@ class UserService {
       if (result.length !== 0) throw new E.UserAlreadyExist()
 
       // 注册 ==> 获取用户
-      await User.signUpWithPhone(connect, userId, phone, code, p, 'register')
+      let registerResult = await User.signUpWithPhone(connect, userId, phone, code, p, 'register')
+      let userCheck = registerResult[4].affectedRows == 0
+      let phoneCheck = registerResult[5].affectedRows == 0
+      let codeCheck = registerResult[6].affectedRows == 0
+      if (userCheck || phoneCheck || codeCheck) {
+        connect.queryAsync('ROLLBACK;')
+        throw new Error('register failed')
+      }
+      connect.queryAsync('COMMIT;')
 
       let userResult = await User.getUserInfo(connect, userId)
 
@@ -234,8 +242,6 @@ class UserService {
       let wechatUserResult = await User.findWechatAndUserByUnionId(connect, unionid)
       if (wechatUserResult.length !== 1) throw new Error('find wechat user error')
       let { user } = wechatUserResult[0]
-
-      console.log(wechatUserResult[0])
 
       if (user == null) {
         // 微信用户没有绑定注册用户
@@ -398,9 +404,19 @@ class UserService {
       let codeResult = await User.getMailCode(connect, mail, code, 'bind')
       if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
       // 绑定
+      
       let result = await User.bindMail(connect, mail, code, userId)
-      if (result[4].affectedRows == 0) throw new Error('bind failed')
+      let codeCheck = result[3].affectedRows == 0
+      let userCheck = result[4].affectedRows == 0
+      if (codeCheck || userCheck) {
+        await connect.queryAsync('ROLLBACK;')  
+        throw new Error('bind failed')
+      }
+
+      await connect.queryAsync('COMMIT;')  
+
     } catch (error) {
+      console.log(error)
       if (error.errno == 1062) throw new E.MailAlreadyBound()
       else throw error
     }

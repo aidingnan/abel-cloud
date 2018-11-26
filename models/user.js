@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-26 14:46:40
+ * @Last Modified time: 2018-11-26 18:10:38
  */
 
 const user = {
@@ -28,8 +28,7 @@ const user = {
       ON DUPLICATE KEY UPDATE user='${id}';
       UPDATE userSmsCodeRecord SET verified=1,status='consumed'
       WHERE phone='${phone}' AND code='${code}' AND verified=0 AND type='${type}'
-      AND unix_timestamp(time) BETWEEN @start AND @end;
-      COMMIT;`
+      AND unix_timestamp(time) BETWEEN @start AND @end;`
     return connect.queryAsync(sql)
   },
 
@@ -290,11 +289,10 @@ const user = {
       SET @end = unix_timestamp(NOW());
       SET @start = unix_timestamp(SUBTIME(NOW(), 15 * 60));
       UPDATE userMailCodeRecord SET verified=1,status='consumed'
-      WHERE mail='${mail}' AND code='${code}' AND verified=0 AND type='bind'
+      WHERE mail='${mail}1' AND code='${code}' AND verified=0 AND type='bind'
       AND unix_timestamp(time) BETWEEN @start AND @end;
       INSERT INTO mail(mail, user)
       VALUES('${mail}', '${userId}');
-      COMMIT;
     `
     return connect.queryAsync(sql)
   },

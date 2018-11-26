@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-26 14:10:28
+ * @Last Modified time: 2018-11-26 18:03:19
  */
 const express = require('express')
 const router = express.Router()
@@ -48,7 +48,7 @@ router.post('/smsCode', joiValidator({
     let { phone, type } = req.body
     let result = await userService.requestSmsCode(req.db, phone, type)
     res.success(result)
-  } catch (e) { res.error(e) }
+  } catch (e) { console.log(e);res.error(e) }
 })
 
 // 使用手机号注册用户
@@ -154,6 +154,17 @@ router.post('/phone', joiValidator({
 
     res.success()
   } catch (error) { res.error(error) }
+})
+
+/**
+ * 解绑手机（替换）
+ */
+router.patch('/phone', joiValidator({
+
+}), cAuth, async (req, res) => {
+  try {
+    userService.unbindPhone(req.db)
+  } catch(error) { res.error(error) }
 })
 
 
