@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-26 18:12:15
+ * @Last Modified time: 2018-11-27 14:55:39
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -258,10 +258,10 @@ class UserService {
     } catch (error) { throw error }
   }
 
-  // /**
-  //  * 微信账号关联用户
-  //  * 账号存在则关联、不存在则创建
-  //  */
+  /**
+  * 微信账号关联用户
+  * 账号存在则关联、不存在则创建
+  */
   async wechatAssociateUser(connect, userId, wechat) {
     try {
       if (!wechat) throw new Error('wechat is required')
@@ -275,6 +275,26 @@ class UserService {
 
     } catch (error) { throw error }
   }
+
+  // 查询微信
+  async getWechatInfo(connect, userId) {
+    try {
+      return await User.getUserWechat(connect, userId)
+    } catch (error) { throw error }
+  }
+
+  // 解绑微信
+  async unbindWechat(connect, userId, unionid) {
+    try {
+      let userResult = await User.getUserWechat(connect, userId)
+      let result = userResult.find(item => item.unionid == unionid)
+      if (!result) throw new Error('unionid error')
+      
+      await User.unbindWechat(connect, userId, unionid)
+      
+    } catch (error) { throw error }
+  }
+
 
   // 更新头像
   async updateAvatar(connect, req, userId) {

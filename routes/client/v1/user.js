@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-26 18:03:19
+ * @Last Modified time: 2018-11-27 14:20:13
  */
 const express = require('express')
 const router = express.Router()
@@ -244,8 +244,8 @@ router.patch('/nickname', cAuth, joiValidator({
 }), async (req, res) => {
   try {
     let { id } = req.auth
-    let { nickname } = req.body
-    let result = await userService.updateNickname(req.db, id, nickname)
+    let { nickName } = req.body
+    let result = await userService.updateNickname(req.db, id, nickName)
     res.success(result)
   } catch (error) { res.error(error) }
 })

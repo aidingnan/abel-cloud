@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-26 18:10:38
+ * @Last Modified time: 2018-11-27 14:51:22
  */
 
 const user = {
@@ -145,6 +145,25 @@ const user = {
     let sql = `
       UPDATE wechat SET user='${id}'
       WHERE user IS NULL && unionid='${unionid}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 查询微信
+  getUserWechat: (connect, userId) => {
+    let sql = `
+      SELECT w.* FROM wechat as w
+      LEFT JOIN user as u 
+      ON w.user=u.id
+      WHERE w.user='${userId}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  unbindWechat: (connect, userId, unionid) => {
+    let sql = `
+      DELETE FROM wechat
+      WHERE unionid='${unionid}' AND user='${userId}'
     `
     return connect.queryAsync(sql)
   },

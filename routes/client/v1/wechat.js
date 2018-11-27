@@ -44,5 +44,31 @@ router.patch('/user', cAuth,  joiValidator({
   }
 })
 
+/**
+ * 查询用户微信
+ */
+router.get('/', cAuth, async (req, res) => {
+  try {
+    let { id } = req.auth
+    res.success(await userService.getWechatInfo(req.db, id))
+  } catch (error) { res.error(error) }
+})
+
+/**
+ * 解绑微信
+ */
+router.delete('/', cAuth, joiValidator({
+  body: {
+    unionid: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { id } = req.auth
+    let { unionid } = req.body
+    let result = await userService.unbindWechat(req.db, id, unionid)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
+
 
 module.exports = router
