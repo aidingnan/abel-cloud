@@ -26,6 +26,7 @@ const station = {
 
   // 创建设备与用户的分享关系
   createShare: (connect, sn, id) => {
+    console.log(sn, id)
     let sql = `
       INSERT INTO device_user
       SET sn='${sn}',user='${id}'
@@ -44,7 +45,7 @@ const station = {
   // 查询设备拥有者
   getStationOwner: (connect, sn) => {
     let sql = `
-      SELECT u.id, u.username, u.createdAt from device as d 
+      SELECT u.id, u.username,u.avatarUrl,u.createdAt from device as d 
       LEFT JOIN user AS u
       ON d.owner = u.id
       where sn='${sn}' AND owner IS NOT NULL
@@ -55,7 +56,7 @@ const station = {
   // 查询设备分享者
   getStationSharer: (connect, sn) => {
     let sql = `
-      SELECT u.id, u.username, u.createdAt from device_user AS du
+      SELECT u.id, u.username,u.avatarUrl,u.createdAt from device_user AS du
       LEFT JOIN user AS u
       on du.user=u.id
       where sn='${sn}'

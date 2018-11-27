@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-23 16:11:37
+ * @Last Modified time: 2018-11-27 16:48:05
  */
 
 const express = require('express')
@@ -47,6 +47,16 @@ router.delete('/:sn', joiValidator({
     let result = await stationService.unbindStation(req.db, id, sn)
     return result
   } catch (error) {res.error(error)}
+})
+
+// 查询某台station下用户
+router.get('/:sn/user', async (req, res) => {
+  try {
+    let { id } = req.auth
+    let { sn } = req.params
+    let result = await stationService.getStationUsers(req.db, sn)
+    res.success(result)
+  } catch (e) { res.error(e)}
 })
 
 // 分享设备
