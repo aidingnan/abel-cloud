@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-27 14:20:13
+ * @Last Modified time: 2018-11-27 15:18:12
  */
 const express = require('express')
 const router = express.Router()
@@ -187,6 +187,23 @@ router.post('/wechat', joiValidator({
   } catch (e) {
     res.error(e)
   }
+})
+
+
+/**
+ * 解绑微信
+ */
+router.delete('/wechat', cAuth, joiValidator({
+  body: {
+    unionid: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { id } = req.auth
+    let { unionid } = req.body
+    let result = await userService.unbindWechat(req.db, id, unionid)
+    res.success(result)
+  } catch (error) { res.error(error) }
 })
 
 /**

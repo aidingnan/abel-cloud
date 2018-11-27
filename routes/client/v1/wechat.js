@@ -54,21 +54,6 @@ router.get('/', cAuth, async (req, res) => {
   } catch (error) { res.error(error) }
 })
 
-/**
- * 解绑微信
- */
-router.delete('/', cAuth, joiValidator({
-  body: {
-    unionid: Joi.string().required()
-  }
-}), async (req, res) => {
-  try {
-    let { id } = req.auth
-    let { unionid } = req.body
-    let result = await userService.unbindWechat(req.db, id, unionid)
-    res.success(result)
-  } catch (error) { res.error(error) }
-})
 
 
 module.exports = router
