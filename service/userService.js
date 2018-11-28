@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-28 17:10:57
+ * @Last Modified time: 2018-11-28 17:19:17
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -426,6 +426,7 @@ class UserService {
       // 绑定
       
       let result = await User.bindMail(connect, mail, code, userId)
+      console.log(result)
       let codeCheck = result[3].affectedRows == 0
       let userCheck = result[4].affectedRows == 0
       if (codeCheck || userCheck) {
