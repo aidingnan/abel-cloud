@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-27 14:51:22
+ * @Last Modified time: 2018-11-28 17:09:02
  */
 
 const user = {
@@ -327,8 +327,6 @@ const user = {
       AND unix_timestamp(time) BETWEEN @start AND @end;
       DELETE FROM mail
       WHERE mail='${mail}' AND user='${userId}';
-      UPDATE user SET mail=null
-      WHERE id='${userId}';
       COMMIT;
     `
     return connect.queryAsync(sql)
