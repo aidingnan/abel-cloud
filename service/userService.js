@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-28 17:08:24
+ * @Last Modified time: 2018-11-28 17:10:57
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -447,12 +447,11 @@ class UserService {
     try {
       // 检查邮箱是否属于用户
       let userMail = await User.getUserMail(connect, userId)
-      console.log(userMail)
       let mailInList = userMail.findIndex(item => item.mail == mail)
       if (mailInList == -1) throw new Error('mail is not belong to user')
       // 检查验证码
       let codeResult = await User.getMailCode(connect, mail, code, 'unbind')
-      // if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
+      if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
       // 解绑
       await User.unBindMail(connect, mail, code, userId)
     } catch (error) { throw error }
