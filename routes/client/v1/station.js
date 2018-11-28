@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-27 16:48:05
+ * @Last Modified time: 2018-11-28 14:37:40
  */
 
 const express = require('express')
@@ -70,11 +70,23 @@ router.post('/:sn/user', joiValidator({
     // 获取设备ID & 对象ID
     let { sn } = req.params
     let { phone } = req.body
-    console.log(id, sn, phone)
     let result = await stationService.addUser(req.db, id, sn, phone)
 
     res.success(result)
   } catch (error) { res.error(error)}
+})
+
+// 取消分享设备
+router.delete('/:sn/user', joiValidator({
+  params: { sn: Joi.string().required() },
+  body: { sharedUser: Joi.string().required() }
+}), async (req, res) => {
+  try {
+    let { id } = req.auth
+    let { sharedUser } = req.body
+    let { sn } = req.params
+    let result = await stationService.deleteUser
+  } catch (error) { res.error(error) }
 })
 
 // 查询所有设备

@@ -63,14 +63,12 @@ class StationService {
   // 分享设备
   async addUser(connect, owner, sn, phone) {
     try {
-      console.log(owner, sn, phone)
       // 检查owner 与 device 关系
       let deviceResult = await Station.findDeviceBySn(connect, sn)
       if (deviceResult.length !== 1) throw new E.StationNotExist()
       if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
       // 检查username
       let userResult = await User.getUserByPhone(connect, phone)
-      console.log(userResult[0])
       if (userResult.length !== 1) throw new E.UserNotExist()
       let { id } = userResult[0]
       // 禁止分享给自己
@@ -81,6 +79,11 @@ class StationService {
       // 建立绑定关系
       return await Station.createShare(connect, sn, id)
     } catch (error) { throw error }
+  }
+
+  // 取消分享
+  async deleteUser(connect, sn, userId, sharedUserId) {
+    
   }
 
   // 查询用户所有设备

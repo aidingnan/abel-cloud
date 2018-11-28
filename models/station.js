@@ -26,7 +26,6 @@ const station = {
 
   // 创建设备与用户的分享关系
   createShare: (connect, sn, id) => {
-    console.log(sn, id)
     let sql = `
       INSERT INTO device_user
       SET sn='${sn}',user='${id}'
@@ -35,8 +34,18 @@ const station = {
   },
 
   // 取消分享
+  deleteShare: (connect, sn, user) => {
+    let sql = `
+      DELETE FROM device_user
+      WHERE sn='${sn}' AND user='${user}'
+    `
+    return connect,queryAsync(sql)
+  },
 
   // 解绑拥有设备
+  unbindOwnStation: (connect, sn) => {
+
+  },
 
   // 解绑被分享设备
 
