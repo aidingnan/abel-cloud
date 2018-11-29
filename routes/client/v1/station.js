@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-28 17:09:38
+ * @Last Modified time: 2018-11-29 15:27:37
  */
 
 const express = require('express')
@@ -70,7 +70,7 @@ router.post('/:sn/user', joiValidator({
     // 获取设备ID & 对象ID
     let { sn } = req.params
     let { phone } = req.body
-    let result = await stationService.addUser(req.db, id, sn, phone)
+    let result = await stationService.addUser(req.db, id, sn, phone, true)
 
     res.success(result)
   } catch (error) { res.error(error)}

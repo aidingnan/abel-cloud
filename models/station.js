@@ -28,7 +28,38 @@ const station = {
   createShare: (connect, sn, id) => {
     let sql = `
       INSERT INTO device_user
-      SET sn='${sn}',user='${id}'
+      SET sn='${sn}',user='${id}';
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 记录设备与手机号分享
+  recordShare: (connect, sn, owner, phone, userId, type) => {
+    let state = userId? 'done': 'todo'
+    let sql = `
+      INSERT INTO device_userRecord
+      SET sn='${sn}',owner='${owner}', phone='${phone}',
+      type='${type}', state='${state}'
+    `
+    if (userId) sql+= `, user='${userId}'`
+    return connect.queryAsync(sql)
+  },
+
+  // 查询手机号被分享记录
+  getShareRecord: (connect, phone, type, state) => {
+    let sql = `
+      SELECT * FROM device_userRecord
+      WHERE phone='${phone}' AND type='${type}' AND state='${state}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 更新分享记录
+  updateShareRecord: (connect, id, state) => {
+    let sql = `
+      UPDATE device_userRecord
+      SET state='${state}'
+      WHERE id='${id}'
     `
     return connect.queryAsync(sql)
   },

@@ -8,11 +8,7 @@ class StationService {
   async bindUser(connect, sn, certId, signature, encrypted) {
     try {
       let device = (await Station.findDeviceBySn(connect, sn))[0]
-
-      console.log(device)
-
       if (device.owner !== null) throw new E.StationHasOwner()
-
 
       // 通过证书ID获取设备公钥
       let certResult = await describeCertificateAsync({ certificateId: certId })
@@ -61,24 +57,30 @@ class StationService {
   }
 
   // 分享设备
-  async addUser(connect, owner, sn, phone) {
+  async addUser(connect, owner, sn, phone, record) {
     try {
+      let userExist = true, id
       // 检查owner 与 device 关系
       let deviceResult = await Station.findDeviceBySn(connect, sn)
       if (deviceResult.length !== 1) throw new E.StationNotExist()
       if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
-      // 检查username
+      // 检查user
       let userResult = await User.getUserByPhone(connect, phone)
-      if (userResult.length !== 1) throw new E.UserNotExist()
-      let { id } = userResult[0]
+      if (userResult.length !== 1) userExist = false
+      else id = userResult[0].id
       // 禁止分享给自己
       if (owner == id) throw new Error('station can not share to owner')
-      // 检查sn 与 username 关系
+      // 禁止重复分享
       let relationResult = await Station.findDeviceShareBySnAndId(connect, sn, id)
       if (relationResult.length > 0) throw new E.ShareExist()
       // 建立绑定关系
-      return await Station.createShare(connect, sn, id)
-    } catch (error) { throw error }
+      if (userExist) await Station.createShare(connect, sn, id)
+
+      // 记录
+      if (record) await Station.recordShare(connect, sn, owner, phone, id, 'invite')
+      
+      return { userExist }
+    } catch (error) { console.log(error);throw error }
   }
 
   // 取消分享

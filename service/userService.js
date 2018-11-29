@@ -2,18 +2,20 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-28 17:19:17
+ * @Last Modified time: 2018-11-29 15:26:14
  */
 const request = require('request')
 const promise = require('bluebird')
 const uuid = require('uuid')
 promise.promisifyAll(request)
 const User = require('../models/user')
+const Station = require('../models/station')
 const E = require('../lib/error')
 const jwt = require('../lib/jwt')
 const WechatInfo = require('../lib/wechatInfo')
 const sendMail = require('../lib/sendMail')
 const sendSmsCode = require('../lib/sendSmsCode')
+const stationService = require('./stationService')
 
 const getToken = async (connect, userResult, clientId, type) => {
   // 提取id, password, clientId, type 作为token
@@ -55,20 +57,18 @@ class UserService {
       else return { userExist: false }
     } catch (error) { throw error }
   }
-
-  /**
-   * 使用手机号注册
-   */
+  
+  // 注册
   async signUpWithPhone(connect, phone, p, code, clientId, type) {
     try {
-      // 生产id
+      // 用户id
       let userId = uuid.v4()
 
       // 校验验证码
       let smsResult = await User.getSmsCode(connect, phone, code, 'register')
 
       // 验证码失败
-      if (smsResult[2].length == 0) throw new E.SmsCodeError()
+      // if (smsResult[2].length == 0) throw new E.SmsCodeError()
 
       // 检查是否已注册
       let result = await User.getUserByPhone(connect, phone)
@@ -79,11 +79,24 @@ class UserService {
       let userCheck = registerResult[4].affectedRows == 0
       let phoneCheck = registerResult[5].affectedRows == 0
       let codeCheck = registerResult[6].affectedRows == 0
+      // 判断数据是否正确
       if (userCheck || phoneCheck || codeCheck) {
         connect.queryAsync('ROLLBACK;')
         throw new Error('register failed')
       }
       connect.queryAsync('COMMIT;')
+
+      // 查询用户手机号是否存在分享记录
+      let shareRecord = await Station.getShareRecord(connect, phone, 'invite', 'todo')
+      for (let i = 0; i < shareRecord.length; i++) {
+        try {
+          let { id, owner, sn, phone } = shareRecord[i]
+          await stationService.addUser(connect, owner, sn, phone, false)
+          await Station.updateShareRecord(connect, id, 'done')
+        } catch (error) {console.log(error)}
+      }
+
+      // 获取用户信息
 
       let userResult = await User.getUserInfo(connect, userId)
 
@@ -426,7 +439,6 @@ class UserService {
       // 绑定
       
       let result = await User.bindMail(connect, mail, code, userId)
-      console.log(result)
       let codeCheck = result[3].affectedRows == 0
       let userCheck = result[4].affectedRows == 0
       if (codeCheck || userCheck) {
