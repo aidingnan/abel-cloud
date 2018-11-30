@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-29 15:27:37
+ * @Last Modified time: 2018-11-30 15:40:47
  */
 
 const express = require('express')
@@ -37,15 +37,15 @@ router.post('/', async (req, res) => {
   } catch (error) {  console.log(error);res.error(error) }
 })
 
-// 解绑设备
-router.delete('/:sn', joiValidator({
-  params: { sn: Joi.string().required() }
+// 删除设备
+router.delete('/', joiValidator({
+  body: { sn: Joi.string().required()}
 }), async(req, res) => {
   try {
     let { id } = req.auth
-    let { sn } = req.params
-    let result = await stationService.unbindStation(req.db, id, sn)
-    return result
+    let { sn } = req.body
+    let result = await stationService.deleteStation(req.db, id, sn)
+    res.success(result)
   } catch (error) {res.error(error)}
 })
 
@@ -85,7 +85,7 @@ router.delete('/:sn/user', joiValidator({
     let { id } = req.auth
     let { sharedUserId } = req.body
     let { sn } = req.params
-    let result = await stationService.deleteUser(sn, userId, sharedUserId)
+    let result = await stationService.deleteUser(req.db, id, sn, sharedUserId)
     res.success(result)
   } catch (error) { res.error(error) }
 })
@@ -101,7 +101,6 @@ router.get('/', async (req, res) => {
 })
 
 // json操作
-
 router.post('/:sn/json', checkUserAndStation, (req, res) => {
   transformJson.createServer(req, res)
 })

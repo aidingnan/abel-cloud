@@ -1,9 +1,18 @@
 
 
 const station = {
-  bindUser: (connect, sn, id) => {
+  // 绑定
+  bindUser: (connect, sn, userId) => {
     let sql = `
-      UPDATE device SET owner='${id}' WHERE sn='${sn}' AND owner IS NULL
+      UPDATE device SET owner='${userId}' WHERE sn='${sn}' AND owner IS NULL
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 解绑
+  unbindUser: (connect, sn, userId) => {
+    let sql = `
+      UPDATE device SET owner=null WHERE sn='${sn}'
     `
     return connect.queryAsync(sql)
   },
@@ -64,23 +73,22 @@ const station = {
     return connect.queryAsync(sql)
   },
 
-  // 取消分享
+  // 删除分享
   deleteShare: (connect, sn, user) => {
     let sql = `
       DELETE FROM device_user
       WHERE sn='${sn}' AND user='${user}'
     `
-    return connect,queryAsync(sql)
+    return connect.queryAsync(sql)
   },
 
-  // 解绑拥有设备
-  unbindOwnStation: (connect, sn) => {
-
+  cleanShare: (connect, sn) => {
+    let sql = `
+      DELETE FROM device_user
+      WHERE sn='${sn}'
+    `
+    return connect.queryAsync(sql)
   },
-
-  // 解绑被分享设备
-
-  
 
   // 查询设备拥有者
   getStationOwner: (connect, sn) => {
@@ -119,7 +127,9 @@ const station = {
   // 查询分享给用户的设备
   getStationSharedToUser: (connect, id) => {
     let sql = `
-      SELECT d.sn,du.createdAt,d.owner,i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name
+      SELECT d.sn,d.owner,
+      i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name,
+      du.createdAt
       FROM device_user AS du
       JOIN device AS d ON du.sn=d.sn
       LEFT JOIN deviceInfo as i ON du.sn=i.sn

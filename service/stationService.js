@@ -4,6 +4,16 @@ const User = require('../models/user')
 const E = require('../lib/error')
 const jwt = require('../lib/jwt')
 
+const pulishUser = async (connect, sn) => {
+  let owner = await Station.getStationOwner(connect, sn)
+  let sharer = await Station.getStationSharer(connect, sn)
+  let topic = `cloud/${sn}/user`
+  let qos = 1
+  let payload = JSON.stringify({ owner, sharer })
+  let obj = { topic, qos, payload }
+  let r = await publishAsync(obj)
+}
+
 class StationService {
   async bindUser(connect, sn, certId, signature, encrypted) {
     try {
@@ -39,21 +49,40 @@ class StationService {
       // let device = await Station.findDeviceBySn(connect, sn)
       let user = (await User.getUserInfo(connect, id))[0]
       let result = await Station.bindUser(connect, sn, id)
-      
-      return Object.assign(user, {password: undefined})
+
+      return Object.assign(user, { password: undefined })
     } catch (error) { throw error }
   }
 
-  async unbindStation(connect, userId, sn) {
+  // 删除设备
+  async deleteStation(connect, userId, sn) {
     try {
+      // 检查设备类型(owner or share)
       let ownStations = await Station.getStationBelongToUser(connect, userId)
       let sharedStations = await Station.getStationSharedToUser(connect, userId)
       let ownStation = ownStations.find(item => item.sn == sn)
       let sharedStation = sharedStations.find(item => item.sn == sn)
       if (!ownStation && !sharedStation) throw new E.StationNotExist()
-      // if (ownStation) 
-      
-    } catch(error) { throw error}
+      if (ownStation) {
+        // 需要删除用户下所有设备
+
+        await Station.unbindUser(connect, sn)
+        await Station.recordShare(connect, sn, userId, null, userId, 'unbind')
+        let userResult = await Station.getStationSharer(connect, sn)
+        
+        for(let i = 0; i < userResult.length; i++) {
+          await Station.recordShare(connect, sn, userId, null, userResult[i].id, 'passiveExit')
+        }
+        
+        await Station.cleanShare(connect, sn)
+      } else if (sharedStation) {
+        // 仅删除个人绑定关系
+        let { owner } = sharedStation
+        await Station.deleteShare(connect, sn, userId )
+        await Station.recordShare(connect, sn, owner, null, userId, 'activeExit')
+      }
+
+    } catch (error) { throw error }
   }
 
   // 分享设备
@@ -78,14 +107,34 @@ class StationService {
 
       // 记录
       if (record) await Station.recordShare(connect, sn, owner, phone, id, 'invite')
-      
+
+
+      try {
+        await pulishUser(connect, sn)
+      } catch (error) { console.log(error) }
+
       return { userExist }
-    } catch (error) { console.log(error);throw error }
+    } catch (error) { throw error }
   }
 
   // 取消分享
-  async deleteUser(connect, sn, userId, sharedUserId) {
-    
+  async deleteUser(connect, owner, sn, sharedUserId) {
+    try {
+      // 检查owner 与 device 关系
+      let deviceResult = await Station.findDeviceBySn(connect, sn)
+      if (deviceResult.length !== 1) throw new E.StationNotExist()
+      if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
+      // 检查分享用户ID
+      let shareResult = await Station.getStationSharer(connect, sn)
+      let user = shareResult.find(item => item.id == sharedUserId)
+      if (!user) throw new E.ShareNotShared()
+      // 删除绑定关系
+      await Station.deleteShare(connect, sn, sharedUserId)
+
+      // 记录
+      await Station.recordShare(connect, sn, owner, null, sharedUserId, 'deprive')
+
+    } catch (error) { throw error }
   }
 
   // 查询用户所有设备
@@ -97,9 +146,9 @@ class StationService {
       let lastUseDeviceSn = null
       if (lastUseDevice.length == 1 && lastUseDevice[0].sn) {
         lastUseDeviceSn = lastUseDevice[0].sn
-      } 
+      }
       return { ownStations, sharedStations, lastUseDeviceSn }
-    } catch (error) { throw error}
+    } catch (error) { throw error }
   }
 
   // 查询设备所有用户
@@ -108,7 +157,7 @@ class StationService {
       let owner = await Station.getStationOwner(connect, sn)
       let sharer = await Station.getStationSharer(connect, sn)
       return { owner, sharer }
-    } catch (error) { throw error}
+    } catch (error) { throw error }
   }
 }
 
