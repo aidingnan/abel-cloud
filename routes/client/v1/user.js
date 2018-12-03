@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-03 16:29:57
+ * @Last Modified time: 2018-12-03 17:53:53
  */
 const express = require('express')
 const router = express.Router()
@@ -66,21 +66,6 @@ router.post('/', joiValidator({
     let result = await userService.signUpWithPhone(req.db, phone, password, code, clientId, type)
     res.success(result)
   } catch (error) { res.error(error) }
-})
-
-// 换手机号
-router.patch('/', joiValidator({
-  body: {
-    oldTicket: Joi.string().required(),
-    newTicket: Joi.string().required() 
-  }
-}), cAuth, async (req, res) => {
-  try {
-    let { oldTicket, newTicket } = req.body
-    let { id } = req.auth
-    let result = await userService.replacePhone(req.db, id, oldTicket, newTicket)
-    res.success(result)
-  } catch (error) { console.log(error);res.error(error)}
 })
 
 // 使用手机号/验证码登录
@@ -171,15 +156,19 @@ router.post('/phone', joiValidator({
   } catch (error) { res.error(error) }
 })
 
-/**
- * 解绑手机（替换）
- */
+// 换手机号
 router.patch('/phone', joiValidator({
-
+  body: {
+    oldTicket: Joi.string().required(),
+    newTicket: Joi.string().required() 
+  }
 }), cAuth, async (req, res) => {
   try {
-    userService.unbindPhone(req.db)
-  } catch(error) { res.error(error) }
+    let { oldTicket, newTicket } = req.body
+    let { id } = req.auth
+    let result = await userService.replacePhone(req.db, id, oldTicket, newTicket)
+    res.success(result)
+  } catch (error) { console.log(error);res.error(error)}
 })
 
 
