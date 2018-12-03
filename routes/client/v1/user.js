@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-27 15:18:12
+ * @Last Modified time: 2018-12-03 16:29:57
  */
 const express = require('express')
 const router = express.Router()
@@ -64,8 +64,23 @@ router.post('/', joiValidator({
   try {
     let { phone, code, password, clientId, type } = req.body
     let result = await userService.signUpWithPhone(req.db, phone, password, code, clientId, type)
-    return res.success(result)
-  } catch (e) { res.error(e) }
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
+
+// 换手机号
+router.patch('/', joiValidator({
+  body: {
+    oldTicket: Joi.string().required(),
+    newTicket: Joi.string().required() 
+  }
+}), cAuth, async (req, res) => {
+  try {
+    let { oldTicket, newTicket } = req.body
+    let { id } = req.auth
+    let result = await userService.replacePhone(req.db, id, oldTicket, newTicket)
+    res.success(result)
+  } catch (error) { console.log(error);res.error(error)}
 })
 
 // 使用手机号/验证码登录
@@ -213,7 +228,7 @@ router.post('/smsCode/ticket', joiValidator({
   body: {
     phone: Joi.string().required(),
     code: Joi.string().required(),
-    type: ['password', 'mail']
+    type: ['password', 'mail', 'replace']
   }
 }), async (req, res) => {
   try {

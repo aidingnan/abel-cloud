@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-28 17:20:47
+ * @Last Modified time: 2018-12-03 17:45:44
  */
 
 const user = {
@@ -29,6 +29,22 @@ const user = {
       UPDATE userSmsCodeRecord SET verified=1,status='consumed'
       WHERE phone='${phone}' AND code='${code}' AND verified=0 AND type='${type}'
       AND unix_timestamp(time) BETWEEN @start AND @end;`
+    return connect.queryAsync(sql)
+  },
+
+  // 换手机号
+  replacePhone: (connect, userId, oldPhone, newPhone) => {
+    let sql = `
+      BEGIN;
+      DELETE FROM phone
+      WHERE phoneNumber='${oldPhone}' AND user='${userId}';
+
+      INSERT INTO phone
+      SET phoneNumber='${newPhone}',user='${userId}';
+
+      UPDATE user SET username='${newPhone}'
+      WHERE id='${userId}'
+    `
     return connect.queryAsync(sql)
   },
 

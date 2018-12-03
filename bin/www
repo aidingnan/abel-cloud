@@ -29,7 +29,7 @@ var pool = db.createPool({
 
 global.pool = promise.promisifyAll(pool)
 
-let cwd = path.join(process.cwd(), './lib/getAWSParams.js')
+// let cwd = path.join(process.cwd(), './lib/getAWSParams.js')
 
 // const Parameters = execFileSync('node', [cwd], { encoding: 'utf8' })
 
@@ -53,6 +53,13 @@ const iotData = new AWS.IotData({
   region: 'cn-north-1',
   endpoint: 'a3dc7azfqxif0n.iot.cn-north-1.amazonaws.com.cn'
 })
+
+ssm.getParameters({
+  Names:['iot', 'rds', 'rds-test']
+}, (err, a, b) => {
+  // console.log(a, b)
+})
+
 
 
 global.getParameterAsync = promise.promisify(ssm.getParameter).bind(ssm)
@@ -125,6 +132,7 @@ function onError(error) {
       process.exit(1);
       break;
     default:
+      console.log(error)
       throw error;
   }
 }

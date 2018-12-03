@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-29 15:26:14
+ * @Last Modified time: 2018-12-03 17:43:24
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -57,7 +57,7 @@ class UserService {
       else return { userExist: false }
     } catch (error) { throw error }
   }
-  
+
   // 注册
   async signUpWithPhone(connect, phone, p, code, clientId, type) {
     try {
@@ -93,7 +93,7 @@ class UserService {
           let { id, owner, sn, phone } = shareRecord[i]
           await stationService.addUser(connect, owner, sn, phone, false)
           await Station.updateShareRecord(connect, id, 'done')
-        } catch (error) {console.log(error)}
+        } catch (error) { console.log(error) }
       }
 
       // 获取用户信息
@@ -151,12 +151,12 @@ class UserService {
       // 判断
       let userResult = await User.loginWithMail(connect, mail, password)
       if (userResult.length !== 1) throw new E.MailOrPasswordError()
-      
+
       // 记录登录信息
       await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
 
       return await getToken(connect, userResult, clientId, type)
-      
+
     } catch (error) { throw error }
   }
 
@@ -174,6 +174,57 @@ class UserService {
       return result
 
     } catch (error) { throw error }
+  }
+
+  // 换手机
+  
+  // 删除旧手机
+  // 添加新手机
+  // 更新用户名
+  async replacePhone(connect, userId, oldTicket, newTicket) {
+    try {
+      // 用户
+      let userResult = await User.getUserInfo(connect, userId)
+      if (userResult.length == 0) throw new E.UserNotExist()
+      let user = userResult[0]
+      // 旧手机
+      let oldTicketResult = await User.getSmsCodeTicketInfo(connect, oldTicket)
+      if (oldTicketResult.length == 0 || oldTicketResult[0].type !== 'replace')
+        throw new E.PhoneTicketInvalid()
+      let oldPhone = oldTicketResult[0].phone
+      // 新手机
+      let newTicketResult = await User.getSmsCodeTicketInfo(connect, newTicket)
+      if (newTicketResult.length == 0 || newTicketResult[0].type !== 'replace')
+        throw new E.PhoneTicketInvalid()
+      let newPhone = newTicketResult[0].phone
+      let newPhoneUsers = await User.getUserByPhone(connect, newPhone)
+
+      console.log(user)
+      console.log(oldPhone)
+      console.log(newPhone)
+      // 换手机条件
+      if (oldPhone !== user.username) throw new E.PhoneNotBelongToUser()
+      if (newPhoneUsers.length !== 0) throw new E.UserAlreadyExist()
+
+      let result = await User.replacePhone(connect, userId, oldPhone, newPhone)
+      let deleteCheck = result[1].affectedRows == 1
+      let addCheck = result[2].affectedRows == 1
+      let updateCheck = result[3].affectedRows == 1
+
+      if (!deleteCheck || !addCheck || !updateCheck) await connect.queryAsync('ROLLBACK;')
+      else {
+        await connect.queryAsync('COMMIT;')
+        return new Error('replace phone failed')
+      }
+      
+      console.log(result)
+      
+      
+
+    } catch (error) { 
+      await connect.queryAsync('ROLLBACK;')
+      throw error;
+     }
   }
 
   // ---------------------用户设置---------------------
@@ -302,9 +353,9 @@ class UserService {
       let userResult = await User.getUserWechat(connect, userId)
       let result = userResult.find(item => item.unionid == unionid)
       if (!result) throw new Error('unionid error')
-      
+
       await User.unbindWechat(connect, userId, unionid)
-      
+
     } catch (error) { throw error }
   }
 
@@ -337,10 +388,10 @@ class UserService {
   // 使用ticket设置密码
   async updatePassword(connect, password, phoneTicket, mailTicket) {
     try {
-      
+
       let phoneUser, mailUser
       // 有效性检查
-      if (!phoneTicket && !mailTicket ) throw new Error('ticket is required')
+      if (!phoneTicket && !mailTicket) throw new Error('ticket is required')
 
       if (phoneTicket) {
         let phoneResult = await User.getSmsCodeTicketInfo(connect, phoneTicket)
@@ -358,17 +409,17 @@ class UserService {
 
       if (phoneUser && mailUser && phoneUser.id !== mailUser.id) throw new Error('not same user')
 
-      let userId = phoneUser? phoneUser.id: mailUser.id
+      let userId = phoneUser ? phoneUser.id : mailUser.id
 
-      let safety = phoneUser? phoneUser.safety: mailUser.safety
+      let safety = phoneUser ? phoneUser.safety : mailUser.safety
 
       if (safety !== 0 && !(phoneTicket && mailTicket)) throw new Error('double verify')
-      
+
       // 更新密码
       await User.setNewPassword(connect, userId, password)
       // 更新验证码状态 todo
-      
-    } catch (error) { console.log(error);throw error }
+
+    } catch (error) { console.log(error); throw error }
   }
 
   // 更新安全设置
@@ -378,7 +429,7 @@ class UserService {
       if (safety !== 0 && mailResult.length == 0) throw new E.MailShouldBeBound()
       let updateResult = await User.updateSafeTy(connect, userId, safety)
       return await this.getUserInfo(connect, userId)
-      
+
     } catch (error) { throw error }
   }
 
@@ -437,16 +488,16 @@ class UserService {
       let codeResult = await User.getMailCode(connect, mail, code, 'bind')
       if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
       // 绑定
-      
+
       let result = await User.bindMail(connect, mail, code, userId)
       let codeCheck = result[3].affectedRows == 0
       let userCheck = result[4].affectedRows == 0
       if (codeCheck || userCheck) {
-        await connect.queryAsync('ROLLBACK;')  
+        await connect.queryAsync('ROLLBACK;')
         throw new Error('bind failed')
       }
 
-      await connect.queryAsync('COMMIT;')  
+      await connect.queryAsync('COMMIT;')
 
     } catch (error) {
       console.log(error)
@@ -495,7 +546,7 @@ class UserService {
       let code = r.slice(-4, r.length)
       console.log(code, type)
       await User.createSmsCode(connect, id, phone, code, type)
-      
+
       // 发送验证码
       let res = await sendSmsCode(phone, code, type)
       // // 判断请求是否成功
@@ -520,7 +571,7 @@ class UserService {
     try {
       // 检查是否已注册
       let u = await User.getUserByPhone(connect, phone)
-      if (u.length == 0) throw new E.UserNotExist()
+      if (u.length == 0 && type !== 'replace') throw new E.UserNotExist()
 
       // 校验验证码
       let codeResult = await User.getSmsCode(connect, phone, code, type)
