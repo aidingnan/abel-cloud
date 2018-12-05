@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-05 16:19:18
+ * @Last Modified time: 2018-12-05 17:07:05
  */
 
 const debug = require('debug')('app:store')
@@ -98,31 +98,6 @@ class FetchFile extends Container {
       res.error(err)
       server.error(err)
     })
-  }
-
-  response(req, res) {
-    let jobId = req.params.jobId
-    let server = this.map.get(jobId)
-    // 任务不存在
-    if (!server) return res.error(new E.StoreFileQueueNoServer(), 403, false)
-
-    // 重复发送或者客户端撤销请求
-    if (server.finished()) {
-      let e = new E.PipeResponseHaveFinished()
-      server.state.setState(Err, e)
-      return res.error(e)
-    }
-
-    let { error, data } = req.body
-    
-    if (error) {
-      let { message, code } = error
-      server.state.setState(Err, error)
-    }
-    else {
-      server.state.setState(Finish, data)
-    }
-    res.success()
   }
 
 }

@@ -31,8 +31,6 @@ global.pool = promise.promisifyAll(pool)
 
 // let cwd = path.join(process.cwd(), './lib/getAWSParams.js')
 
-// const Parameters = execFileSync('node', [cwd], { encoding: 'utf8' })
-
 /**
  * 初始化AWS tokenKeys cloudKeys
  */

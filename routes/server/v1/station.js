@@ -24,7 +24,6 @@ router.post('/bind', joiValidator({
 
 router.get('/user', async (req, res) => {
   try {
-    // let { sn } = req.auth
     let { sn } = req.auth
     let result = await stationService.getStationUsers(req.db, sn)
     res.success(result)
@@ -34,7 +33,7 @@ router.get('/user', async (req, res) => {
 // json 返回
 router.post('/:id/response/:jobId/json', async (req, res) => {
   try {
-    transformJson.request(req, res)
+    transformJson.response(req, res)
   } catch(e) { res.error(e)}
 })
 

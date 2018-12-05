@@ -15,9 +15,9 @@ class State {
     new NextState(this.ctx, ...args)
   }
 
-  enter() {}
+  enter() { }
 
-  exit() {}
+  exit() { }
 }
 
 /**
@@ -33,7 +33,7 @@ class Init extends State {
     let server = this.ctx
     let jobId = this.ctx.jobId
     this.ctx.ctx.map.set(jobId, server)
-    
+
     let body = server.req.body
     let SetCookie = this.ctx.req.headers['cookie']
     this.ctx.manifest = Object.assign({
@@ -58,11 +58,11 @@ class Notice extends State {
       let topic = `cloud/${sn}/pipe`
       let qos = 1
       let payload = JSON.stringify(this.ctx.manifest)
-      let obj = { topic, qos, payload}
+      let obj = { topic, qos, payload }
       publishAsync(obj)
       this.setState(Pending)
     } catch (e) { this.setState(Error, e, 500) }
-    
+
   }
 }
 
@@ -125,7 +125,7 @@ class Server extends EventEmitter {
     if (Date.now() > this.timer) return true
     else return false
   }
-  
+
   finished() {
     return this.res.finished
   }
@@ -148,10 +148,12 @@ class Server extends EventEmitter {
   }
 }
 
+global.queue = global.queue?global.queue: new Map()
+
 class Container {
   constructor(limit) {
     this.limit = limit || 1024
-    this.map = new Map()
+    this.map = global.queue
   }
 
   schedule() {
@@ -159,7 +161,39 @@ class Container {
       if (v.finished()) this.map.delete(k)
     })
   }
-}
 
+  // 对客户端请求进行返回
+  response(req, res) {
+    let { jobId } = req.params
+    let server = this.map.get(jobId)
+    // 任务不存在
+    if (!server) return res.error(new E.TransformJsonQueueNoServer(), 403, false)
+
+    // 超时
+    if (server.isTimeOut()) {
+      let e = new E.PipeResponseTimeout()
+      server.state.setState(Err, e)
+      return res.error(e)
+    }
+    // 重复发送或者客户端撤销请求
+    if (server.finished()) {
+      let e = new E.PipeResponseHaveFinished()
+      server.state.setState(Err, e)
+      return res.error(e)
+    }
+
+    let responseError = req.body.error
+    if (responseError) {
+      // 将station错误返回至客户端
+      server.state.setState(Err, responseError)
+    }
+    else {
+      // 将station数据返回至客户端
+      let data = (Object.keys(req.body).length === 1 && req.body.data) ? req.body.data : req.body
+      server.state.setState(Finish, data)
+    }
+    res.end()
+  }
+}
 
 module.exports = { State, Pending, Notice, Finish, Err, Server, Container, Init }

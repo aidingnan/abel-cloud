@@ -114,36 +114,6 @@ class StoreFile extends Container {
       res.error(e)
     }
   }
-
-  /**
-   * response store error to client
-   * @param {any} req 
-   * @param {any} res 
-   * @memberof StoreFile
-   */
-  response(req, res) {
-    let jobId = req.params.jobId
-    let server = this.map.get(jobId)
-    // 任务不存在
-    if (!server) return res.error(new E.StoreFileQueueNoServer(), 403, false)
-
-    // 重复发送或者客户端撤销请求
-    if (server.finished()) {
-      let e = new E.PipeResponseHaveFinished()
-      server.state.setState(Err, e)
-      return res.error(e)
-    }
-
-    let { error, data } = req.body
-    
-    if (error) {
-      server.state.setState(Err, error)
-    }
-    else {
-      server.state.setState(Finish, data)
-    }
-    res.success()
-  }
 }
 
 module.exports = new StoreFile(10000)
