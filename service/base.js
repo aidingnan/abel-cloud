@@ -116,7 +116,7 @@ class Server extends EventEmitter {
     this.jobId = uuid.v4()
     this.state = null
     new Init(this)
-    this.req.setTimeout(15000, () => {console.log('timeout trigger')})
+    // this.req.setTimeout(1500, this.test)
     this.req.on('error', err => this.error(err))
     this.req.on('close', this.abort)
   }
@@ -144,8 +144,8 @@ class Server extends EventEmitter {
   abort() {
     console.log('in abort')
     this.res.finished = true
+    this.res.err
   }
-
 }
 
 class Container {

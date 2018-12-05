@@ -2,6 +2,7 @@ var express = require('express')
 const promise = require('bluebird')
 var cookieParser = require('cookie-parser')
 var logger = require('morgan')
+var timeout = require('connect-timeout')
 
 var app = express()
 
@@ -44,6 +45,7 @@ app.use(async (req, res, next) => {
   next()
 })
 
+app.use(timeout('15s', { respond: true }))
 app.use(logger('dev'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
@@ -74,7 +76,8 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500)
   res.json({
     message: err.message,
-    error: err
+    error: err,
+    code: err.status || 500
   });
 })
 
