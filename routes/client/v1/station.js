@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-05 16:52:33
+ * @Last Modified time: 2018-12-05 17:11:12
  */
 
 const express = require('express')
@@ -140,7 +140,7 @@ router.get('/:sn/pipe', joiValidator({
 })
 
 async function checkUserAndStation(req, res, next) {
-  return next()
+  // return next()
   try {
     let userId = req.auth.id
     let sn = req.params.sn
