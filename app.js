@@ -42,6 +42,8 @@ app.use(async (req, res, next) => {
       req.db.release()
     } catch (e) {}
   })
+
+  console.log(req.body)
   
   next()
 })
@@ -50,7 +52,6 @@ app.use(timeout('15s', { respond: true }))
 app.use(logger('dev'))
 app.use(express.json())
 app.use(express.urlencoded({ limit: '50mb', extended: false }))
-console.log('after json')
 app.use(cookieParser())
 
 // res middleware
