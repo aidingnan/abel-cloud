@@ -46,7 +46,7 @@ app.use(async (req, res, next) => {
   next()
 })
 
-app.use(timeout('15s', { respond: true }))
+// app.use(timeout('15s', { respond: true }))
 app.use(logger('dev'))
 app.use(express.urlencoded({ limit: '500mb', extended: false }))
 app.use(express.json({ limit: '500mb', extended: false }))

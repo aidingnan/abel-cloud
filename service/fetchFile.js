@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-05 18:08:53
+ * @Last Modified time: 2018-12-05 18:37:35
  */
 
 const debug = require('debug')('app:store')
@@ -55,10 +55,6 @@ class Pipe extends State {
     for(let key in req.headers) {
       this.ctx.res.setHeader(key, req.headers[key])
     }
-
-    req.on('error', err => {
-      console.log(err, 'in test callback')
-    })
 
     req.pipe(this.ctx.res)
   }
