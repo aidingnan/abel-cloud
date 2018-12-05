@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-22 18:24:50
+ * @Last Modified time: 2018-12-05 16:19:18
  */
 
 const debug = require('debug')('app:store')
@@ -63,6 +63,7 @@ class Pipe extends State {
 class FetchFile extends Container {
   constructor(limit) {
     super(limit)
+    this.requestType = 'fetch'
   }
 
   createServer(req, res) {

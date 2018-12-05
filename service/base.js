@@ -39,7 +39,8 @@ class Init extends State {
     this.ctx.manifest = Object.assign({
       sessionId: jobId,
       user: { id: this.ctx.req.auth.id },
-      headers: { 'cookie': SetCookie }
+      headers: { 'cookie': SetCookie },
+      requestType: this.ctx.ctx.requestType
     }, body)
 
     this.setState(Notice)
@@ -116,7 +117,6 @@ class Server extends EventEmitter {
     this.jobId = uuid.v4()
     this.state = null
     new Init(this)
-    // this.req.setTimeout(1500, this.test)
     this.req.on('error', err => this.error(err))
     this.req.on('close', this.abort)
   }

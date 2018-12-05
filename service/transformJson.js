@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 16:49:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-06 14:28:03
+ * @Last Modified time: 2018-12-05 16:17:53
  */
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
@@ -19,6 +19,7 @@ const { Init, Finish, Err, Server, Container } = require('./base')
 class TransformJson extends Container {
   constructor(limit) {
     super(limit)
+    this.requestType = 'json'
   }
 
   // 创建客户端请求

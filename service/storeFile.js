@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-22 18:24:59
+ * @Last Modified time: 2018-12-05 16:19:30
  */
 
 const debug = require('debug')('app:store')
@@ -68,6 +68,7 @@ class StoreFile extends Container {
 
   constructor(limit) {
     super(limit)
+    this.requestType = 'store'
   }
 
   schedule() {
