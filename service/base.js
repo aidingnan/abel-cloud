@@ -1,6 +1,8 @@
 const EventEmitter = require('events').EventEmitter
 const uuid = require('uuid')
 const debug = require('debug')('app:store')
+const E = require('../lib/error')
+
 
 class State {
   constructor(ctx, ...args) {
