@@ -70,7 +70,7 @@ app.use(function(err, req, res, next) {
     req.db.release()
   } catch (e) {}
   console.log(err.message)
-  if (err.message == 'Response timeout') res.error(new E.RequestTimeOut(), 500)
+  if (err.message == 'Response timeout') res.error(new E.RequestTimeOut(), 504)
   else res.error(err)
 })
 
