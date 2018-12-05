@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-03 17:43:24
+ * @Last Modified time: 2018-12-04 17:47:40
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -90,8 +90,8 @@ class UserService {
       let shareRecord = await Station.getShareRecord(connect, phone, 'invite', 'todo')
       for (let i = 0; i < shareRecord.length; i++) {
         try {
-          let { id, owner, sn, phone } = shareRecord[i]
-          await stationService.addUser(connect, owner, sn, phone, false)
+          let { id, owner, sn, phone, setting } = shareRecord[i]
+          await stationService.addUser(connect, owner, sn, phone, JSON.parse(setting), false)
           await Station.updateShareRecord(connect, id, 'done')
         } catch (error) { console.log(error) }
       }

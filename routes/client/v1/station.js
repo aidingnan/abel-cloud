@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-11-30 15:40:47
+ * @Last Modified time: 2018-12-04 16:51:44
  */
 
 const express = require('express')
@@ -32,21 +32,21 @@ router.post('/', async (req, res) => {
     let encrypted = cipher.update(JSON.stringify(user), 'utf8', 'hex')
     encrypted += cipher.final('hex')
 
-    let result = { encrypted: `${latest}@${encrypted}`}
+    let result = { encrypted: `${latest}@${encrypted}` }
     res.success(result)
-  } catch (error) {  console.log(error);res.error(error) }
+  } catch (error) { console.log(error); res.error(error) }
 })
 
 // 删除设备
 router.delete('/', joiValidator({
-  body: { sn: Joi.string().required()}
-}), async(req, res) => {
+  body: { sn: Joi.string().required() }
+}), async (req, res) => {
   try {
     let { id } = req.auth
     let { sn } = req.body
     let result = await stationService.deleteStation(req.db, id, sn)
     res.success(result)
-  } catch (error) {res.error(error)}
+  } catch (error) { res.error(error) }
 })
 
 // 查询某台station下用户
@@ -56,24 +56,30 @@ router.get('/:sn/user', async (req, res) => {
     let { sn } = req.params
     let result = await stationService.getStationUsers(req.db, sn)
     res.success(result)
-  } catch (e) { res.error(e)}
+  } catch (e) { res.error(e) }
 })
 
 // 分享设备
 router.post('/:sn/user', joiValidator({
   params: { sn: Joi.string().required() },
-  body: {  phone: Joi.string().required() }
+  body: {
+    phone: Joi.string().required(),
+    setting: Joi.object({
+      cloud: Joi.number().valid(1).required(),
+      publicSpace: Joi.number().valid(0, 1).required()
+    }).required()
+  }
 }), async (req, res) => {
   try {
     // 获取owner
     let { id } = req.auth
     // 获取设备ID & 对象ID
     let { sn } = req.params
-    let { phone } = req.body
-    let result = await stationService.addUser(req.db, id, sn, phone, true)
+    let { phone, setting } = req.body
+    let result = await stationService.addUser(req.db, id, sn, phone, setting, true)
 
     res.success(result)
-  } catch (error) { res.error(error)}
+  } catch (error) { res.error(error) }
 })
 
 // 取消分享设备
@@ -97,7 +103,21 @@ router.get('/', async (req, res) => {
     let result = await stationService.getStations(req.db, id, clientId, type)
 
     res.success(result)
-  } catch (e) { res.error(e)}
+  } catch (e) { res.error(e) }
+})
+
+// 设备下用户设置
+router.patch('/:sn/user/:userId', joiValidator({
+  params: { sn: Joi.string(), userId: Joi.string() },
+  body: { usb: Joi.number().allow(0, 1), publicSpace: Joi.number().allow(0, 1) }
+}), async (req, res) => {
+  try {
+    let { id } = req.auth
+    let { sn, userId } = req.params
+    let { usb, publicSpace } = req.body
+    if (!usb && !publicSpace) return res.error('invalid params')
+    let result = await stationService.updateStationUser(req.db, id, sn, userId, usb, publicSpace)
+  } catch (error) { res.error(error) }
 })
 
 // json操作
@@ -136,10 +156,10 @@ async function checkUserAndStation(req, res, next) {
 
     try {
       req.db.release()
-    } catch (e) {}
-    
+    } catch (e) { }
+
     next()
-  } catch (e) { 
+  } catch (e) {
     res.error(e)
   }
 }

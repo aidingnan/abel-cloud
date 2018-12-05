@@ -34,21 +34,25 @@ const station = {
   },
 
   // 创建设备与用户的分享关系
-  createShare: (connect, sn, id) => {
+  createShare: (connect, sn, id, setting) => {
     let sql = `
       INSERT INTO device_user
-      SET sn='${sn}',user='${id}';
+      SET sn='${sn}',user='${id}'
     `
+
+    for (let item in setting) {
+      sql += `,${item}=${setting[item]}`
+    }
     return connect.queryAsync(sql)
   },
 
   // 记录设备与手机号分享
-  recordShare: (connect, sn, owner, phone, userId, type) => {
+  recordShare: (connect, sn, owner, phone, userId, type, setting) => {
     let state = userId? 'done': 'todo'
     let sql = `
       INSERT INTO device_userRecord
       SET sn='${sn}',owner='${owner}', phone='${phone}',
-      type='${type}', state='${state}'
+      type='${type}', state='${state}', setting='${setting}'
     `
     if (userId) sql+= `, user='${userId}'`
     return connect.queryAsync(sql)
@@ -93,7 +97,7 @@ const station = {
   // 查询设备拥有者
   getStationOwner: (connect, sn) => {
     let sql = `
-      SELECT u.id, u.username,u.avatarUrl,u.createdAt from device as d 
+      SELECT u.id, u.username,u.avatarUrl,u.nickName,u.createdAt from device as d 
       LEFT JOIN user AS u
       ON d.owner = u.id
       where sn='${sn}' AND owner IS NOT NULL
@@ -104,7 +108,7 @@ const station = {
   // 查询设备分享者
   getStationSharer: (connect, sn) => {
     let sql = `
-      SELECT u.id, u.username,u.avatarUrl,u.createdAt from device_user AS du
+      SELECT u.id, u.username,u.avatarUrl,u.nickName,u.createdAt from device_user AS du
       LEFT JOIN user AS u
       on du.user=u.id
       where sn='${sn}'

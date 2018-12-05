@@ -86,7 +86,7 @@ class StationService {
   }
 
   // 分享设备
-  async addUser(connect, owner, sn, phone, record) {
+  async addUser(connect, owner, sn, phone, setting, record) {
     try {
       let userExist = true, id
       // 检查owner 与 device 关系
@@ -103,11 +103,10 @@ class StationService {
       let relationResult = await Station.findDeviceShareBySnAndId(connect, sn, id)
       if (relationResult.length > 0) throw new E.ShareExist()
       // 建立绑定关系
-      if (userExist) await Station.createShare(connect, sn, id)
+      if (userExist) await Station.createShare(connect, sn, id, setting)
 
       // 记录
-      if (record) await Station.recordShare(connect, sn, owner, phone, id, 'invite')
-
+      if (record) await Station.recordShare(connect, sn, owner, phone, id, 'invite', JSON.stringify(setting))
 
       try {
         await pulishUser(connect, sn)
@@ -158,6 +157,15 @@ class StationService {
       let sharer = await Station.getStationSharer(connect, sn)
       return { owner, sharer }
     } catch (error) { throw error }
+  }
+
+  async updateStationUser(connect, ownerId, sn, sharerUserId, usb, publicSpace) {
+    try {
+      let ownerResult = await Station.getStationOwner(connect, sn)
+      let sharerResult = await Station.getStationSharer(connect, sn)
+      if (ownerResult.find(item => item.id == ownerId)) throw new E.StationNotBelongToUser()
+      console.log(ownerResult, sharerResult)
+    } catch (error) { throw error}
   }
 }
 
