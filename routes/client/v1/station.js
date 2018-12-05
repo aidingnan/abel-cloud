@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-05 17:11:12
+ * @Last Modified time: 2018-12-05 19:07:15
  */
 
 const express = require('express')
@@ -15,6 +15,7 @@ const transformJson = require('../../../service/transformJson')
 const storeFile = require('../../../service/storeFile')
 const fetchFile = require('../../../service/fetchFile')
 const Station = require('../../../models/station')
+var timeout = require('connect-timeout')
 
 // 绑定设备
 router.post('/', async (req, res) => {
@@ -120,20 +121,21 @@ router.patch('/:sn/user/:userId', joiValidator({
   } catch (error) { res.error(error) }
 })
 
+
 // json操作
-router.post('/:sn/json', checkUserAndStation, (req, res) => {
+router.post('/:sn/json', timeout('5s'), checkUserAndStation, (req, res) => {
   transformJson.createServer(req, res)
 })
 
 // 上传文件
-router.post('/:sn/pipe', joiValidator({
+router.post('/:sn/pipe', timeout('5s'), joiValidator({
   query: { data: Joi.string().required() }
 }), checkUserAndStation, (req, res) => {
   storeFile.createServer(req, res)
 })
 
 // 下载文件
-router.get('/:sn/pipe', joiValidator({
+router.get('/:sn/pipe', timeout('5s'), joiValidator({
   query: { data: Joi.string().required() }
 }), checkUserAndStation, (req, res) => {
   fetchFile.createServer(req, res)

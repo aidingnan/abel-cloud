@@ -2,7 +2,7 @@ var express = require('express')
 const promise = require('bluebird')
 var cookieParser = require('cookie-parser')
 var logger = require('morgan')
-var timeout = require('connect-timeout')
+
 var E = require('./lib/error')
 
 var app = express()
