@@ -3,6 +3,7 @@ const promise = require('bluebird')
 var cookieParser = require('cookie-parser')
 var logger = require('morgan')
 var timeout = require('connect-timeout')
+var E = require('./lib/error')
 
 var app = express()
 
@@ -68,17 +69,9 @@ app.use(function(err, req, res, next) {
   try {
     req.db.release()
   } catch (e) {}
-  // set locals, only providing error in development
-  res.locals.message = err.message
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500)
-  res.json({
-    message: err.message,
-    error: err,
-    code: err.status || 500
-  });
+  console.log(err.message)
+  if (err.message == 'Response timeout') res.error(new E.RequestTimeOut(), 500)
+  else res.error(err)
 })
 
 
