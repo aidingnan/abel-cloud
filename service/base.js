@@ -185,7 +185,7 @@ class Container {
     }
 
     let responseError = req.body.error
-    console.log(req.body.error)
+    console.log('wu ce na ', req.body.error)
     if (responseError) {
       // 将station错误返回至客户端
       server.state.setState(Err, responseError)
