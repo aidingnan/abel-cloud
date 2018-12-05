@@ -150,6 +150,7 @@ class Server extends EventEmitter {
   }
 }
 
+console.log('init queue')
 global.queue = global.queue?global.queue: new Map()
 
 class Container {
@@ -169,7 +170,10 @@ class Container {
     let { jobId } = req.params
     let server = this.map.get(jobId)
     // 任务不存在
-    if (!server) return res.error(new E.TransformJsonQueueNoServer(), 403, false)
+    if (!server) {
+      console.log('task not exist')
+      return res.error(new E.TransformJsonQueueNoServer(), 403, false)
+    }
 
     // 超时
     if (server.isTimeOut()) {
