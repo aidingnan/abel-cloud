@@ -150,7 +150,6 @@ class Server extends EventEmitter {
   }
 }
 
-console.log('init queue')
 global.queue = global.queue?global.queue: new Map()
 
 class Container {
@@ -189,7 +188,7 @@ class Container {
     }
 
     let responseError = req.body.error
-    console.log('wu ce na ', req.body.error)
+    console.log('response error', req.body.error)
     if (responseError) {
       // 将station错误返回至客户端
       server.state.setState(Err, responseError)

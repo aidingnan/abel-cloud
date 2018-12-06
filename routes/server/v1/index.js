@@ -5,8 +5,4 @@ const { sAuth } = require('../../../middlewares/jwt')
 router.use('*', sAuth)
 router.use('/station', require('./station'))
 
-
-
-
-
 module.exports = router
