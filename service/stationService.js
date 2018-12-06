@@ -126,7 +126,7 @@ class StationService {
       // 检查分享用户ID
       let shareResult = await Station.getStationSharer(connect, sn)
       let user = shareResult.find(item => item.id == sharedUserId)
-      if (!user) throw new E.ShareNotShared()
+      if (!user) throw new E.UserNotExist()
       // 删除绑定关系
       await Station.deleteShare(connect, sn, sharedUserId)
 
@@ -159,12 +159,14 @@ class StationService {
     } catch (error) { throw error }
   }
 
-  async updateStationUser(connect, ownerId, sn, sharerUserId, usb, publicSpace) {
+  async updateStationUser(connect, ownerId, sn, userId, setting) {
     try {
       let ownerResult = await Station.getStationOwner(connect, sn)
-      let sharerResult = await Station.getStationSharer(connect, sn)
-      if (ownerResult.find(item => item.id == ownerId)) throw new E.StationNotBelongToUser()
-      console.log(ownerResult, sharerResult)
+      let shareResult = await Station.getStationSharer(connect, sn)
+      if (!ownerResult.find(item => item.id == ownerId)) throw new E.StationNotBelongToUser()
+      if (!shareResult.find(item => item.id == userId)) throw new E.UserNotExist()
+      await Station.updateStationUser(connect, sn, userId, setting)
+      return await Station.getStationSharer(connect, sn)
     } catch (error) { throw error}
   }
 }

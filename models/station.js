@@ -46,6 +46,19 @@ const station = {
     return connect.queryAsync(sql)
   },
 
+  // 更新设备下用户设置
+  updateStationUser: (connect, sn, userId, setting) => {
+    let sql = `
+      UPDATE device_user
+      SET cloud=1
+    `
+    for (let item in setting) {
+      sql += `,${item}=${setting[item]}`
+    }
+    sql += ` WHERE sn='${sn}' AND user='${userId}'`
+    return connect.queryAsync(sql)
+  },
+
   // 记录设备与手机号分享
   recordShare: (connect, sn, owner, phone, userId, type, setting) => {
     let state = userId? 'done': 'todo'
@@ -97,7 +110,7 @@ const station = {
   // 查询设备拥有者
   getStationOwner: (connect, sn) => {
     let sql = `
-      SELECT u.id, u.username,u.avatarUrl,u.nickName,u.createdAt from device as d 
+      SELECT u.id, u.username,u.avatarUrl,u.nickName from device as d 
       LEFT JOIN user AS u
       ON d.owner = u.id
       where sn='${sn}' AND owner IS NOT NULL
@@ -108,7 +121,7 @@ const station = {
   // 查询设备分享者
   getStationSharer: (connect, sn) => {
     let sql = `
-      SELECT u.id, u.username,u.avatarUrl,u.nickName,u.createdAt from device_user AS du
+      SELECT du.*, u.id, u.username,u.avatarUrl,u.nickName from device_user AS du
       LEFT JOIN user AS u
       on du.user=u.id
       where sn='${sn}'

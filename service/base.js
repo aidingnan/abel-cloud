@@ -188,7 +188,7 @@ class Container {
     }
 
     let responseError = req.body.error
-    console.log('response error', req.body.error)
+    if (responseError) console.log('response error', req.body.error)
     if (responseError) {
       // 将station错误返回至客户端
       server.state.setState(Err, responseError)

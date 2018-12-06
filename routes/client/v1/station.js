@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-06 10:55:08
+ * @Last Modified time: 2018-12-06 16:04:51
  */
 
 const express = require('express')
@@ -107,16 +107,20 @@ router.get('/', async (req, res) => {
 })
 
 // 设备下用户设置
-router.patch('/:sn/user/:userId', joiValidator({
-  params: { sn: Joi.string(), userId: Joi.string() },
-  body: { usb: Joi.number().allow(0, 1), publicSpace: Joi.number().allow(0, 1) }
+router.patch('/:sn/user', joiValidator({
+  params: { sn: Joi.string()},
+  body: { 
+    sharedUserId: Joi.string().required(),
+    setting: Joi.object({ publicSpace: Joi.number().valid(0, 1) }).required() }
 }), async (req, res) => {
   try {
+    
     let { id } = req.auth
-    let { sn, userId } = req.params
-    let { usb, publicSpace } = req.body
-    if (!usb && !publicSpace) return res.error('invalid params')
-    let result = await stationService.updateStationUser(req.db, id, sn, userId, usb, publicSpace)
+    let { sn } = req.params
+    let { setting, sharedUserId } = req.body
+    if (Object.getOwnPropertyNames(setting).length == 0) throw new Error('invalid params')
+    let result = await stationService.updateStationUser(req.db, id, sn, sharedUserId, setting)
+    res.success(result)
   } catch (error) { res.error(error) }
 })
 
