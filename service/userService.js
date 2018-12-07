@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-04 17:47:40
+ * @Last Modified time: 2018-12-07 16:11:50
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -294,10 +294,12 @@ class UserService {
   async loginWithWechat(connect, code, loginType, clientId, type) {
     try {
       // 解析code => userinfo
-      let wechatInfo = new WechatInfo(loginType)
+      let data = await getParameterAsync({ Name: 'wechat' })
+      let config = JSON.parse(data.Parameter.Value)[loginType]
+      let wechatInfo = new WechatInfo(config)
       let oth = promise.promisify(wechatInfo.oauth2UserInfo).bind(wechatInfo)
       let userInfo = await oth(null, code)
-      console.log(userInfo)
+      // console.log(userInfo)
 
       let { unionid, nickname, headimgurl, refresh_token, access_token, openid } = userInfo
       // 插入或更新微信用户

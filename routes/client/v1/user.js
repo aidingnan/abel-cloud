@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-03 17:53:53
+ * @Last Modified time: 2018-12-07 15:24:51
  */
 const express = require('express')
 const router = express.Router()
@@ -301,7 +301,7 @@ router.post('/mailCode', joiValidator({
 
     let result = await userService.createMailCode(req.db, mail, type)
     res.success(result)
-  } catch (error) { res.error(error) }
+  } catch (error) { console.log(error);res.error(error) }
 })
 
 /**

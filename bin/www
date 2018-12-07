@@ -3,33 +3,13 @@
 /**
  * Module dependencies.
  */
-var app = require('../app');
-var debug = require('debug')('abel:server');
-var http = require('http');
+var app = require('../app')
+var debug = require('debug')('abel:server')
+var http = require('http')
 const db = require('mysql')
-const { execFileSync } = require('child_process')
-const path = require('path')
 const config = require('getconfig')
-const { mysql } = require('getconfig')
 const promise = require('bluebird')
 const AWS = require('aws-sdk')
-
-
-
-/**
- * 初始化 mysql
- */
-var pool = db.createPool({
-  host     : mysql.host,
-  user     : mysql.username,
-  password : mysql.password,
-  database : mysql.database,
-  multipleStatements:true
-});
-
-global.pool = promise.promisifyAll(pool)
-
-// let cwd = path.join(process.cwd(), './lib/getAWSParams.js')
 
 /**
  * 初始化AWS tokenKeys cloudKeys
@@ -52,13 +32,24 @@ const iotData = new AWS.IotData({
   endpoint: 'a3dc7azfqxif0n.iot.cn-north-1.amazonaws.com.cn'
 })
 
-ssm.getParameters({
-  Names:['iot', 'rds', 'rds-test']
-}, (err, a, b) => {
-  // console.log(a, b)
+ssm.getParameters({ Names: ['iot', 'rds', 'rds-test'] }, (err, data) => {
+  try {
+    if (err) throw err
+    let type = process.env.NODE_ENV == 'test' ? 'rds-test' : 'rds'
+    let mysql = JSON.parse(data.Parameters.find(item => item.Name == type).Value)
+    // 初始化 mysql
+    var pool = db.createPool({
+      host: mysql.host,
+      user: mysql.user,
+      password: mysql.password,
+      database: mysql.dbname,
+      multipleStatements: true
+    });
+
+    global.pool = promise.promisifyAll(pool)
+
+  } catch (error) { console.log(error) }
 })
-
-
 
 global.getParameterAsync = promise.promisify(ssm.getParameter).bind(ssm)
 global.describeCertificateAsync = promise.promisify(iot.describeCertificate).bind(iot)

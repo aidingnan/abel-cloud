@@ -20,9 +20,7 @@ router.get('/token', joiValidator({
     let { code, loginType, clientId, type} = req.query
     let user = await userService.loginWithWechat(req.db, code, loginType, clientId, type)
     res.success(user)
-  } catch (e) {
-    res.error(e)
-  }
+  } catch (e) { res.error(e) }
 })
 
 /**
