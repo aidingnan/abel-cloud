@@ -33,7 +33,7 @@ app.use(async (req, res, next) => {
   next()
 })
 
-app.use(logger('combined'))
+app.use(logger(':remote-addr [:date[clf]] ":method :url :status :response-time ms'))
 app.use(express.urlencoded({ limit: '500mb', extended: false }))
 app.use(express.json({ limit: '500mb', extended: false }))
 app.use(cookieParser())
