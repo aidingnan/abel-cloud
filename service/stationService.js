@@ -54,37 +54,6 @@ class StationService {
     } catch (error) { throw error }
   }
 
-  // 删除设备
-  async deleteStation(connect, userId, sn) {
-    try {
-      // 检查设备类型(owner or share)
-      let ownStations = await Station.getStationBelongToUser(connect, userId)
-      let sharedStations = await Station.getStationSharedToUser(connect, userId)
-      let ownStation = ownStations.find(item => item.sn == sn)
-      let sharedStation = sharedStations.find(item => item.sn == sn)
-      if (!ownStation && !sharedStation) throw new E.StationNotExist()
-      if (ownStation) {
-        // 需要删除用户下所有设备
-
-        await Station.unbindUser(connect, sn)
-        await Station.recordShare(connect, sn, userId, null, userId, 'unbind')
-        let userResult = await Station.getStationSharer(connect, sn)
-        
-        for(let i = 0; i < userResult.length; i++) {
-          await Station.recordShare(connect, sn, userId, null, userResult[i].id, 'passiveExit')
-        }
-        
-        await Station.cleanShare(connect, sn)
-      } else if (sharedStation) {
-        // 仅删除个人绑定关系
-        let { owner } = sharedStation
-        await Station.deleteShare(connect, sn, userId )
-        await Station.recordShare(connect, sn, owner, null, userId, 'activeExit')
-      }
-
-    } catch (error) { throw error }
-  }
-
   // 分享设备
   async addUser(connect, owner, sn, phone, setting, record) {
     try {
@@ -136,6 +105,37 @@ class StationService {
     } catch (error) { throw error }
   }
 
+  // 删除设备
+  async deleteStation(connect, userId, sn) {
+    try {
+      // 检查设备类型(owner or share)
+      let ownStations = await Station.getStationBelongToUser(connect, userId)
+      let sharedStations = await Station.getStationSharedToUser(connect, userId)
+      let ownStation = ownStations.find(item => item.sn == sn)
+      let sharedStation = sharedStations.find(item => item.sn == sn)
+      if (!ownStation && !sharedStation) throw new E.StationNotExist()
+      if (ownStation) {
+        // 需要删除用户下所有设备
+
+        await Station.unbindUser(connect, sn)
+        await Station.recordShare(connect, sn, userId, null, userId, 'unbind')
+        let userResult = await Station.getStationSharer(connect, sn)
+        
+        for(let i = 0; i < userResult.length; i++) {
+          await Station.recordShare(connect, sn, userId, null, userResult[i].id, 'passiveExit')
+        }
+        
+        await Station.cleanShare(connect, sn)
+      } else if (sharedStation) {
+        // 仅删除个人绑定关系
+        let { owner } = sharedStation
+        await Station.deleteShare(connect, sn, userId )
+        await Station.recordShare(connect, sn, owner, null, userId, 'activeExit')
+      }
+
+    } catch (error) { throw error }
+  }
+
   // 查询用户所有设备
   async getStations(connect, userId, clientId, type) {
     try {
@@ -151,7 +151,7 @@ class StationService {
   }
 
   // 查询设备所有用户
-  async getStationUsers(connect, sn, userId) {
+  async getStationUsers(connect, sn) {
     try {
       let owner = await Station.getStationOwner(connect, sn)
       let sharer = await Station.getStationSharer(connect, sn)
@@ -159,6 +159,7 @@ class StationService {
     } catch (error) { throw error }
   }
 
+  // 更新设备下用户设置
   async updateStationUser(connect, ownerId, sn, userId, setting) {
     try {
       let ownerResult = await Station.getStationOwner(connect, sn)

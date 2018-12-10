@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-06 16:04:51
+ * @Last Modified time: 2018-12-10 15:59:28
  */
 
 const express = require('express')
@@ -77,7 +77,6 @@ router.post('/:sn/user', joiValidator({
     let { sn } = req.params
     let { phone, setting } = req.body
     let result = await stationService.addUser(req.db, id, sn, phone, setting, true)
-
     res.success(result)
   } catch (error) { res.error(error) }
 })
@@ -124,7 +123,6 @@ router.patch('/:sn/user', joiValidator({
   } catch (error) { res.error(error) }
 })
 
-
 // json操作
 router.post('/:sn/json', checkUserAndStation, (req, res) => {
   transformJson.createServer(req, res)
@@ -169,7 +167,5 @@ async function checkUserAndStation(req, res, next) {
     res.error(e)
   }
 }
-
-
 
 module.exports = router

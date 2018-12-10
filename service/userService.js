@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-07 16:11:50
+ * @Last Modified time: 2018-12-10 14:26:51
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -34,6 +34,8 @@ const getToken = async (connect, userResult, clientId, type) => {
 }
 
 class UserService {
+  // ---------------------注册登录---------------------
+
   // 判断手机是否注册
   async userPhoneExist(connect, phone) {
     try {
@@ -168,65 +170,6 @@ class UserService {
     } catch (error) { throw error }
   }
 
-  async getPhone(connect, id) {
-    try {
-      let result = await User.getPhone(connect, id)
-      return result
-
-    } catch (error) { throw error }
-  }
-
-  // 换手机
-  
-  // 删除旧手机
-  // 添加新手机
-  // 更新用户名
-  async replacePhone(connect, userId, oldTicket, newTicket) {
-    try {
-      // 用户
-      let userResult = await User.getUserInfo(connect, userId)
-      if (userResult.length == 0) throw new E.UserNotExist()
-      let user = userResult[0]
-      // 旧手机
-      let oldTicketResult = await User.getSmsCodeTicketInfo(connect, oldTicket)
-      if (oldTicketResult.length == 0 || oldTicketResult[0].type !== 'replace')
-        throw new E.PhoneTicketInvalid()
-      let oldPhone = oldTicketResult[0].phone
-      // 新手机
-      let newTicketResult = await User.getSmsCodeTicketInfo(connect, newTicket)
-      if (newTicketResult.length == 0 || newTicketResult[0].type !== 'replace')
-        throw new E.PhoneTicketInvalid()
-      let newPhone = newTicketResult[0].phone
-      let newPhoneUsers = await User.getUserByPhone(connect, newPhone)
-
-      console.log(user)
-      console.log(oldPhone)
-      console.log(newPhone)
-      // 换手机条件
-      if (oldPhone !== user.username) throw new E.PhoneNotBelongToUser()
-      if (newPhoneUsers.length !== 0) throw new E.UserAlreadyExist()
-
-      let result = await User.replacePhone(connect, userId, oldPhone, newPhone)
-      let deleteCheck = result[1].affectedRows == 1
-      let addCheck = result[2].affectedRows == 1
-      let updateCheck = result[3].affectedRows == 1
-
-      if (!deleteCheck || !addCheck || !updateCheck) await connect.queryAsync('ROLLBACK;')
-      else {
-        await connect.queryAsync('COMMIT;')
-        return new Error('replace phone failed')
-      }
-      
-      console.log(result)
-      
-      
-
-    } catch (error) { 
-      await connect.queryAsync('ROLLBACK;')
-      throw error;
-     }
-  }
-
   // ---------------------用户设置---------------------
 
   // 设备使用记录
@@ -237,37 +180,7 @@ class UserService {
     } catch (error) { throw error }
   }
 
-  /**
-   * 添加手机
-   */
-  async bindPhone(connect, id, phone, code) {
-    try {
-      // 校验验证码
-      let res = await request.postAsync({
-        uri: 'https://abel.leanapp.cn/v1/user/verifySmsCode',
-        json: true,
-        body: { phone, code }
-      })
-
-      // 验证码失败 ==> 错误
-      if (res.statusCode !== 200) throw new E.SmsCodeError()
-
-      let result = await User.addPhone(connect, id, phone)
-    } catch (error) { throw error }
-  }
-
-  /**
-   * 解绑手机
-   */
-  async unbindPhone(connect, id, phone) {
-    try {
-
-    } catch (error) { throw error }
-  }
-
-  /**
-   * 添加微信账号
-   */
+  // 绑定微信
   async addWechat(connect, id, code, type) {
     try {
       // 解析code => userinfo
@@ -288,9 +201,7 @@ class UserService {
     } catch (error) { throw error }
   }
 
-  /**
-   * 微信登录
-   */
+  // 微信登录
   async loginWithWechat(connect, code, loginType, clientId, type) {
     try {
       // 解析code => userinfo
@@ -324,11 +235,12 @@ class UserService {
     } catch (error) { throw error }
   }
 
-  /**
-  * 微信账号关联用户
-  * 账号存在则关联、不存在则创建
-  */
+  // 关联微信
   async wechatAssociateUser(connect, userId, wechat) {
+    /**
+    * 微信账号关联用户
+    * 账号存在则关联、不存在则创建
+    */
     try {
       if (!wechat) throw new Error('wechat is required')
       // 检查微信账号是否有关联账号
@@ -360,7 +272,6 @@ class UserService {
 
     } catch (error) { throw error }
   }
-
 
   // 更新头像
   async updateAvatar(connect, req, userId) {
@@ -587,6 +498,78 @@ class UserService {
     } catch (error) { ; console.log(error); throw error }
   }
 
+  // 添加手机
+  async bindPhone(connect, id, phone, code) {
+    try {
+      // 校验验证码
+      let res = await request.postAsync({
+        uri: 'https://abel.leanapp.cn/v1/user/verifySmsCode',
+        json: true,
+        body: { phone, code }
+      })
+
+      // 验证码失败 ==> 错误
+      if (res.statusCode !== 200) throw new E.SmsCodeError()
+
+      let result = await User.addPhone(connect, id, phone)
+    } catch (error) { throw error }
+  }
+
+  // 查询手机
+  async getPhone(connect, id) {
+    try {
+      let result = await User.getPhone(connect, id)
+      return result
+
+    } catch (error) { throw error }
+  }
+
+  // 换手机
+  async replacePhone(connect, userId, oldTicket, newTicket) {
+    try {
+      // 用户
+      let userResult = await User.getUserInfo(connect, userId)
+      if (userResult.length == 0) throw new E.UserNotExist()
+      let user = userResult[0]
+      // 旧手机
+      let oldTicketResult = await User.getSmsCodeTicketInfo(connect, oldTicket)
+      if (oldTicketResult.length == 0 || oldTicketResult[0].type !== 'replace')
+        throw new E.PhoneTicketInvalid()
+      let oldPhone = oldTicketResult[0].phone
+      // 新手机
+      let newTicketResult = await User.getSmsCodeTicketInfo(connect, newTicket)
+      if (newTicketResult.length == 0 || newTicketResult[0].type !== 'replace')
+        throw new E.PhoneTicketInvalid()
+      let newPhone = newTicketResult[0].phone
+      let newPhoneUsers = await User.getUserByPhone(connect, newPhone)
+
+      console.log(user)
+      console.log(oldPhone)
+      console.log(newPhone)
+      // 换手机条件
+      if (oldPhone !== user.username) throw new E.PhoneNotBelongToUser()
+      if (newPhoneUsers.length !== 0) throw new E.UserAlreadyExist()
+
+      let result = await User.replacePhone(connect, userId, oldPhone, newPhone)
+      let deleteCheck = result[1].affectedRows == 1
+      let addCheck = result[2].affectedRows == 1
+      let updateCheck = result[3].affectedRows == 1
+
+      if (!deleteCheck || !addCheck || !updateCheck) await connect.queryAsync('ROLLBACK;')
+      else {
+        await connect.queryAsync('COMMIT;')
+        return new Error('replace phone failed')
+      }
+
+      console.log(result)
+
+
+
+    } catch (error) {
+      await connect.queryAsync('ROLLBACK;')
+      throw error;
+    }
+  }
 }
 
 module.exports = new UserService()
