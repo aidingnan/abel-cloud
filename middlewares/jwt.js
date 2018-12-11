@@ -27,15 +27,14 @@ module.exports = {
     const token = req.headers.authorization
     try {
       // 解码
-      const decoded = jwt.decode(token)
+      const decoded = await jwt.decode(token)
       // 解码失败
       if (!decoded)
         return res.error(new Error('decode failed'), 401, false)
 
-      // todo 超时 code!!!
       // token超时
-      if (!decoded.exp || decoded.exp <= Date.now())
-        return res.error(new Error('token overdue, login again please！'), 401)
+      // if (!decoded.exp || decoded.exp <= Date.now())
+        // return res.error(new Error('token overdue, login again please！'), 401)
 
       // 解码内容错误
       if (!decoded.id)
@@ -51,7 +50,7 @@ module.exports = {
       next()
 
     } catch (error) {
-      console.log(error)
+      console.log(error, '1')
       res.error(new Error('authentication failed'), 401, false)
     }
   },
@@ -63,7 +62,7 @@ module.exports = {
       // 微信用户不存在
       if (!wechat) return res.error('wechat is required')
       // 微信用户存在
-      let decoded = jwt.decode(wechat)
+      let decoded = await jwt.decode(wechat)
       if (!decoded) return res.error('decode failed', 401, false)
       // 获取微信用户信息
       let { access_token, openid } = decoded
@@ -96,15 +95,9 @@ module.exports = {
 
     try {
       const aut = req.headers.authorization
-      let arr = aut.split('@')
-      let latest = arr[0]
-      let token = arr[1]
-      let secretResult = await getParameterAsync({ Name: 'tokenKeys' })
-      let { keys } = JSON.parse(secretResult.Parameter.Value)
-      let secret = keys[latest]
 
       // decode
-      const decoded = jwt.decode(token, secret)
+      const decoded = await jwt.decode(aut)
       if (!decoded)
         return res.error(new Error('decode failed'), 401, false)
 

@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-10 14:26:51
+ * @Last Modified time: 2018-12-11 15:23:11
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -30,7 +30,13 @@ const getToken = async (connect, userResult, clientId, type) => {
   // 提取用户其他信息
   let obj = { nickName, avatarUrl, safety, id, username, mail }
 
-  return { token: jwt.encode(user), ...obj }
+  // 获取token
+  let token = await jwt.encode(user)
+
+  // 记录登录信息
+  await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
+
+  return { token, ...obj }
 }
 
 class UserService {
@@ -115,9 +121,6 @@ class UserService {
       let userResult = await User.loginWithPhone(connect, u, p)
       if (userResult.length !== 1) throw new E.UsernameOrPasswordError()
 
-      // 记录登录信息
-      await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
-
       return await getToken(connect, userResult, clientId, type)
 
     } catch (error) { throw error }
@@ -135,9 +138,6 @@ class UserService {
       let userResult = await User.getUserWithPhone(connect, phone)
       if (userResult.length !== 1) throw new E.UsernameOrPasswordError()
 
-      // 记录登录信息
-      await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
-
       // 更新验证码
       await User.updateSmsCode(connect, phone, code, 'login', 1, 'toConsumed')
 
@@ -153,9 +153,6 @@ class UserService {
       // 判断
       let userResult = await User.loginWithMail(connect, mail, password)
       if (userResult.length !== 1) throw new E.MailOrPasswordError()
-
-      // 记录登录信息
-      await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
 
       return await getToken(connect, userResult, clientId, type)
 
@@ -223,12 +220,11 @@ class UserService {
       if (user == null) {
         // 微信用户没有绑定注册用户
         let obj = { unionid, access_token, refresh_token, openid }
-        return { wechat: jwt.encode(obj), user: false }
+        return { wechat: await jwt.encode(obj), user: false }
       } else {
         // 微信用户绑定了注册用户
         let userResult = await User.getUserInfo(connect, user)
-
-        await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
+        
         return { ...(await getToken(connect, userResult, clientId, type)), user: true }
       }
 

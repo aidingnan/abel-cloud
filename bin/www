@@ -138,4 +138,9 @@ function onListening() {
   debug('Listening on ' + bind);
 }
 
+process.on('SIGINT', () => {
+  console.log('SIGINT signal received')
+  process.exit(0)
+})
+
 module.exports = server
