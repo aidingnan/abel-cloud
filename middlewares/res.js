@@ -12,7 +12,6 @@
 
 
 const debug = require('debug')('app:res')
-// const { getconfig } = require('getconfig')
 
 const DEFAULT_SUCCESS_STATUS = 200
 const DEFAULT_ERROR_STATUS = 403

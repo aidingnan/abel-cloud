@@ -39,18 +39,20 @@ module.exports = {
       // 解码内容错误
       if (!decoded.id)
         return res.error(new Error('authentication failed'), 401, false)
-      
+
       // 检查用户
       let user = await User.getUserInfo(req.db, decoded.id)
       if (user.length !== 1)
         return res.error(new E.UserNotExist(), 401, false)
+
+      if (decoded.password !== user[0].password) return res.error(new Error('authentication failed'), 401, false)
 
       // 附加验证结果
       req.auth = decoded
       next()
 
     } catch (error) {
-      console.log(error, '1')
+      console.log(error)
       res.error(new Error('authentication failed'), 401, false)
     }
   },

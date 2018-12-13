@@ -16,16 +16,16 @@ app.use(async (req, res, next) => {
   req.db = connect
 
   req.on('end', () => {
-    // console.log('req end trigger')
     try {
+      // console.log('end trigger in app: relase')
       req.db.release()
-    } catch (e) {}
+    } catch (e) { console.log(e) }
   })
 
   // 当底层连接在 response.end() 被调用或能够刷新之前被终止时触发。
   res.on('close', () => {
-    // console.log('res close trigger')
     try {
+      // console.log('close trigger in app: relase')
       req.db.release()
     } catch (e) {}
   })

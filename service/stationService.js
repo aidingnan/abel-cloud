@@ -7,7 +7,7 @@ const jwt = require('../lib/jwt')
 const pulishUser = async (connect, sn) => {
   let owner = await Station.getStationOwner(connect, sn)
   let sharer = await Station.getStationSharer(connect, sn)
-  let topic = `cloud/${sn}/user`
+  let topic = `cloud/${sn}/users`
   let qos = 1
   let payload = JSON.stringify({ owner, sharer })
   let obj = { topic, qos, payload }
