@@ -2,12 +2,13 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-05 18:37:35
+ * @Last Modified time: 2018-12-13 18:52:19
  */
 
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
 const { State, Notice, Finish, Err, Server, Container } = require('./base')
+const Limit = require('../lib/speedLimit')
 
 /**
  * 状态机
@@ -56,7 +57,9 @@ class Pipe extends State {
       this.ctx.res.setHeader(key, req.headers[key])
     }
 
-    req.pipe(this.ctx.res)
+    let limit = new Limit()
+
+    req.pipe(limit).pipe(this.ctx.res)
   }
 }
 
