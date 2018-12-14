@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-12 14:15:34
+ * @Last Modified time: 2018-12-14 14:28:44
  */
 const express = require('express')
 const router = express.Router()
@@ -12,6 +12,11 @@ const joiValidator = require('../../../middlewares/joiValidator')
 const userService = require('../../../service/userService')
 const { weAuth, cAuth } = require('../../../middlewares/jwt')
 const nodemailer = require('nodemailer');
+
+var timeout = require('connect-timeout')
+
+
+router.use(timeout('15s'))
 
 // 查询手机号
 router.get('/phone/check', joiValidator({

@@ -5,6 +5,11 @@ const joiValidator = require('../../../middlewares/joiValidator')
 const userService = require('../../../service/userService')
 const { weAuth, cAuth } = require('../../../middlewares/jwt')
 
+var timeout = require('connect-timeout')
+
+
+router.use(timeout('15s'))
+
 /**
  * 微信登录
  */

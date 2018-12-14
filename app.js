@@ -19,7 +19,7 @@ app.use(async (req, res, next) => {
     try {
       // console.log('end trigger in app: relase')
       req.db.release()
-    } catch (e) { console.log(e) }
+    } catch (e) { }
   })
 
   // 当底层连接在 response.end() 被调用或能够刷新之前被终止时触发。
