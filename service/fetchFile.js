@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-14 15:40:30
+ * @Last Modified time: 2018-12-14 16:23:54
  */
 
 const debug = require('debug')('app:store')
@@ -59,7 +59,9 @@ class Pipe extends State {
 
     let limit = new Limit()
 
-    req.pipe(limit).pipe(this.ctx.res)
+    req.pipe(this.ctx.res)
+
+    // req.pipe(limit).pipe(this.ctx.res)
 
     // req.on('error')
   }
