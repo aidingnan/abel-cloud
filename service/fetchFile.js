@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-14 14:53:09
+ * @Last Modified time: 2018-12-14 15:11:53
  */
 
 const debug = require('debug')('app:store')
@@ -57,7 +57,7 @@ class Pipe extends State {
       this.ctx.res.setHeader(key, req.headers[key])
     }
 
-    let limit = new Limit({readableHighWaterMark: 65536, writableHighWaterMark: 65536})
+    let limit = new Limit({readableHighWaterMark: 16384, writableHighWaterMark: 16384})
 
     req.pipe(limit).pipe(this.ctx.res)
   }
