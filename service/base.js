@@ -144,9 +144,9 @@ class Server extends EventEmitter {
   }
 
   abort() {
-    console.log('in abort')
+    // console.log('in abort')
     this.res.finished = true
-    this.res.err
+    // this.res.error()
   }
 }
 
