@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-14 17:14:57
+ * @Last Modified time: 2018-12-14 18:25:39
  */
 
 const debug = require('debug')('app:store')
@@ -57,22 +57,20 @@ class Pipe extends State {
       this.ctx.res.setHeader(key, req.headers[key])
     }
 
-    // let limit = new Limit()
+    // let limit = new Limit({readableHighWaterMark: 16000, writableHighWaterMark: 16000})
 
     req.pipe(this.ctx.res)
 
-    req.on('close', () => console.log('req - close'))
-    req.on('error', () => console.log('req - error'))
-    req.on('abort', () => console.log('req - abort'))
+    req.once('close', () => {
+      console.log('req - close')
+      // limit.inputClose()
+    })
+    // req.on('error', () => console.log('req - error'))
+    // req.on('abort', () => console.log('req - abort'))
 
-    // limit.on('close', () => console.log('limit - close'))
-    // limit.on('error', () => console.log('limit - error'))
-    // limit.on('abort', () => console.log('limit - abort'))
-    // limit.on('unpipe', () => console.log('limit - unpipe'))
-
-    this.ctx.res.on('close', () => console.log('res - close'))
-    this.ctx.res.on('error', () => console.log('res - error'))
-    this.ctx.res.on('abort', () => console.log('res - abort'))
+    // this.ctx.res.on('close', () => console.log('res - close'))
+    // this.ctx.res.on('error', () => console.log('res - error'))
+    // this.ctx.res.on('abort', () => console.log('res - abort'))
 
     // req.pipe(limit).pipe(this.ctx.res)
   }
