@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-14 15:19:04
+ * @Last Modified time: 2018-12-14 15:40:30
  */
 
 const debug = require('debug')('app:store')
@@ -60,6 +60,8 @@ class Pipe extends State {
     let limit = new Limit()
 
     req.pipe(limit).pipe(this.ctx.res)
+
+    // req.on('error')
   }
 }
 
@@ -97,6 +99,7 @@ class FetchFile extends Container {
     server.state.setState(Pipe, req, res)
 
     req.on('error', err => {
+      console.log('in request error', error)
       // response
       res.error(err)
       server.error(err)
