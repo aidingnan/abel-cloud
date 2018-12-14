@@ -102,6 +102,10 @@ class StationService {
       // 记录
       await Station.recordShare(connect, sn, owner, null, sharedUserId, 'deprive')
 
+      try {
+        await pulishUser(connect, sn)
+      } catch (error) { console.log(error) }
+
     } catch (error) { throw error }
   }
 
@@ -131,6 +135,10 @@ class StationService {
         let { owner } = sharedStation
         await Station.deleteShare(connect, sn, userId )
         await Station.recordShare(connect, sn, owner, null, userId, 'activeExit')
+
+        try {
+          await pulishUser(connect, sn)
+        } catch (error) { console.log(error) }
       }
 
     } catch (error) { throw error }
@@ -167,6 +175,9 @@ class StationService {
       if (!ownerResult.find(item => item.id == ownerId)) throw new E.StationNotBelongToUser()
       if (!shareResult.find(item => item.id == userId)) throw new E.UserNotExist()
       await Station.updateStationUser(connect, sn, userId, setting)
+      try {
+        await pulishUser(connect, sn)
+      } catch (error) { console.log(error) }
       return await Station.getStationSharer(connect, sn)
     } catch (error) { throw error}
   }
