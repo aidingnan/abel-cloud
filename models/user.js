@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-03 17:45:44
+ * @Last Modified time: 2018-12-17 15:17:16
  */
 
 const user = {
@@ -15,7 +15,7 @@ const user = {
   },
 
   // 使用手机号注册用户
-  signUpWithPhone: (connect, id, phone, code, password, type) => {
+  signUpWithPhone: (connect, id, phone, ticket, password, type) => {
     let sql = `
       BEGIN;
       SET @now = NOW();
@@ -27,7 +27,7 @@ const user = {
       VALUES('${phone}', '${id}', @now, @now)
       ON DUPLICATE KEY UPDATE user='${id}';
       UPDATE userSmsCodeRecord SET verified=1,status='consumed'
-      WHERE phone='${phone}' AND code='${code}' AND verified=0 AND type='${type}'
+      WHERE phone='${phone}' AND id='${ticket}' AND verified=1 AND type='${type}'
       AND unix_timestamp(time) BETWEEN @start AND @end;`
     return connect.queryAsync(sql)
   },

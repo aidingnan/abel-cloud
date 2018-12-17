@@ -138,7 +138,7 @@ class Server extends EventEmitter {
   }
 
   error(err, code) {
-    console.log('in error')
+    console.log('in error', err)
     if (this.finished()) return
     this.res.error(err, code)
   }

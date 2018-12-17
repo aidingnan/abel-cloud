@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-14 14:28:44
+ * @Last Modified time: 2018-12-17 15:07:37
  */
 const express = require('express')
 const router = express.Router()
@@ -60,15 +60,15 @@ router.post('/smsCode', joiValidator({
 router.post('/', joiValidator({
   body: {
     phone: Joi.string().min(11).max(11).required(),
-    code: Joi.string().min(4).max(6).required(),
+    ticket: Joi.string().min(36).max(36).required(),
     password: Joi.string().min(6).required(),
     clientId: Joi.string().required(),
     type: Joi.string().required()
   }
 }), async (req, res) => {
   try {
-    let { phone, code, password, clientId, type } = req.body
-    let result = await userService.signUpWithPhone(req.db, phone, password, code, clientId, type)
+    let { phone, ticket, password, clientId, type } = req.body
+    let result = await userService.signUpWithPhone(req.db, phone, password, ticket, clientId, type)
     res.success(result)
   } catch (error) { res.error(error) }
 })
@@ -222,7 +222,7 @@ router.post('/smsCode/ticket', joiValidator({
   body: {
     phone: Joi.string().required(),
     code: Joi.string().required(),
-    type: ['password', 'mail', 'replace']
+    type: ['password', 'mail', 'replace', 'register']
   }
 }), async (req, res) => {
   try {

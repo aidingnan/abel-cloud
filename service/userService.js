@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-11 15:23:11
+ * @Last Modified time: 2018-12-17 15:20:25
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -67,23 +67,22 @@ class UserService {
   }
 
   // 注册
-  async signUpWithPhone(connect, phone, p, code, clientId, type) {
+  async signUpWithPhone(connect, phone, p, ticket, clientId, type) {
     try {
       // 用户id
       let userId = uuid.v4()
 
       // 校验验证码
-      let smsResult = await User.getSmsCode(connect, phone, code, 'register')
-
+      let smsResult = await User.getSmsCodeTicketInfo(connect, ticket)
       // 验证码失败
-      // if (smsResult[2].length == 0) throw new E.SmsCodeError()
+      if (smsResult.length == 0) throw new E.SmsCodeError()
 
       // 检查是否已注册
       let result = await User.getUserByPhone(connect, phone)
       if (result.length !== 0) throw new E.UserAlreadyExist()
 
       // 注册 ==> 获取用户
-      let registerResult = await User.signUpWithPhone(connect, userId, phone, code, p, 'register')
+      let registerResult = await User.signUpWithPhone(connect, userId, phone, ticket, p, 'register')
       let userCheck = registerResult[4].affectedRows == 0
       let phoneCheck = registerResult[5].affectedRows == 0
       let codeCheck = registerResult[6].affectedRows == 0
@@ -480,7 +479,8 @@ class UserService {
     try {
       // 检查是否已注册
       let u = await User.getUserByPhone(connect, phone)
-      if (u.length == 0 && type !== 'replace') throw new E.UserNotExist()
+      if (u.length == 0 && type !== 'replace' && type !== 'register') 
+        throw new E.UserNotExist()
 
       // 校验验证码
       let codeResult = await User.getSmsCode(connect, phone, code, type)
