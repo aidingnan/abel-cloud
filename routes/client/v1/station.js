@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-14 17:06:00
+ * @Last Modified time: 2018-12-20 15:41:51
  */
 
 const express = require('express')
@@ -64,12 +64,15 @@ router.post('/', async (req, res) => {
 
 // 删除设备
 router.delete('/', joiValidator({
-  body: { sn: Joi.string().required() }
+  body: { 
+    sn: Joi.string().required(),
+    ticket: Joi.string().required()
+  }
 }), async (req, res) => {
   try {
     let { id } = req.auth
-    let { sn } = req.body
-    let result = await stationService.deleteStation(req.db, id, sn)
+    let { sn, ticket } = req.body
+    let result = await stationService.deleteStation(req.db, sn, id, ticket)
     res.success(result)
   } catch (error) { res.error(error) }
 })
@@ -80,6 +83,15 @@ router.get('/:sn/user', async (req, res) => {
     let { id } = req.auth
     let { sn } = req.params
     let result = await stationService.getStationUsers(req.db, sn)
+    res.success(result)
+  } catch (e) { res.error(e) }
+})
+
+// 查询所有设备
+router.get('/', async (req, res) => {
+  try {
+    let { id, clientId, type } = req.auth
+    let result = await stationService.getStations(req.db, id, clientId, type)
     res.success(result)
   } catch (e) { res.error(e) }
 })
@@ -120,16 +132,6 @@ router.delete('/:sn/user', joiValidator({
   } catch (error) { res.error(error) }
 })
 
-// 查询所有设备
-router.get('/', async (req, res) => {
-  try {
-    let { id, clientId, type } = req.auth
-    let result = await stationService.getStations(req.db, id, clientId, type)
-
-    res.success(result)
-  } catch (e) { res.error(e) }
-})
-
 // 设备下用户设置
 router.patch('/:sn/user', joiValidator({
   params: { sn: Joi.string()},
@@ -144,6 +146,32 @@ router.patch('/:sn/user', joiValidator({
     let { setting, sharedUserId } = req.body
     if (Object.getOwnPropertyNames(setting).length == 0) throw new Error('invalid params')
     let result = await stationService.updateStationUser(req.db, id, sn, sharedUserId, setting)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
+
+// 查询设备下某用户记录
+router.get('/:sn/user/record', async (req, res) => {
+  try {
+    let { sn } = req.params
+    let { id } = req.auth
+    let result = await stationService.getStationRecord(req.db, sn, id)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
+
+// 确认删除
+router.patch('/:sn/user/record', joiValidator({
+  params: { sn: Joi.string() },
+  body: {
+    code: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { sn } = req.params
+    let { id } = req.auth
+    let { code } = req.body
+    let result = await stationService.confirmDelete(req.db, sn, id, code)
     res.success(result)
   } catch (error) { res.error(error) }
 })

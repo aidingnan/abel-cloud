@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-17 15:07:37
+ * @Last Modified time: 2018-12-20 14:11:08
  */
 const express = require('express')
 const router = express.Router()
@@ -46,7 +46,7 @@ router.get('/mail/check', joiValidator({
 router.post('/smsCode', joiValidator({
   body: {
     phone: Joi.string().min(11).max(11).required(),
-    type: ['register', 'password', 'replace', 'login', 'mail']
+    type: ['register', 'password', 'replace', 'login', 'mail', 'deviceChange']
   }
 }), async (req, res) => {
   try {
@@ -126,7 +126,7 @@ router.post('/deviceInfo', cAuth, joiValidator({
   try {
     let { sn } = req.body
     let { id, clientId, type } = req.auth
-    let result = await userService.recordDeviceUseInfo(req.db, id, clientId, type, sn)
+    await userService.recordDeviceUseInfo(req.db, id, clientId, type, sn)
     res.success()
   } catch (e) { console.log(e); res.error(e) }
 })
@@ -198,7 +198,6 @@ router.post('/wechat', joiValidator({
   }
 })
 
-
 /**
  * 解绑微信
  */
@@ -222,7 +221,7 @@ router.post('/smsCode/ticket', joiValidator({
   body: {
     phone: Joi.string().required(),
     code: Joi.string().required(),
-    type: ['password', 'mail', 'replace', 'register']
+    type: ['password', 'mail', 'replace', 'register', 'deviceChange']
   }
 }), async (req, res) => {
   try {

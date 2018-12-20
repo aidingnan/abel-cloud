@@ -3,6 +3,7 @@ const Station = require('../models/station')
 const User = require('../models/user')
 const E = require('../lib/error')
 const jwt = require('../lib/jwt')
+const sendSmsCode = require('../lib/sendSmsCode')
 
 const pulishUser = async (connect, sn) => {
   let owner = await Station.getStationOwner(connect, sn)
@@ -74,8 +75,14 @@ class StationService {
       // 建立绑定关系
       if (userExist) await Station.createShare(connect, sn, id, setting)
 
+      // 去除之前删除记录
+      if (userExist) await Station.updateShareRecords(connect, sn, id, 'deprive', 'done')
+      if (userExist) await Station.updateShareRecords(connect, sn, id, 'passiveExit', 'done')
+
       // 记录
       if (record) await Station.recordShare(connect, sn, owner, phone, id, 'invite', JSON.stringify(setting))
+
+      // 去除之前删除记录
 
       try {
         await pulishUser(connect, sn)
@@ -94,13 +101,22 @@ class StationService {
       if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
       // 检查分享用户ID
       let shareResult = await Station.getStationSharer(connect, sn)
-      let user = shareResult.find(item => item.id == sharedUserId)
+      let user = shareResult.find(item => item.id == sharedUserId && item.isDeleted == 0)
       if (!user) throw new E.UserNotExist()
+
+      let r = (Math.random()).toString()
+      let code = r.slice(-4, r.length)
+      
       // 删除绑定关系
       await Station.deleteShare(connect, sn, sharedUserId)
 
       // 记录
-      await Station.recordShare(connect, sn, owner, null, sharedUserId, 'deprive')
+      await Station.recordShare(connect, sn, owner, null, sharedUserId, 'deprive', null, code, 'todo')
+
+      // 发送通知短信
+      try {
+        await sendSmsCode(user.username, code, 'deviceChange')
+      } catch (error) { console.log(error)}
 
       try {
         await pulishUser(connect, sn)
@@ -110,13 +126,20 @@ class StationService {
   }
 
   // 删除设备
-  async deleteStation(connect, userId, sn) {
+  async deleteStation(connect, sn, userId, ticket) {
     try {
+
+      // 验证ticket
+      let ticketResult = await User.getSmsCodeTicketInfo(connect, ticket)
+      if (!ticketResult.length) throw new E.PhoneTicketInvalid()
+      if (ticketResult[0].type !== 'deviceChange') throw new Error('ticket type error')
+      let { code } = ticketResult[0]
+
       // 检查设备类型(owner or share)
       let ownStations = await Station.getStationBelongToUser(connect, userId)
       let sharedStations = await Station.getStationSharedToUser(connect, userId)
       let ownStation = ownStations.find(item => item.sn == sn)
-      let sharedStation = sharedStations.find(item => item.sn == sn)
+      let sharedStation = sharedStations.find(item => item.sn == sn && !item.isDeleted)
       if (!ownStation && !sharedStation) throw new E.StationNotExist()
       if (ownStation) {
         // 需要删除用户下所有设备
@@ -126,21 +149,37 @@ class StationService {
         let userResult = await Station.getStationSharer(connect, sn)
         
         for(let i = 0; i < userResult.length; i++) {
-          await Station.recordShare(connect, sn, userId, null, userResult[i].id, 'passiveExit')
+          if (userResult[i].isDeleted) return
+          let r = (Math.random()).toString()
+          let c = r.slice(-4, r.length)
+          await Station.deleteShare(connect, sn, userResult[i].id)
+          await Station.recordShare(connect, sn, userId, null, userResult[i].id, 'passiveExit', null, code, 'todo')
+          await sendSmsCode(userResult[i].username, c, 'deviceChange')
         }
         
-        await Station.cleanShare(connect, sn)
       } else if (sharedStation) {
         // 仅删除个人绑定关系
         let { owner } = sharedStation
-        await Station.deleteShare(connect, sn, userId )
-        await Station.recordShare(connect, sn, owner, null, userId, 'activeExit')
+        await Station.deleteShare(connect, sn, userId, code )
+        await Station.recordShare(connect, sn, owner, null, userId, 'activeExit', null, code)
 
         try {
           await pulishUser(connect, sn)
         } catch (error) { console.log(error) }
       }
 
+    } catch (error) { throw error }
+  }
+
+  async confirmDelete(connect, sn, userId, operationCode) {
+    try {
+      let recordResult = await Station.getDeleteRecord(connect, sn, userId, operationCode)
+      
+      if (recordResult.length == 0) throw new Error('delete not exist')
+      let { id } = recordResult[0]
+      
+      await Station.confirmDelete(connect, sn, userId, operationCode)
+      await Station.updateShareRecord(connect, id, 'done')
     } catch (error) { throw error }
   }
 
@@ -165,6 +204,13 @@ class StationService {
       let sharer = await Station.getStationSharer(connect, sn)
       return { owner, sharer }
     } catch (error) { throw error }
+  }
+
+  // 查询设备下某用户记录
+  async getStationRecord(connect, sn, userId) {
+    try {
+      return await Station.getStationRecord(connect, sn, userId)
+    } catch (error) { throw error}
   }
 
   // 更新设备下用户设置

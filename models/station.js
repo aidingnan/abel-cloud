@@ -28,7 +28,7 @@ const station = {
   // 查找设备与用户的分享关系
   findDeviceShareBySnAndId: (connect, sn, id) => {
     let sql = `
-      SELECT * FROM device_user WHERE sn='${sn}' AND user='${id}'
+      SELECT * FROM device_user WHERE sn='${sn}' AND user='${id}' AND isDeleted=0
     `
     return connect.queryAsync(sql)
   },
@@ -38,6 +38,7 @@ const station = {
     let sql = `
       INSERT INTO device_user
       SET sn='${sn}',user='${id}'
+      ON DUPLICATE KEY UPDATE isDeleted=0,deleteCode=null
     `
 
     for (let item in setting) {
@@ -60,14 +61,16 @@ const station = {
   },
 
   // 记录设备与手机号分享
-  recordShare: (connect, sn, owner, phone, userId, type, setting) => {
-    let state = userId? 'done': 'todo'
+  recordShare: (connect, sn, owner, phone, userId, type, setting, operationCode, state) => {
+    let s = state? state: userId? 'done': 'todo'
     let sql = `
       INSERT INTO device_userRecord
       SET sn='${sn}',owner='${owner}', phone='${phone}',
-      type='${type}', state='${state}', setting='${setting}'
+      type='${type}', state='${s}'
     `
     if (userId) sql+= `, user='${userId}'`
+    if (setting) sql += `, setting='${setting}'`
+    if (operationCode) sql += `, operationCode='${operationCode}'`
     return connect.queryAsync(sql)
   },
 
@@ -80,7 +83,23 @@ const station = {
     return connect.queryAsync(sql)
   },
 
-  // 更新分享记录
+  getStationRecord: (connect, sn, userId) => {
+    let sql = `
+      SELECT * FROM device_userRecord
+      WHERE sn='${sn}' AND user='${userId}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  getDeleteRecord: (connect, sn, userId, operationCode) => {
+    let sql = `
+      SELECT * FROM device_userRecord
+      WHERE sn='${sn}' AND user='${userId}' AND state='todo' AND operationCode='${operationCode}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 更新记录
   updateShareRecord: (connect, id, state) => {
     let sql = `
       UPDATE device_userRecord
@@ -90,10 +109,21 @@ const station = {
     return connect.queryAsync(sql)
   },
 
-  // 删除分享
-  deleteShare: (connect, sn, user) => {
+  updateShareRecords: (connect, sn, userId, type, state) => {
     let sql = `
-      DELETE FROM device_user
+      UPDATE device_userRecord
+      SET state='${state}'
+      WHERE sn='${sn}' AND user='${userId}' AND type='${type}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 删除分享
+  deleteShare: (connect, sn, user, code) => {
+    let deleteCode = code? `'${code}'`: `null`
+    let sql = `
+      UPDATE device_user
+      SET isDeleted=1,deleteCode=${deleteCode}
       WHERE sn='${sn}' AND user='${user}'
     `
     return connect.queryAsync(sql)
@@ -103,6 +133,16 @@ const station = {
     let sql = `
       DELETE FROM device_user
       WHERE sn='${sn}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 确认删除
+  confirmDelete: (connect, sn, userId, code) => {
+    let sql = `
+      UPDATE device_user
+      SET deleteCode='${code}'
+      WHERE sn='${sn}' AND user='${userId}'
     `
     return connect.queryAsync(sql)
   },
@@ -129,7 +169,6 @@ const station = {
     return connect.queryAsync(sql)
   },
 
-
   // 查询用户拥有的设备
   getStationBelongToUser: (connect, id) => {
     let sql = `
@@ -146,7 +185,7 @@ const station = {
     let sql = `
       SELECT d.sn,d.owner,
       i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name,
-      du.createdAt
+      du.createdAt, du.isDeleted, du.deleteCode
       FROM device_user AS du
       JOIN device AS d ON du.sn=d.sn
       LEFT JOIN deviceInfo as i ON du.sn=i.sn

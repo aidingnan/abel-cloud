@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-17 15:17:16
+ * @Last Modified time: 2018-12-19 14:26:11
  */
 
 const user = {
@@ -54,6 +54,15 @@ const user = {
       SELECT * FROM user,phone WHERE user.id=phone.user 
       AND user.password=PASSWORD('${password}')
       AND phone.phoneNumber='${username}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 验证密码
+  confirmPassword: (connect, userId, password) => {
+    let sql = `
+      SELECT * FROM user
+      WHERE id='${userId}' AND password=PASSWORD('${password}')
     `
     return connect.queryAsync(sql)
   },
