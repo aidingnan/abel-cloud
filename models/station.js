@@ -38,7 +38,7 @@ const station = {
     let sql = `
       INSERT INTO device_user
       SET sn='${sn}',user='${id}'
-      ON DUPLICATE KEY UPDATE isDeleted=0,deleteCode=null
+      ON DUPLICATE KEY UPDATE isDeleted=0,deleteCode=null,disable=0
     `
 
     for (let item in setting) {
@@ -124,6 +124,16 @@ const station = {
     let sql = `
       UPDATE device_user
       SET isDeleted=1,deleteCode=${deleteCode}
+      WHERE sn='${sn}' AND user='${user}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 禁用/启用
+  disableUser: (connect, sn, user, disable) => {
+    let sql = `
+      UPDATE device_user
+      SET disable='${disable}'
       WHERE sn='${sn}' AND user='${user}'
     `
     return connect.queryAsync(sql)

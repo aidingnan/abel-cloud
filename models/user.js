@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-19 14:26:11
+ * @Last Modified time: 2018-12-25 15:33:05
  */
 
 const user = {
@@ -256,11 +256,11 @@ const user = {
     return connect.queryAsync(sql)
   },
 
-  // 更新修改密码token状态 todo
-  updateSmsRecordStatus: (connect, id, phone, status) => {
+  // 更新token状态
+  updateSmsRecordStatus: (connect, id, status) => {
     let sql = `
       UPDATE userSmsCodeRecord SET status='${status}'
-      WHERE id='${id}' AND phone='${phone}'
+      WHERE id='${id}'
     `
     return connect.queryAsync(sql)
   },

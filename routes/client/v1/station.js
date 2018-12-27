@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-20 15:41:51
+ * @Last Modified time: 2018-12-26 17:01:02
  */
 
 const express = require('express')
@@ -15,7 +15,7 @@ const transformJson = require('../../../service/transformJson')
 const storeFile = require('../../../service/storeFile')
 const fetchFile = require('../../../service/fetchFile')
 const Station = require('../../../models/station')
-
+var timeout = require('connect-timeout')
 
 // json操作
 router.post('/:sn/json', checkUserAndStation, (req, res) => {
@@ -35,9 +35,6 @@ router.get('/:sn/pipe', joiValidator({
 }), checkUserAndStation, (req, res) => {
   fetchFile.createServer(req, res)
 })
-
-var timeout = require('connect-timeout')
-
 
 router.use(timeout('15s'))
 
@@ -119,17 +116,37 @@ router.post('/:sn/user', joiValidator({
 })
 
 // 取消分享设备
-router.delete('/:sn/user', joiValidator({
-  params: { sn: Joi.string().required() },
-  body: { sharedUserId: Joi.string().required() }
+router.delete('/:sn/user/:userId', joiValidator({
+  params: { 
+    sn: Joi.string().required(),
+    userId: Joi.string().required()
+  },
+  body: {
+    ticket: Joi.string().required()
+  }
 }), async (req, res) => {
   try {
     let { id } = req.auth
-    let { sharedUserId } = req.body
-    let { sn } = req.params
-    let result = await stationService.deleteUser(req.db, id, sn, sharedUserId)
+    let { sn, userId } = req.params
+    let { ticket } = req.body
+    let result = await stationService.deleteUser(req.db, id, sn, userId, ticket)
     res.success(result)
   } catch (error) { res.error(error) }
+})
+
+// 禁用设备
+router.patch('/:sn/user/:userId', joiValidator({
+  params: {
+    sn: Joi.string().required(),
+    userId: Joi.string().required()
+  },
+  body: { disable: Joi.number().required() }
+}), async (req, res) => {
+  let { sn, userId } = req.params
+  let { id } = req.auth
+  let { disable } = req.body
+  let result = await stationService.disableUser(req.db, id, sn, userId, disable)
+  res.success(result)
 })
 
 // 设备下用户设置
@@ -140,7 +157,6 @@ router.patch('/:sn/user', joiValidator({
     setting: Joi.object({ publicSpace: Joi.number().valid(0, 1) }).required() }
 }), async (req, res) => {
   try {
-    
     let { id } = req.auth
     let { sn } = req.params
     let { setting, sharedUserId } = req.body
@@ -176,8 +192,6 @@ router.patch('/:sn/user/record', joiValidator({
   } catch (error) { res.error(error) }
 })
 
-
-
 async function checkUserAndStation(req, res, next) {
   // return next()
   try {
@@ -188,7 +202,7 @@ async function checkUserAndStation(req, res, next) {
     let ownStations = await Station.getStationBelongToUser(connect, userId)
     let sharedStations = await Station.getStationSharedToUser(connect, userId)
     let sameOwnStation = ownStations.find(item => item.sn == sn)
-    let sameSharedStations = sharedStations.find(item => item.sn == sn)
+    let sameSharedStations = sharedStations.find(item => item.sn == sn  && !item.disable)
     if (!sameOwnStation && !sameSharedStations) throw new Error('sn error')
 
     let station = sameOwnStation || sharedStations
@@ -199,9 +213,7 @@ async function checkUserAndStation(req, res, next) {
     } catch (e) { }
 
     next()
-  } catch (e) {
-    res.error(e)
-  }
+  } catch (e) { res.error(e) }
 }
 
 module.exports = router
