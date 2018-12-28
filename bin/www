@@ -46,6 +46,10 @@ ssm.getParameters({ Names: ['iot', 'rds', 'rds-test'] }, (err, data) => {
       multipleStatements: true
     });
 
+    pool.on('enqueue', function () {
+      console.log('Waiting for available connection slot');
+    });
+
     global.pool = promise.promisifyAll(pool)
 
   } catch (error) { console.log(error) }
