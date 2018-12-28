@@ -5,9 +5,6 @@ const logger = require('morgan')
 const E = require('./lib/error')
 const app = express()
 
-// 添加默认api 供AWS负载均衡器检查
-app.get('/', (req, res) => res.end())
-
 // 为请求 request添加数据库句柄
 app.use(async (req, res, next) => {
   try {

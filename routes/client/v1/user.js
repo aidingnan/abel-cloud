@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-24 16:08:01
+ * @Last Modified time: 2018-12-28 16:22:01
  */
 const express = require('express')
 const router = express.Router()
@@ -11,7 +11,6 @@ const Joi = require('joi')
 const joiValidator = require('../../../middlewares/joiValidator')
 const userService = require('../../../service/userService')
 const { weAuth, cAuth } = require('../../../middlewares/jwt')
-const nodemailer = require('nodemailer');
 
 var timeout = require('connect-timeout')
 

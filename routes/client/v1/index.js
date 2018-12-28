@@ -5,9 +5,6 @@ const { cAuth } = require('../../../middlewares/jwt')
 router.get('/', (req, res) => res.success({}))
 router.use('/user', require('./user'))
 router.use('/wechat', require('./wechat'))
-router.use('*', cAuth)
-router.use('/station', require('./station'))
-
-
+router.use('/station', cAuth, require('./station'))
 
 module.exports = router
