@@ -52,7 +52,8 @@ ssm.getParameters({ Names: ['iot', 'rds', 'rds-test'] }, (err, data) => {
       user: mysql.user,
       password: mysql.password,
       database: mysql.dbname,
-      multipleStatements: true
+      multipleStatements: true,
+      connectionLimit: 5
     });
 
     pool.on('enqueue', function () {
