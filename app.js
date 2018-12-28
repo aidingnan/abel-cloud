@@ -1,7 +1,6 @@
 const express = require('express')
 const promise = require('bluebird')
 const cookieParser = require('cookie-parser')
-const logger = require('morgan')
 const E = require('./lib/error')
 const app = express()
 
@@ -17,7 +16,6 @@ app.use(async (req, res, next) => {
   }
 })
 
-app.use(logger(':remote-addr [:date[clf]] ":method :url :status :response-time ms'))
 app.use(express.json({ limit: '5mb', extended: false }))
 app.use(cookieParser())
 
