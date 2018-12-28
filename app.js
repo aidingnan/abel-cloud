@@ -1,49 +1,30 @@
-var express = require('express')
+const express = require('express')
 const promise = require('bluebird')
-var cookieParser = require('cookie-parser')
-var logger = require('morgan')
+const cookieParser = require('cookie-parser')
+const logger = require('morgan')
+const E = require('./lib/error')
+const app = express()
 
-var E = require('./lib/error')
+// 添加默认api 供AWS负载均衡器检查
+app.get('/', (req, res) => res.end())
 
-var app = express()
-
-app.get('/', (req, res) => {
-  res.status(200).json({})
-})
-
+// 为请求 request添加数据库句柄
 app.use(async (req, res, next) => {
   try {
     let connect = promise.promisifyAll(await pool.getConnectionAsync())
     req.db = connect
-
-    req.on('end', () => {
-      try {
-        // console.log('end trigger in app: relase')
-        req.db.release()
-      } catch (e) { }
-    })
-
-    // 当底层连接在 response.end() 被调用或能够刷新之前被终止时触发。
-    res.on('close', () => {
-      try {
-        // console.log('close trigger in app: relase')
-        req.db.release()
-      } catch (e) {}
-    })
-    
     next()
   } catch (error) {
-    console.log(error)
+    console.error(error)
     res.error(error)
   }
 })
 
 app.use(logger(':remote-addr [:date[clf]] ":method :url :status :response-time ms'))
-app.use(express.urlencoded({ limit: '500mb', extended: false }))
-app.use(express.json({ limit: '500mb', extended: false }))
+app.use(express.json({ limit: '5mb', extended: false }))
 app.use(cookieParser())
 
-// res middleware
+// 为response添加 success, error 方法
 app.use(require('./middlewares/res'))
 
 app.use('/', require('./routes'))
@@ -58,7 +39,7 @@ app.use(function(err, req, res, next) {
   try {
     req.db.release()
   } catch (e) {}
-  console.log(err.message)
+  console.error(err.message)
   if (err.message == 'Response timeout') res.error(new E.RequestTimeOut(), 504)
   else res.error(err)
 })

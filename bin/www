@@ -3,41 +3,50 @@
 /**
  * Module dependencies.
  */
-var app = require('../app')
-var debug = require('debug')('abel:server')
-var http = require('http')
+const app = require('../app')
+const debug = require('debug')('abel:server')
+const http = require('http')
 const db = require('mysql')
 const config = require('getconfig')
 const promise = require('bluebird')
 const AWS = require('aws-sdk')
 
 /**
- * 初始化AWS tokenKeys cloudKeys
+ * 初始化各类SDK
  */
 
+// 获取环境变量
 const ssm = new AWS.SSM({
   region: 'cn-north-1'
 })
 
+// 获取设备公钥
 const iot = new AWS.Iot({
   region: 'cn-north-1'
 })
 
+// 上传头像
 const s3 = new AWS.S3({
   region: 'cn-north-1'
 })
 
+// 推送消息
 const iotData = new AWS.IotData({
   region: 'cn-north-1',
   endpoint: 'a3dc7azfqxif0n.iot.cn-north-1.amazonaws.com.cn'
 })
 
+/**
+ * 获取变量
+ * rds： 生产数据库
+ * rds-test: 测试数据库
+ */
 ssm.getParameters({ Names: ['iot', 'rds', 'rds-test'] }, (err, data) => {
   try {
     if (err) throw err
     let type = process.env.NODE_ENV == 'test' ? 'rds-test' : 'rds'
     let mysql = JSON.parse(data.Parameters.find(item => item.Name == type).Value)
-    // 初始化 mysql
+    // 初始化数据库池
     var pool = db.createPool({
       host: mysql.host,
       user: mysql.user,
@@ -52,9 +61,13 @@ ssm.getParameters({ Names: ['iot', 'rds', 'rds-test'] }, (err, data) => {
 
     global.pool = promise.promisifyAll(pool)
 
-  } catch (error) { console.log(error) }
+  } catch (error) { 
+    console.log(error)
+    throw error
+  }
 })
 
+// sdk添加到全局
 global.getParameterAsync = promise.promisify(ssm.getParameter).bind(ssm)
 global.describeCertificateAsync = promise.promisify(iot.describeCertificate).bind(iot)
 global.publishAsync = promise.promisify(iotData.publish).bind(iotData)
@@ -141,10 +154,5 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
-
-// process.on('SIGINT', () => {
-//   console.log('SIGINT signal received')
-//   process.exit(0)
-// })
 
 module.exports = server
