@@ -6,6 +6,7 @@ const storeFile = require('../../../service/storeFile')
 const fetchFile = require('../../../service/fetchFile')
 const Joi = require('joi')
 const joiValidator = require('../../../middlewares/joiValidator')
+const container = require('../../../service/task')
 
 router.post('/bind', joiValidator({
   body: {
@@ -48,7 +49,7 @@ router.get('/:id/response/:jobId', (req, res) => {
 router.post('/:id/response/:jobId/pipe/store', (req, res) => {
   try {
     storeFile.response(req, res)
-  } catch(e) { res.error(e)}
+  } catch(e) { res.error(e) }
 })
 
 router.post('/:id/response/:jobId', (req, res) => {
@@ -61,6 +62,13 @@ router.post('/:id/response/:jobId/pipe/fetch', (req, res) => {
   try {
     fetchFile.response(req, res)
   } catch(e) { res.error(e)}
+})
+
+// task 返回
+router.post('/:id/task/:taskId', (req, res) => {
+  try {
+
+  } catch (error) { res.error(error) }
 })
 
 module.exports = router

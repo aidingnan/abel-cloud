@@ -12,25 +12,30 @@ app.get('/', (req, res) => {
 })
 
 app.use(async (req, res, next) => {
-  let connect = promise.promisifyAll(await pool.getConnectionAsync())
-  req.db = connect
+  try {
+    let connect = promise.promisifyAll(await pool.getConnectionAsync())
+    req.db = connect
 
-  req.on('end', () => {
-    try {
-      // console.log('end trigger in app: relase')
-      req.db.release()
-    } catch (e) { }
-  })
+    req.on('end', () => {
+      try {
+        // console.log('end trigger in app: relase')
+        req.db.release()
+      } catch (e) { }
+    })
 
-  // 当底层连接在 response.end() 被调用或能够刷新之前被终止时触发。
-  res.on('close', () => {
-    try {
-      // console.log('close trigger in app: relase')
-      req.db.release()
-    } catch (e) {}
-  })
-  
-  next()
+    // 当底层连接在 response.end() 被调用或能够刷新之前被终止时触发。
+    res.on('close', () => {
+      try {
+        // console.log('close trigger in app: relase')
+        req.db.release()
+      } catch (e) {}
+    })
+    
+    next()
+  } catch (error) {
+    console.log(error)
+    res.error(error)
+  }
 })
 
 app.use(logger(':remote-addr [:date[clf]] ":method :url :status :response-time ms'))

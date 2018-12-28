@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-26 17:01:02
+ * @Last Modified time: 2018-12-28 11:18:57
  */
 
 const express = require('express')
@@ -61,7 +61,7 @@ router.post('/', async (req, res) => {
 
 // 删除设备
 router.delete('/', joiValidator({
-  body: { 
+  body: {
     sn: Joi.string().required(),
     ticket: Joi.string().required()
   }
@@ -71,6 +71,19 @@ router.delete('/', joiValidator({
     let { sn, ticket } = req.body
     let result = await stationService.deleteStation(req.db, sn, id, ticket)
     res.success(result)
+  } catch (error) { res.error(error) }
+})
+
+router.post('/:sn/reset', joiValidator({
+  body: {
+    tickets: Joi.array().required()
+  }
+}), async (req, res) => {
+  try {
+    let { id } = req.auth
+    let { sn } = req.params
+    let { tickets } = req.body
+    await stationService.resetStation(req.db, sn, id, tickets, req, res)
   } catch (error) { res.error(error) }
 })
 
@@ -203,7 +216,7 @@ async function checkUserAndStation(req, res, next) {
     let sharedStations = await Station.getStationSharedToUser(connect, userId)
     let sameOwnStation = ownStations.find(item => item.sn == sn)
     let sameSharedStations = sharedStations.find(item => item.sn == sn  && !item.disable)
-    if (!sameOwnStation && !sameSharedStations) throw new Error('sn error')
+    if (!sameOwnStation && !sameSharedStations) throw new Error('sn not belong to user')
 
     let station = sameOwnStation || sharedStations
     if (!station.online) throw new Error('Station is not online')
