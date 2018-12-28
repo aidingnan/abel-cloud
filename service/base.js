@@ -146,6 +146,9 @@ class Server extends EventEmitter {
   abort() {
     // console.log('in abort')
     this.res.finished = true
+    try {
+      req.db.release()
+    } catch (e) { }
     // this.res.error()
   }
 }
