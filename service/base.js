@@ -201,7 +201,7 @@ class Container {
       let data = (Object.keys(req.body).length === 1 && req.body.data) ? req.body.data : req.body
       server.state.setState(Finish, data)
     }
-    res.end()
+    res.success()
   }
 }
 
