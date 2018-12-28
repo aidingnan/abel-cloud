@@ -100,7 +100,7 @@ class StationService {
       // 检查分享用户ID
       let shareResult = await Station.getStationSharer(connect, sn)
       let user = shareResult.find(item => item.id == sharedUserId && item.isDeleted == 0)
-      if (!user) throw new E.UserNotExist()
+      if (!user) throw new E.UserNotExistInStation()
 
       // disable
       await Station.disableUser(connect, sn, sharedUserId, disable)
@@ -118,7 +118,7 @@ class StationService {
       // 检查分享用户ID
       let shareResult = await Station.getStationSharer(connect, sn)
       let user = shareResult.find(item => item.id == sharedUserId && item.isDeleted == 0)
-      if (!user) throw new E.UserNotExist()
+      if (!user) throw new E.UserNotExistInStation()
       
       // 校验验证码
       let smsResult = await User.getSmsCodeTicketInfo(connect, ticket)
@@ -268,7 +268,7 @@ class StationService {
       let ownerResult = await Station.getStationOwner(connect, sn)
       let shareResult = await Station.getStationSharer(connect, sn)
       if (!ownerResult.find(item => item.id == ownerId)) throw new E.StationNotBelongToUser()
-      if (!shareResult.find(item => item.id == userId)) throw new E.UserNotExist()
+      if (!shareResult.find(item => item.id == userId)) throw new E.UserNotExistInStation()
       await Station.updateStationUser(connect, sn, userId, setting)
 
       try {

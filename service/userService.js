@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-25 15:13:51
+ * @Last Modified time: 2018-12-28 17:57:05
  */
 const request = require('request')
 const promise = require('bluebird')
@@ -81,20 +81,24 @@ class UserService {
       let result = await User.getUserByPhone(connect, phone)
       if (result.length !== 0) throw new E.UserAlreadyExist()
 
-      // 注册 ==> 获取用户
-      let registerResult = await User.signUpWithPhone(connect, userId, phone, ticket, p, 'register')
+      // 事务处理，单独建立connect
+      let newConnect = promise.promisifyAll(await connect.getConnectionAsync())
+      // 注册 ==> 获取用户 
+      let registerResult = await User.signUpWithPhone(newConnect, userId, phone, ticket, p, 'register')
       let userCheck = registerResult[4].affectedRows == 0
       let phoneCheck = registerResult[5].affectedRows == 0
       let codeCheck = registerResult[6].affectedRows == 0
       // 判断数据是否正确
       if (userCheck || phoneCheck || codeCheck) {
-        connect.queryAsync('ROLLBACK;')
+        newConnect.queryAsync('ROLLBACK;')
         throw new Error('register failed')
       }
-      connect.queryAsync('COMMIT;')
+      newConnect.queryAsync('COMMIT;')
+
+      newConnect.release()
 
       // 查询用户手机号是否存在分享记录
-      let shareRecord = await Station.getShareRecord(connect, phone, 'invite', 'todo')
+      let shareRecord = await Station.getShareRecord(newConnect, phone, 'invite', 'todo')
       for (let i = 0; i < shareRecord.length; i++) {
         try {
           let { id, owner, sn, phone, setting } = shareRecord[i]
@@ -395,17 +399,20 @@ class UserService {
       // 检查验证码
       let codeResult = await User.getMailCode(connect, mail, code, 'bind')
       if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
+      // 事务处理，单独建立connect
+      let newConnect = promise.promisifyAll(await connect.getConnectionAsync())
       // 绑定
-
-      let result = await User.bindMail(connect, mail, code, userId)
+      let result = await User.bindMail(newConnect, mail, code, userId)
       let codeCheck = result[3].affectedRows == 0
       let userCheck = result[4].affectedRows == 0
       if (codeCheck || userCheck) {
-        await connect.queryAsync('ROLLBACK;')
+        await newConnect.queryAsync('ROLLBACK;')
         throw new Error('bind failed')
       }
 
-      await connect.queryAsync('COMMIT;')
+      await newConnect.queryAsync('COMMIT;')
+
+      newConnect.release()
 
     } catch (error) {
       console.log(error)
@@ -523,6 +530,8 @@ class UserService {
   // 换手机
   async replacePhone(connect, userId, oldTicket, newTicket) {
     try {
+      // 事务处理，单独建立connect
+      let newConnect = promise.promisifyAll(await connect.getConnectionAsync())
       // 用户
       let userResult = await User.getUserInfo(connect, userId)
       if (userResult.length == 0) throw new E.UserNotExist()
@@ -546,23 +555,23 @@ class UserService {
       if (oldPhone !== user.username) throw new E.PhoneNotBelongToUser()
       if (newPhoneUsers.length !== 0) throw new E.UserAlreadyExist()
 
-      let result = await User.replacePhone(connect, userId, oldPhone, newPhone)
+      let result = await User.replacePhone(newConnect, userId, oldPhone, newPhone)
       let deleteCheck = result[1].affectedRows == 1
       let addCheck = result[2].affectedRows == 1
       let updateCheck = result[3].affectedRows == 1
 
-      if (!deleteCheck || !addCheck || !updateCheck) await connect.queryAsync('ROLLBACK;')
+      if (!deleteCheck || !addCheck || !updateCheck) await newConnect.queryAsync('ROLLBACK;')
       else {
-        await connect.queryAsync('COMMIT;')
+        await newConnect.queryAsync('COMMIT;')
         return new Error('replace phone failed')
       }
 
       console.log(result)
 
-
+      newConnect.release()
 
     } catch (error) {
-      await connect.queryAsync('ROLLBACK;')
+      await newConnect.queryAsync('ROLLBACK;')
       throw error;
     }
   }

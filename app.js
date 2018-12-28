@@ -7,8 +7,7 @@ const app = express()
 // 为请求 request添加数据库句柄
 app.use(async (req, res, next) => {
   try {
-    let connect = promise.promisifyAll(await pool.getConnectionAsync())
-    req.db = connect
+    req.db = pool
     next()
   } catch (error) {
     console.error(error)
@@ -31,9 +30,7 @@ app.use(function(req, res, next) {
 
 // error handler
 app.use(function(err, req, res, next) {
-  try {
-    req.db.release()
-  } catch (e) {}
+  
   console.error(err.message)
   if (err.message == 'Response timeout') res.error(new E.RequestTimeOut(), 504)
   else res.error(err)

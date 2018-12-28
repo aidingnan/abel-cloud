@@ -33,10 +33,6 @@ module.exports = (req, res, next) => {
   * @param {number} status - default 200
   */
   res.success = (data, status) => {
-    
-    try {
-      req.db.release()
-    } catch (e) { }
 
     status = status || DEFAULT_SUCCESS_STATUS
     return res.status(status).json({
@@ -53,10 +49,6 @@ module.exports = (req, res, next) => {
   * @param {number} status - default 403
   */
   res.error = (error, status) => {
-
-    try {
-      req.db.release()
-    } catch (e) { }
 
     let code, message
     status = status || DEFAULT_ERROR_STATUS

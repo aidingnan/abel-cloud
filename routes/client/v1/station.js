@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-28 11:18:57
+ * @Last Modified time: 2018-12-28 17:58:53
  */
 
 const express = require('express')
@@ -100,6 +100,7 @@ router.get('/:sn/user', async (req, res) => {
 // 查询所有设备
 router.get('/', async (req, res) => {
   try {
+    console.log('...')
     let { id, clientId, type } = req.auth
     let result = await stationService.getStations(req.db, id, clientId, type)
     res.success(result)
@@ -220,10 +221,6 @@ async function checkUserAndStation(req, res, next) {
 
     let station = sameOwnStation || sharedStations
     if (!station.online) throw new Error('Station is not online')
-
-    try {
-      req.db.release()
-    } catch (e) { }
 
     next()
   } catch (e) { res.error(e) }
