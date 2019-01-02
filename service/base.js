@@ -3,6 +3,17 @@ const uuid = require('uuid')
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
 
+/**
+ * Notice
+ * 1. 客户端放弃请求 
+ * 2. 请求超时
+ *  a. json 可以使用超时时间
+ *  b. fetch 可以使用超时时间
+ *  c. store 不能使用超时时间(没有响应头)
+ * 3. 上传文件
+ *  a. 文件传输成功后重置超时时间
+ */
+
 
 class State {
   constructor(ctx, ...args) {
@@ -32,12 +43,17 @@ class Init extends State {
   }
 
   enter() {
+    // 添加task到队列中
     let server = this.ctx
     let jobId = this.ctx.jobId
     this.ctx.ctx.map.set(jobId, server)
 
+    // 获取参数
     let body = server.req.body
+    let range = this.ctx.req.headers['range']
     let SetCookie = this.ctx.req.headers['cookie']
+
+    // 组成消息内容
     this.ctx.manifest = Object.assign({
       sessionId: jobId,
       user: { id: this.ctx.req.auth.id },
@@ -52,6 +68,7 @@ class Init extends State {
 class Notice extends State {
   constructor(ctx) {
     super(ctx)
+    this.name = 'notice'
   }
 
   async enter() {
@@ -74,6 +91,7 @@ class Notice extends State {
 class Pending extends State {
   constructor(ctx) {
     super(ctx)
+    this.name = 'padding'
   }
 }
 
@@ -83,6 +101,7 @@ class Pending extends State {
 class Finish extends State {
   constructor(ctx, ...args) {
     super(ctx, ...args)
+    this.name = 'finish'
   }
 
   enter(data) {
@@ -96,6 +115,7 @@ class Finish extends State {
 class Err extends State {
   constructor(ctx, ...args) {
     super(ctx, ...args)
+    this.name = 'error'
   }
 
   enter(error, code) {
@@ -115,12 +135,12 @@ class Server extends EventEmitter {
     this.res = res
     this.ctx = ctx
     this.manifest = null
-    this.timer = Date.now() + 150 * 1000
+    this.timer = Date.now() + 15 * 1000
     this.jobId = uuid.v4()
     this.state = null
     new Init(this)
     this.req.on('error', err => this.error(err))
-    this.req.on('close', this.abort)
+    this.req.on('close', this.close)
   }
 
   isTimeOut() {
@@ -143,8 +163,8 @@ class Server extends EventEmitter {
     this.res.error(err, code)
   }
 
-  abort() {
-    // console.log('in abort')
+  close() {
+    debug(`close trigger`)
     this.res.finished = true
     // this.res.error()
   }
@@ -159,10 +179,15 @@ class Container {
   }
 
   schedule() {
+    debug(this.map.size)
     this.map.forEach((v, k) => {
+      debug(v.isTimeOut()?'已超时': '未超时', v.jobId, `状态为：${v.state.name}`)
       if (v.finished()) this.map.delete(k)
     })
+    debug(this.map.size)
   }
+
+  createServer() {}
 
   // 对客户端请求进行返回
   response(req, res) {

@@ -2,14 +2,14 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-28 17:57:05
+ * @Last Modified time: 2018-12-29 17:00:45
  */
-const request = require('request')
 const promise = require('bluebird')
 const uuid = require('uuid')
-promise.promisifyAll(request)
 const User = require('../models/user')
 const Station = require('../models/station')
+const Phone = require('../models/phone')
+const Wechat = require('../models/wechat')
 const E = require('../lib/error')
 const jwt = require('../lib/jwt')
 const WechatInfo = require('../lib/wechatInfo')
@@ -40,7 +40,10 @@ const getToken = async (connect, userResult, clientId, type) => {
 }
 
 class UserService {
-  // ---------------------注册登录---------------------
+
+  /**
+  * ---------------------手机相关api---------------------
+  */
 
   // 判断手机是否注册
   async userPhoneExist(connect, phone) {
@@ -54,16 +57,56 @@ class UserService {
     } catch (error) { throw error }
   }
 
-  // 判断邮箱是否注册
-  async userMailExist(connect, mail) {
+  // 请求手机验证码
+  async requestSmsCode(connect, phone, type) {
     try {
-      let userResult = await User.getUserWithMail(connect, mail)
-      if (userResult.length == 1) {
-        let { id, avatarUrl, nickName, safety } = userResult[0]
-        return { userExist: true, id, avatarUrl, nickName, safety }
+      // 检查是否已注册
+      let result = await Phone.checkPhone(connect, phone)
+      if (type == 'register' && result.length !== 0) {
+        throw new E.UserAlreadyExist()
+      } else if (type !== 'register' && result.length !== 1) {
+        throw new E.UserNotExist()
       }
-      else return { userExist: false }
-    } catch (error) { throw error }
+
+      // 生成验证码
+      let id = uuid.v4()
+      let r = (Math.random()).toString()
+      let code = r.slice(-4, r.length)
+      console.log(code, type)
+      await Phone.createSmsCode(connect, id, phone, code, type)
+
+      // 发送验证码
+      let res = await sendSmsCode(phone, code, type)
+      if (res.Code !== 'OK') { throw new Error(res.Message) }
+
+      return { userExist: result.length == 0 ? false : true }
+
+    } catch (error) {
+      let code = error.code
+      if (code == 'isv.MOBILE_NUMBER_ILLEGAL') throw new E.MobileError()
+      else if (code == 'isv.BUSINESS_LIMIT_CONTROL') throw new E.MobileLimit()
+      else throw error
+    }
+  }
+
+  // 手机验证码换取ticket
+  async getSmsCodeToken(connect, phone, code, type) {
+    try {
+      // 检查是否已注册
+      let u = await Phone.checkPhone(connect, phone)
+      if (u.length == 0 && type !== 'replace' && type !== 'register')
+        throw new E.UserNotExist()
+
+      // 校验验证码
+      let codeResult = await Phone.getSmsCode(connect, phone, code, type)
+
+      let codeRecord = codeResult[2]
+      if (codeResult[2].length == 0) throw new E.SmsCodeError()
+
+      await Phone.updateSmsCode(connect, phone, code, type, 1, 'toConsumed')
+      return codeRecord[0].id
+
+    } catch (error) { ; console.log(error); throw error }
   }
 
   // 注册
@@ -72,19 +115,18 @@ class UserService {
       // 用户id
       let userId = uuid.v4()
 
-      // 校验验证码
-      let smsResult = await User.getSmsCodeTicketInfo(connect, ticket)
-      // 验证码失败
-      if (smsResult.length == 0) throw new E.SmsCodeError()
-
       // 检查是否已注册
-      let result = await User.getUserByPhone(connect, phone)
+      let result = await Phone.checkPhone(connect, phone)
       if (result.length !== 0) throw new E.UserAlreadyExist()
+
+      // 校验验证码
+      let smsResult = await Phone.getSmsCodeTicketInfo(connect, ticket)
+      if (smsResult.length == 0) throw new E.SmsCodeError()
 
       // 事务处理，单独建立connect
       let newConnect = promise.promisifyAll(await connect.getConnectionAsync())
       // 注册 ==> 获取用户 
-      let registerResult = await User.signUpWithPhone(newConnect, userId, phone, ticket, p, 'register')
+      let registerResult = await Phone.signUpWithPhone(newConnect, userId, phone, ticket, p, 'register')
       let userCheck = registerResult[4].affectedRows == 0
       let phoneCheck = registerResult[5].affectedRows == 0
       let codeCheck = registerResult[6].affectedRows == 0
@@ -94,7 +136,6 @@ class UserService {
         throw new Error('register failed')
       }
       newConnect.queryAsync('COMMIT;')
-
       newConnect.release()
 
       // 查询用户手机号是否存在分享记录
@@ -108,7 +149,6 @@ class UserService {
       }
 
       // 获取用户信息
-
       let userResult = await User.getUserInfo(connect, userId)
 
       return await getToken(connect, userResult, clientId, type)
@@ -116,7 +156,7 @@ class UserService {
     } catch (error) { console.log(error); throw error }
   }
 
-  // 使用用户名密码登录
+  // 使用手机号密码登录
   async getTokenWithPhone(connect, u, p, clientId, type) {
     try {
 
@@ -133,8 +173,7 @@ class UserService {
   async getTokenWithCode(connect, phone, code, clientId, type) {
     try {
       // 检查验证码
-      let smsResult = await User.getSmsCode(connect, phone, code, 'login')
-      // 验证码失败
+      let smsResult = await Phone.getSmsCode(connect, phone, code, 'login')
       if (smsResult[2].length == 0) throw new E.SmsCodeError()
 
       // 获取用户信息
@@ -142,7 +181,7 @@ class UserService {
       if (userResult.length !== 1) throw new E.UsernameOrPasswordError()
 
       // 更新验证码
-      await User.updateSmsCode(connect, phone, code, 'login', 1, 'toConsumed')
+      await Phone.updateSmsCode(connect, phone, code, 'login', 1, 'toConsumed')
 
       return await getToken(connect, userResult, clientId, type)
 
@@ -189,14 +228,14 @@ class UserService {
       let userInfo = await oth(null, code)
       let { unionid, nickname, headimgurl } = userInfo
       // 插入或更新微信用户
-      await User.insertIntoWechat(connect, unionid, nickname, headimgurl)
+      await Wechat.insertIntoWechat(connect, unionid, nickname, headimgurl)
       // 查询微信用户绑定信息
-      let wechatUserResult = await User.findWechatAndUserByUnionId(connect, unionid)
+      let wechatUserResult = await Wechat.findWechatAndUserByUnionId(connect, unionid)
       if (wechatUserResult.length !== 1) throw new Error('find wechat failed')
       if (wechatUserResult[0].user !== null) throw new Error('wechat has been bound')
 
       // 添加绑定
-      let result = await User.addWechat(connect, id, unionid)
+      let result = await Wechat.addWechat(connect, id, unionid)
       return result
     } catch (error) { throw error }
   }
@@ -214,9 +253,9 @@ class UserService {
 
       let { unionid, nickname, headimgurl, refresh_token, access_token, openid } = userInfo
       // 插入或更新微信用户
-      await User.insertIntoWechat(connect, unionid, nickname, headimgurl)
+      await Wechat.insertIntoWechat(connect, unionid, nickname, headimgurl)
       // 查询微信用户绑定信息
-      let wechatUserResult = await User.findWechatAndUserByUnionId(connect, unionid)
+      let wechatUserResult = await Wechat.findWechatAndUserByUnionId(connect, unionid)
       if (wechatUserResult.length !== 1) throw new Error('find wechat user error')
       let { user } = wechatUserResult[0]
 
@@ -227,7 +266,7 @@ class UserService {
       } else {
         // 微信用户绑定了注册用户
         let userResult = await User.getUserInfo(connect, user)
-        
+
         return { ...(await getToken(connect, userResult, clientId, type)), user: true }
       }
 
@@ -246,7 +285,7 @@ class UserService {
       if (wechat.user !== null) throw new E.WechatAlreadyAssociated()
 
       // 关联
-      let result = await User.addWechat(connect, userId, wechat.unionid)
+      let result = await Wechat.addWechat(connect, userId, wechat.unionid)
 
       return {}
 
@@ -256,18 +295,18 @@ class UserService {
   // 查询微信
   async getWechatInfo(connect, userId) {
     try {
-      return await User.getUserWechat(connect, userId)
+      return await Wechat.getUserWechat(connect, userId)
     } catch (error) { throw error }
   }
 
   // 解绑微信
   async unbindWechat(connect, userId, unionid) {
     try {
-      let userResult = await User.getUserWechat(connect, userId)
+      let userResult = await Wechat.getUserWechat(connect, userId)
       let result = userResult.find(item => item.unionid == unionid)
       if (!result) throw new Error('unionid error')
 
-      await User.unbindWechat(connect, userId, unionid)
+      await Wechat.unbindWechat(connect, userId, unionid)
 
     } catch (error) { throw error }
   }
@@ -306,7 +345,7 @@ class UserService {
       if (!phoneTicket && !mailTicket) throw new Error('ticket is required')
 
       if (phoneTicket) {
-        let phoneResult = await User.getSmsCodeTicketInfo(connect, phoneTicket)
+        let phoneResult = await Phone.getSmsCodeTicketInfo(connect, phoneTicket)
         if (phoneResult.length !== 1) throw new E.PhoneTicketInvalid()
         let { phone } = phoneResult[0]
         phoneUser = (await User.getUserWithPhone(connect, phone))[0]
@@ -346,6 +385,18 @@ class UserService {
   }
 
   // ---------------------邮件---------------------
+
+  // 判断邮箱是否注册
+  async userMailExist(connect, mail) {
+    try {
+      let userResult = await User.getUserWithMail(connect, mail)
+      if (userResult.length == 1) {
+        let { id, avatarUrl, nickName, safety } = userResult[0]
+        return { userExist: true, id, avatarUrl, nickName, safety }
+      }
+      else return { userExist: false }
+    } catch (error) { throw error }
+  }
 
   // 邮件验证码
   async createMailCode(connect, mail, type, userId) {
@@ -446,78 +497,6 @@ class UserService {
 
   // ---------------------短信---------------------
 
-  // 请求短信验证码
-  async requestSmsCode(connect, phone, type) {
-    try {
-      let result = await User.getUserByPhone(connect, phone)
-      if (type == 'register') {
-        // 检查是否已注册
-        if (result.length !== 0) throw new E.UserAlreadyExist()
-      }
-
-      // 生成验证码
-      let id = uuid.v4()
-      let r = (Math.random()).toString()
-      let code = r.slice(-4, r.length)
-      console.log(code, type)
-      await User.createSmsCode(connect, id, phone, code, type)
-
-      // 发送验证码
-      // let res = await sendSmsCode(phone, code, type)
-      // // 判断请求是否成功
-      // if (res.Code !== 'OK') {
-      //   console.log('in res')
-      //   throw new Error(res.Message)
-      // }
-
-      return { userExist: result.length == 0 ? false : true }
-
-    } catch (error) {
-      console.log(error.code)
-      let code = error.code
-      if (code == 'isv.MOBILE_NUMBER_ILLEGAL') throw new E.MobileError()
-      else if (code == 'isv.BUSINESS_LIMIT_CONTROL') throw new E.MobileLimit()
-      else throw error
-    }
-  }
-
-  // 手机ticket
-  async getSmsCodeToken(connect, phone, code, type) {
-    try {
-      // 检查是否已注册
-      let u = await User.getUserByPhone(connect, phone)
-      if (u.length == 0 && type !== 'replace' && type !== 'register') 
-        throw new E.UserNotExist()
-
-      // 校验验证码
-      let codeResult = await User.getSmsCode(connect, phone, code, type)
-
-      let codeRecord = codeResult[2]
-      if (codeResult[2].length == 0) throw new E.SmsCodeError()
-
-      await User.updateSmsCode(connect, phone, code, type, 1, 'toConsumed')
-      return codeRecord[0].id
-
-    } catch (error) { ; console.log(error); throw error }
-  }
-
-  // 添加手机
-  async bindPhone(connect, id, phone, code) {
-    try {
-      // 校验验证码
-      let res = await request.postAsync({
-        uri: 'https://abel.leanapp.cn/v1/user/verifySmsCode',
-        json: true,
-        body: { phone, code }
-      })
-
-      // 验证码失败 ==> 错误
-      if (res.statusCode !== 200) throw new E.SmsCodeError()
-
-      let result = await User.addPhone(connect, id, phone)
-    } catch (error) { throw error }
-  }
-
   // 查询手机
   async getPhone(connect, id) {
     try {
@@ -537,16 +516,16 @@ class UserService {
       if (userResult.length == 0) throw new E.UserNotExist()
       let user = userResult[0]
       // 旧手机
-      let oldTicketResult = await User.getSmsCodeTicketInfo(connect, oldTicket)
+      let oldTicketResult = await Phone.getSmsCodeTicketInfo(connect, oldTicket)
       if (oldTicketResult.length == 0 || oldTicketResult[0].type !== 'replace')
         throw new E.PhoneTicketInvalid()
       let oldPhone = oldTicketResult[0].phone
       // 新手机
-      let newTicketResult = await User.getSmsCodeTicketInfo(connect, newTicket)
+      let newTicketResult = await Phone.getSmsCodeTicketInfo(connect, newTicket)
       if (newTicketResult.length == 0 || newTicketResult[0].type !== 'replace')
         throw new E.PhoneTicketInvalid()
       let newPhone = newTicketResult[0].phone
-      let newPhoneUsers = await User.getUserByPhone(connect, newPhone)
+      let newPhoneUsers = await Phone.checkPhone(connect, newPhone)
 
       console.log(user)
       console.log(oldPhone)

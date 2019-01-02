@@ -13,6 +13,7 @@
 const promise = require('bluebird')
 const jwt = require('../lib/jwt')
 const User = require('../models/user')
+const Wechat = require('../models/wechat')
 const WechatInfo = require('../lib/wechatInfo')
 const E = require('../lib/error')
 
@@ -73,7 +74,7 @@ module.exports = {
       let userInfo = await getUserInfo(access_token, openid)
       // 检查数据库是否存在对应用户
       let { unionid } = userInfo
-      let user = await User.findWechatAndUserByUnionId(req.db, unionid)
+      let user = await Wechat.findWechatAndUserByUnionId(req.db, unionid)
       if (user.length !== 1) return res.error(new Error('wechat user not exist'), 401, false)
       req.wechat = user[0]
 

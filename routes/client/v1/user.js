@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-28 16:22:01
+ * @Last Modified time: 2018-12-29 15:56:33
  */
 const express = require('express')
 const router = express.Router()
@@ -17,28 +17,18 @@ var timeout = require('connect-timeout')
 
 router.use(timeout('15s'))
 
-// 查询手机号
+/**
+ * 手机相关api
+ */
+// 查询手机号是否注册
 router.get('/phone/check', joiValidator({
-  jquery: {
+  query: {
     phone: Joi.string().required()
   }
 }), async (req, res) => {
   let { phone } = req.query
   let result = await userService.userPhoneExist(req.db, phone)
   res.success(result)
-})
-
-// 查询邮箱号是否存在
-router.get('/mail/check', joiValidator({
-  jquery: {
-    mail: Joi.string().required()
-  }
-}), async (req, res) => {
-  try {
-    let { mail } = req.query
-    let result = await userService.userMailExist(req.db, mail)
-    res.success(result)
-  } catch (error) { res.error(error) }
 })
 
 // 发送手机验证码
@@ -55,6 +45,23 @@ router.post('/smsCode', joiValidator({
   } catch (e) { console.log(e);res.error(e) }
 })
 
+/**
+ * 手机验证码换取ticket
+ */
+router.post('/smsCode/ticket', joiValidator({
+  body: {
+    phone: Joi.string().required(),
+    code: Joi.string().required(),
+    type: ['password', 'mail', 'replace', 'register', 'deviceChange', 'deprive']
+  }
+}), async (req, res) => {
+  try {
+    let { phone, code, type } = req.body
+    let result = await userService.getSmsCodeToken(req.db, phone, code, type)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
+
 // 使用手机号注册用户
 router.post('/', joiValidator({
   body: {
@@ -68,22 +75,6 @@ router.post('/', joiValidator({
   try {
     let { phone, ticket, password, clientId, type } = req.body
     let result = await userService.signUpWithPhone(req.db, phone, password, ticket, clientId, type)
-    res.success(result)
-  } catch (error) { res.error(error) }
-})
-
-// 使用手机号/验证码登录
-router.get('/smsCode/token', joiValidator({
-  query: {
-    phone: Joi.string().required(),
-    code: Joi.string().required(),
-    clientId: Joi.string().required(),
-    type: Joi.string().required()
-  }
-}), async (req, res) => {
-  try {
-    let { phone, code, clientId, type } = req.query
-    let result = await userService.getTokenWithCode(req.db, phone, code, clientId, type)
     res.success(result)
   } catch (error) { res.error(error) }
 })
@@ -104,6 +95,22 @@ router.get('/password/token', joiValidator({
   } catch (e) { res.error(e) }
 })
 
+// 使用手机号/验证码登录
+router.get('/smsCode/token', joiValidator({
+  query: {
+    phone: Joi.string().required(),
+    code: Joi.string().required(),
+    clientId: Joi.string().required(),
+    type: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { phone, code, clientId, type } = req.query
+    let result = await userService.getTokenWithCode(req.db, phone, code, clientId, type)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
+
 /**
  * 查询用户信息
  */
@@ -112,6 +119,33 @@ router.get('/', cAuth, async (req, res) => {
     let result = await userService.getUserInfo(req.db, req.auth.id)
     res.success(result)
   } catch (e) { res.error(e) }
+})
+
+/**
+ * 查询绑定手机号
+ */
+
+router.get('/phone', cAuth, async (req, res) => {
+  try {
+    let { id } = req.auth
+    let result = await userService.getPhone(req.db, id)
+    res.success(result)
+  } catch (e) { res.error(e) }
+})
+
+// 换手机号
+router.patch('/phone', joiValidator({
+  body: {
+    oldTicket: Joi.string().required(),
+    newTicket: Joi.string().required() 
+  }
+}), cAuth, async (req, res) => {
+  try {
+    let { oldTicket, newTicket } = req.body
+    let { id } = req.auth
+    let result = await userService.replacePhone(req.db, id, oldTicket, newTicket)
+    res.success(result)
+  } catch (error) { console.log(error);res.error(error)}
 })
 
 /**
@@ -130,50 +164,7 @@ router.post('/deviceInfo', cAuth, joiValidator({
   } catch (e) { console.log(e); res.error(e) }
 })
 
-/**
- * 查询绑定手机号
- */
 
-router.get('/phone', cAuth, async (req, res) => {
-  try {
-    let { id } = req.auth
-    let result = await userService.getPhone(req.db, id)
-    res.success(result)
-  } catch (e) { res.error(e) }
-})
-
-/**
- * 添加绑定手机号
- */
-router.post('/phone', joiValidator({
-  body: {
-    phone: Joi.string().min(11).max(11).required(),
-    code: Joi.string().min(6).max(6).required(),
-  }
-}), cAuth, async (req, res) => {
-  try {
-    let { phone, code } = req.body
-    let { id } = req.auth
-    userService.bindPhone(req.db, id, phone, code)
-
-    res.success()
-  } catch (error) { res.error(error) }
-})
-
-// 换手机号
-router.patch('/phone', joiValidator({
-  body: {
-    oldTicket: Joi.string().required(),
-    newTicket: Joi.string().required() 
-  }
-}), cAuth, async (req, res) => {
-  try {
-    let { oldTicket, newTicket } = req.body
-    let { id } = req.auth
-    let result = await userService.replacePhone(req.db, id, oldTicket, newTicket)
-    res.success(result)
-  } catch (error) { console.log(error);res.error(error)}
-})
 
 
 /**
@@ -209,23 +200,6 @@ router.delete('/wechat', cAuth, joiValidator({
     let { id } = req.auth
     let { unionid } = req.body
     let result = await userService.unbindWechat(req.db, id, unionid)
-    res.success(result)
-  } catch (error) { res.error(error) }
-})
-
-/**
- * 手机验证码换取ticket
- */
-router.post('/smsCode/ticket', joiValidator({
-  body: {
-    phone: Joi.string().required(),
-    code: Joi.string().required(),
-    type: ['password', 'mail', 'replace', 'register', 'deviceChange', 'deprive']
-  }
-}), async (req, res) => {
-  try {
-    let { phone, code, type } = req.body
-    let result = await userService.getSmsCodeToken(req.db, phone, code, type)
     res.success(result)
   } catch (error) { res.error(error) }
 })
@@ -286,6 +260,19 @@ router.patch('/safety', cAuth, joiValidator({
     let { safety } = req.body
     let { id } = req.auth
     let result = await userService.updateSafety(req.db, id, safety)
+    res.success(result)
+  } catch (error) { res.error(error) }
+})
+
+// 查询邮箱号是否存在
+router.get('/mail/check', joiValidator({
+  query: {
+    mail: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { mail } = req.query
+    let result = await userService.userMailExist(req.db, mail)
     res.success(result)
   } catch (error) { res.error(error) }
 })

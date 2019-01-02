@@ -1,6 +1,7 @@
 const crypto = require('crypto')
 const Station = require('../models/station')
 const User = require('../models/user')
+const Phone = require('../models/phone')
 const E = require('../lib/error')
 const jwt = require('../lib/jwt')
 const sendSmsCode = require('../lib/sendSmsCode')
@@ -66,7 +67,7 @@ class StationService {
       if (deviceResult.length !== 1) throw new E.StationNotExist()
       if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
       // 检查user
-      let userResult = await User.getUserByPhone(connect, phone)
+      let userResult = await User.getUserWithPhone(connect, phone)
       if (userResult.length !== 1) userExist = false
       else id = userResult[0].id
       // 禁止分享给自己
@@ -121,7 +122,7 @@ class StationService {
       if (!user) throw new E.UserNotExistInStation()
       
       // 校验验证码
-      let smsResult = await User.getSmsCodeTicketInfo(connect, ticket)
+      let smsResult = await Phone.getSmsCodeTicketInfo(connect, ticket)
       // 验证码失败
       if (smsResult.length == 0) throw new E.SmsCodeError()
       let { code } = smsResult[0]
@@ -146,7 +147,7 @@ class StationService {
   async deleteStation(connect, sn, userId, ticket) {
     try {
       // 验证ticket
-      let ticketResult = await User.getSmsCodeTicketInfo(connect, ticket)
+      let ticketResult = await Phone.getSmsCodeTicketInfo(connect, ticket)
       if (!ticketResult.length) throw new E.PhoneTicketInvalid()
       if (ticketResult[0].type !== 'deviceChange') throw new Error('ticket type error')
       let { code } = ticketResult[0]
@@ -213,7 +214,7 @@ class StationService {
       // 检查tickets
       for (let i = 0; i < tickets.length; i++) {
         
-        let ticketResult = await User.getSmsCodeTicketInfo(connect, tickets[i])
+        let ticketResult = await Phone.getSmsCodeTicketInfo(connect, tickets[i])
         if (ticketResult.length !== 1) throw new Error(`ticket ${tickest[i]} error`)
         let ticket = ticketResult[0]
         let user = users.find(item => item.username == ticket.phone)

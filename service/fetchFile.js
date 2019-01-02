@@ -2,12 +2,12 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-14 18:25:39
+ * @Last Modified time: 2019-01-02 17:52:28
  */
 
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
-const { State, Notice, Finish, Err, Server, Container } = require('./base')
+const { State, Init, Err, Server, Container } = require('./base')
 const Limit = require('../lib/speedLimit')
 
 /**
@@ -16,36 +16,10 @@ const Limit = require('../lib/speedLimit')
  * server state: init -> notice -> pending -> finish
  */
 
-class Init extends State {
-  constructor(ctx) {
-    super(ctx)
-    this.name = 'init'
-  }
-
-  enter() {
-    let server = this.ctx
-    let jobId = this.ctx.jobId
-    this.ctx.ctx.map.set(jobId, server)
-    try {
-      var body = JSON.parse(server.req.query.data)
-      let range = this.ctx.req.headers['range']
-      let SetCookie = this.ctx.req.headers['cookie']
-
-      this.ctx.manifest = Object.assign({
-        sessionId: jobId,
-        user: { id: this.ctx.req.auth.id },
-        headers: { range, 'cookie': SetCookie }
-      }, body)
-
-      this.setState(Notice)
-    } catch (e) { this.setState(Err, e) }
-    
-  }
-}
-
 class Pipe extends State {
   constructor(ctx, req, res) {
     super(ctx, req, res)
+    this.name = 'pipe'
   }
 
   enter(req, res) {
@@ -84,6 +58,7 @@ class FetchFile extends Container {
 
   createServer(req, res) {
     this.schedule()
+    req.setTimeout(15000)
     if (this.map.size > this.limit) throw new E.PipeTooMuchTask()
     debug(this.map.size)
     new Server(req, res, this, Init)

@@ -2,53 +2,26 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-05 16:19:30
+ * @Last Modified time: 2019-01-02 17:25:26
  */
 
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
-const { State, Notice, Finish, Err, Server, Container } = require('./base')
+const { State, Init, Err, Server, Container } = require('./base')
 
 /**
  * 状态机
  * server state: init -> notice -> pending -> pipe -> pending -> finish
  */
 
-
-/**
- * 初始化：获取参数
- */
-class Init extends State {
-  constructor(ctx) {
-    super(ctx)
-    this.name = 'init'
-  }
-
-  enter() {
-    let server = this.ctx
-    let jobId = this.ctx.jobId
-    this.ctx.ctx.map.set(jobId, server)
-    
-    try {
-      let body = JSON.parse(server.req.query.data)
-      let SetCookie = this.ctx.req.headers['cookie']
-
-      this.ctx.manifest = Object.assign({
-        sessionId: jobId,
-        user: { id: this.ctx.req.auth.id },
-        headers: { 'cookie': SetCookie }
-      }, body)
-  
-      this.setState(Notice)
-
-    } catch (e) { return this.setState(Err, e) }
-    
-  }
-}
-
 class Pipe extends State {
   constructor(ctx, res) {
     super(ctx, res)
+    this.name = 'pipe'
+    res.once('close', () => {
+      console.log('res close')
+      this.ctx.timer = Date.now() + 15 * 1000
+    })
   }
 
   enter(res) {

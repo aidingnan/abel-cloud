@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-28 17:58:53
+ * @Last Modified time: 2019-01-02 15:57:20
  */
 
 const express = require('express')
@@ -100,7 +100,6 @@ router.get('/:sn/user', async (req, res) => {
 // 查询所有设备
 router.get('/', async (req, res) => {
   try {
-    console.log('...')
     let { id, clientId, type } = req.auth
     let result = await stationService.getStations(req.db, id, clientId, type)
     res.success(result)
@@ -207,7 +206,7 @@ router.patch('/:sn/user/record', joiValidator({
 })
 
 async function checkUserAndStation(req, res, next) {
-  // return next()
+  return next()
   try {
     let userId = req.auth.id
     let sn = req.params.sn
