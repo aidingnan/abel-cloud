@@ -49,7 +49,13 @@ class Init extends State {
     this.ctx.ctx.map.set(jobId, server)
 
     // 获取参数
-    let body = server.req.body
+    let body
+    if (this.ctx.ctx.requestType == 'json') {
+      body = server.req.body
+    } else {
+      body = JSON.parse(server.req.query.data)
+    }
+
     let range = this.ctx.req.headers['range']
     let SetCookie = this.ctx.req.headers['cookie']
 
