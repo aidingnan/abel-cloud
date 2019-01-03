@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-03 11:29:57
+ * @Last Modified time: 2019-01-03 11:49:08
  */
 
 const express = require('express')
@@ -206,7 +206,7 @@ router.patch('/:sn/user/record', joiValidator({
 })
 
 async function checkUserAndStation(req, res, next) {
-  return next()
+  // return next()
   try {
     let userId = req.auth.id
     let sn = req.params.sn
