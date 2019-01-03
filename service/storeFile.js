@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-03 11:56:49
+ * @Last Modified time: 2019-01-03 14:15:08
  */
 
 const debug = require('debug')('app:store')
@@ -26,16 +26,12 @@ class Pipe extends State {
     }
     
     res.once('finish', () => {
-      console.log('data now is ', Date.now())
-      console.log('res close ', this.ctx.timer)
       this.ctx.timer = Date.now() + 30 * 1000
-      console.log('reset timer ', this.ctx.timer)
     })
 
     this.ctx.req.pipe(res)
   }
 }
-
 
 /**
  * formidable upload file
