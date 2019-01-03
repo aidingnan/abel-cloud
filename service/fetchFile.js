@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-02 17:52:28
+ * @Last Modified time: 2019-01-03 18:33:01
  */
 
 const debug = require('debug')('app:store')
@@ -36,17 +36,10 @@ class Pipe extends State {
     req.pipe(this.ctx.res)
 
     req.once('close', () => {
-      console.log('req - close')
-      // limit.inputClose()
+      console.log('fetch file station req close')
+      console.log(this.ctx.name)
     })
-    // req.on('error', () => console.log('req - error'))
-    // req.on('abort', () => console.log('req - abort'))
 
-    // this.ctx.res.on('close', () => console.log('res - close'))
-    // this.ctx.res.on('error', () => console.log('res - error'))
-    // this.ctx.res.on('abort', () => console.log('res - abort'))
-
-    // req.pipe(limit).pipe(this.ctx.res)
   }
 }
 
@@ -75,12 +68,12 @@ class FetchFile extends Container {
       server.state.setState(Err, e)
       return res.error(e)
     }
+
     if (server.finished()) {
       let e = new E.PipeResponseHaveFinished()
       server.state.setState(Err, e)
       return res.error(e)
     }
-
     
     server.state.setState(Pipe, req, res)
 
@@ -91,7 +84,6 @@ class FetchFile extends Container {
       server.error(err)
     })
   }
-
 }
 
 module.exports = new FetchFile(10000)

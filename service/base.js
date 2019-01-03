@@ -142,7 +142,7 @@ class Server extends EventEmitter {
     this.res = res
     this.ctx = ctx
     this.manifest = null
-    this.timer = Date.now() + 15 * 1000
+    this.timer = Date.now() + 25 * 1000
     this.jobId = uuid.v4()
     this.state = null
     new Init(this)
@@ -223,6 +223,7 @@ class Container {
     if (responseError) console.log('response error', req.body.error)
     if (responseError) {
       // 将station错误返回至客户端
+      if (responseError.status && !responseError.code) responseError.code = responseError.status
       server.state.setState(Err, responseError)
     }
     else {
@@ -230,6 +231,7 @@ class Container {
       let data = (Object.keys(req.body).length === 1 && req.body.data) ? req.body.data : req.body
       server.state.setState(Finish, data)
     }
+    
     res.success()
   }
 }

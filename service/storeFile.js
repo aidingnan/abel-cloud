@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-03 14:15:08
+ * @Last Modified time: 2019-01-03 18:31:36
  */
 
 const debug = require('debug')('app:store')
@@ -26,7 +26,12 @@ class Pipe extends State {
     }
     
     res.once('finish', () => {
+      console.log('store file station res finish')
       this.ctx.timer = Date.now() + 30 * 1000
+    })
+
+    res.on('close', () => {
+      console.log('store file station res close')
     })
 
     this.ctx.req.pipe(res)

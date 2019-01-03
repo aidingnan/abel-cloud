@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 16:49:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-02 17:52:35
+ * @Last Modified time: 2019-01-03 17:27:21
  */
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
@@ -13,9 +13,6 @@ const { Init, Server, Container } = require('./base')
  * server state: init -> notice -> pending -> finish
  */
 
-/**
- * server 管理容器
- */
 class TransformJson extends Container {
   constructor(limit) {
     super(limit)
