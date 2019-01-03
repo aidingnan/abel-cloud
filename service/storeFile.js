@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-03 11:50:23
+ * @Last Modified time: 2019-01-03 11:56:49
  */
 
 const debug = require('debug')('app:store')
@@ -25,7 +25,7 @@ class Pipe extends State {
       res.setHeader(key, this.ctx.req.headers[key])
     }
     
-    res.once('close', () => {
+    res.once('finish', () => {
       console.log('data now is ', Date.now())
       console.log('res close ', this.ctx.timer)
       this.ctx.timer = Date.now() + 30 * 1000
