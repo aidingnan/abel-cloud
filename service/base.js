@@ -67,6 +67,8 @@ class Init extends State {
       requestType: this.ctx.ctx.requestType
     }, body)
 
+    console.log(this.ctx.manifest)
+
     this.setState(Notice)
   }
 }
@@ -87,7 +89,6 @@ class Notice extends State {
       publishAsync(obj)
       this.setState(Pending)
     } catch (e) { this.setState(Error, e, 500) }
-
   }
 }
 

@@ -35,14 +35,14 @@ router.get('/user', async (req, res) => {
 router.post('/:id/response/:jobId/json', async (req, res) => {
   try {
     transformJson.response(req, res)
-  } catch(e) { res.error(e)}
+  } catch(e) { res.error(e) }
 })
 
 // station接收文件
 router.get('/:id/response/:jobId', (req, res) => {
   try {
     storeFile.request(req, res)
-  } catch(e) { res.error(e)}
+  } catch(e) { res.error(e) }
 })
 
 // station处理文件返回
@@ -55,13 +55,13 @@ router.post('/:id/response/:jobId/pipe/store', (req, res) => {
 router.post('/:id/response/:jobId', (req, res) => {
   try {
     fetchFile.request(req, res)
-  } catch(e) { res.error(e)}
+  } catch(e) { res.error(e) }
 })
 
 router.post('/:id/response/:jobId/pipe/fetch', (req, res) => {
   try {
     fetchFile.response(req, res)
-  } catch(e) { res.error(e)}
+  } catch(e) { res.error(e) }
 })
 
 // task 返回

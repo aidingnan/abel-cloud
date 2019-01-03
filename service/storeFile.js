@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-02 17:25:26
+ * @Last Modified time: 2019-01-03 11:19:59
  */
 
 const debug = require('debug')('app:store')
@@ -18,9 +18,9 @@ class Pipe extends State {
   constructor(ctx, res) {
     super(ctx, res)
     this.name = 'pipe'
-    res.once('close', () => {
+    res.on('close', () => {
       console.log('res close')
-      this.ctx.timer = Date.now() + 15 * 1000
+      this.ctx.timer = Date.now() + 30 * 1000
     })
   }
 
