@@ -126,6 +126,7 @@ class Err extends State {
   }
 
   enter(error, code) {
+    console.log(error.message, ' <--in error state')
     this.ctx.error(error, code)
   }
 }
