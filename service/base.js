@@ -88,7 +88,7 @@ class Notice extends State {
       let obj = { topic, qos, payload }
       publishAsync(obj)
       this.setState(Pending)
-    } catch (e) { this.setState(Error, e, 500) }
+    } catch (e) { console.log(e);this.setState(Error, e, 500) }
   }
 }
 
