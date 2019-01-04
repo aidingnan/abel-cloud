@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-03 15:39:24
+ * @Last Modified time: 2019-01-04 17:29:27
  */
 
 const express = require('express')
@@ -219,7 +219,7 @@ async function checkUserAndStation(req, res, next) {
     if (!sameOwnStation && !sameSharedStations) throw new Error('sn not belong to user')
 
     let station = sameOwnStation || sharedStations
-    if (!station.online) throw new Error('Station is not online')
+    // if (!station.online) throw new Error('Station is not online')
 
     next()
   } catch (e) { res.error(e) }
