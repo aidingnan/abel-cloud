@@ -184,12 +184,12 @@ class Container {
   }
 
   schedule() {
-    console.log(this.map.size)
+    debug(this.map.size)
     this.map.forEach((v, k) => {
       debug(v.isTimeOut()?'已超时': '未超时', v.jobId, `状态为：${v.state.name}`)
       if (v.finished()) this.map.delete(k)
     })
-    console.log(this.map.size)
+    debug(this.map.size)
   }
 
   createServer() {}
