@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-04 10:59:42
+ * @Last Modified time: 2019-01-04 18:06:54
  */
 
 const debug = require('debug')('app:store')
@@ -48,12 +48,6 @@ class StoreFile extends Container {
     this.requestType = 'store'
   }
 
-  schedule() {
-    this.map.forEach((v, k) => {
-      if (v.finished()) this.map.delete(k)
-    })
-  }
-
   createServer(req, res) {
     this.schedule()
     debug('store size: ', this.map.size)
@@ -73,14 +67,17 @@ class StoreFile extends Container {
         server.state.setState(Err, e)
         return res.error(e)
       }
-      
-      server.state.setState(Pipe, res)
+
       // req error
       req.on('error', err => {
+        console.log('storefile in request error', error)
         // response
         res.error(err)
         server.error(err)
       })
+      
+      server.state.setState(Pipe, res)
+      
     } catch (e) {
       console.log(e, 'in catch')
       res.error(e)

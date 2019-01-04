@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-04 17:57:04
+ * @Last Modified time: 2019-01-04 18:05:55
  */
 
 const debug = require('debug')('app:store')
@@ -35,11 +35,6 @@ class Pipe extends State {
 
     req.pipe(this.ctx.res)
 
-    req.once('close', () => {
-      console.log('fetch file station req close')
-      console.log(this.ctx.name)
-    })
-
   }
 }
 
@@ -53,13 +48,8 @@ class FetchFile extends Container {
     this.schedule()
     if (this.map.size > this.limit) throw new E.PipeTooMuchTask()
     debug(this.map.size)
-    let server = new Server(req, res, this, Init)
-    console.log(typeof server)
-    req.setTimeout(8000, () => {
-      let e = new E.PipeResponseHaveFinished()
-      server.state.setState(Err,e)
-      console.log(server.state.name)
-    })
+    new Server(req, res, this, Init)
+    
   }
 
   request(req, res) {
@@ -67,27 +57,22 @@ class FetchFile extends Container {
     let server = this.map.get(jobId)
     if (!server) return res.error(new E.StoreFileQueueNoServer(), 403, false)
 
-    // timeout
-    // if (server.isTimeOut()) {
-    //   let e = new E.PipeResponseTimeout()
-    //   server.state.setState(Err, e)
-    //   return res.error(e)
-    // }
-
     if (server.finished()) {
       let e = new E.PipeResponseHaveFinished()
       server.state.setState(Err, e)
       return res.error(e)
     }
-    
-    server.state.setState(Pipe, req, res)
 
     req.on('error', err => {
-      console.log('in request error', error)
+      console.log('fetchfile in request error', error)
       // response
       res.error(err)
       server.error(err)
     })
+    
+    server.state.setState(Pipe, req, res)
+
+    
   }
 }
 
