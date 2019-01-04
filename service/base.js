@@ -87,9 +87,11 @@ class Notice extends State {
       let payload = JSON.stringify(this.ctx.manifest)
       let obj = { topic, qos, payload }
       // publishAsync(obj)
-      iotData.publish(obj, () => {
-        console.log('in publish callback')
-        this.setState(Pending)
+      iotData.publish(obj, (err) => {
+        if (err) {
+          console.log('error in publish callback')
+          this.setState(Notice)
+        } else this.setState(Pending)
       })
       
     } catch (e) { console.log(e, '====================================');this.setState(Error, e, 500) }
