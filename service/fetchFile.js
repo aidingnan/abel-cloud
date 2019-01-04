@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-04 17:56:03
+ * @Last Modified time: 2019-01-04 17:57:04
  */
 
 const debug = require('debug')('app:store')
@@ -58,6 +58,7 @@ class FetchFile extends Container {
     req.setTimeout(8000, () => {
       let e = new E.PipeResponseHaveFinished()
       server.state.setState(Err,e)
+      console.log(server.state.name)
     })
   }
 
