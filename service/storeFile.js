@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-03 18:31:36
+ * @Last Modified time: 2019-01-04 10:59:42
  */
 
 const debug = require('debug')('app:store')
@@ -26,12 +26,11 @@ class Pipe extends State {
     }
     
     res.once('finish', () => {
-      console.log('store file station res finish')
-      this.ctx.timer = Date.now() + 30 * 1000
+      debug('store file station res finish')
     })
 
     res.on('close', () => {
-      console.log('store file station res close')
+      debug('store file station res close')
     })
 
     this.ctx.req.pipe(res)
@@ -68,12 +67,7 @@ class StoreFile extends Container {
       let jobId = req.params.jobId
       let server = this.map.get(jobId)
       if (!server) return res.error(new E.StoreFileQueueNoServer(), 403, false)
-      // timeout
-      if (server.isTimeOut()) {
-        let e = new E.PipeResponseTimeout()
-        server.state.setState(Err, e)
-        return res.error(e)
-      }
+      
       if (server.finished()) {
         let e = new E.PipeResponseHaveFinished()
         server.state.setState(Err, e)

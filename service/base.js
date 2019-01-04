@@ -142,7 +142,6 @@ class Server extends EventEmitter {
     this.res = res
     this.ctx = ctx
     this.manifest = null
-    this.timer = Date.now() + 25 * 1000
     this.jobId = uuid.v4()
     this.state = null
     new Init(this)
@@ -206,12 +205,6 @@ class Container {
       return res.error(new E.TransformJsonQueueNoServer(), 403, false)
     }
 
-    // 超时
-    if (server.isTimeOut()) {
-      let e = new E.PipeResponseTimeout()
-      server.state.setState(Err, e)
-      return res.error(e)
-    }
     // 重复发送或者客户端撤销请求
     if (server.finished()) {
       let e = new E.PipeResponseHaveFinished()
@@ -231,7 +224,7 @@ class Container {
       let data = (Object.keys(req.body).length === 1 && req.body.data) ? req.body.data : req.body
       server.state.setState(Finish, data)
     }
-    
+
     res.success()
   }
 }

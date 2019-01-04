@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-03 18:33:01
+ * @Last Modified time: 2019-01-04 10:41:27
  */
 
 const debug = require('debug')('app:store')
@@ -63,11 +63,11 @@ class FetchFile extends Container {
     if (!server) return res.error(new E.StoreFileQueueNoServer(), 403, false)
 
     // timeout
-    if (server.isTimeOut()) {
-      let e = new E.PipeResponseTimeout()
-      server.state.setState(Err, e)
-      return res.error(e)
-    }
+    // if (server.isTimeOut()) {
+    //   let e = new E.PipeResponseTimeout()
+    //   server.state.setState(Err, e)
+    //   return res.error(e)
+    // }
 
     if (server.finished()) {
       let e = new E.PipeResponseHaveFinished()
