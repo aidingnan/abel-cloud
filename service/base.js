@@ -172,7 +172,6 @@ class Server extends EventEmitter {
   close() {
     debug(`close trigger`)
     this.res.finished = true
-    // this.res.error()
   }
 }
 
@@ -201,7 +200,6 @@ class Container {
     let server = this.map.get(jobId)
     // 任务不存在
     if (!server) {
-      console.log('task not exist')
       return res.error(new E.TransformJsonQueueNoServer(), 403, false)
     }
 
