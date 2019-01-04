@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-04 17:42:07
+ * @Last Modified time: 2019-01-04 17:54:53
  */
 
 const debug = require('debug')('app:store')
@@ -51,11 +51,13 @@ class FetchFile extends Container {
 
   createServer(req, res) {
     this.schedule()
-    req.setTimeout(8000)
-    req.once('close', () => {console.log('close in fetch')})
     if (this.map.size > this.limit) throw new E.PipeTooMuchTask()
     debug(this.map.size)
-    new Server(req, res, this, Init)
+    let server = new Server(req, res, this, Init)
+    req.setTimeout(8000, () => {
+      let e = new E.PipeResponseHaveFinished()
+      server.state.setState(Err,e)
+    })
   }
 
   request(req, res) {
