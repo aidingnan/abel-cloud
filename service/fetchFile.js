@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-04 17:54:53
+ * @Last Modified time: 2019-01-04 17:56:03
  */
 
 const debug = require('debug')('app:store')
@@ -54,6 +54,7 @@ class FetchFile extends Container {
     if (this.map.size > this.limit) throw new E.PipeTooMuchTask()
     debug(this.map.size)
     let server = new Server(req, res, this, Init)
+    console.log(typeof server)
     req.setTimeout(8000, () => {
       let e = new E.PipeResponseHaveFinished()
       server.state.setState(Err,e)
