@@ -10,6 +10,7 @@ const db = require('mysql')
 const config = require('getconfig')
 const promise = require('bluebird')
 const AWS = require('aws-sdk')
+const Cache = require('../lib/cache')
 
 /**
  * 初始化各类SDK
@@ -71,9 +72,9 @@ ssm.getParameters({ Names: ['iot', 'rds', 'rds-test'] }, (err, data) => {
 // sdk添加到全局
 global.getParameterAsync = promise.promisify(ssm.getParameter).bind(ssm)
 global.describeCertificateAsync = promise.promisify(iot.describeCertificate).bind(iot)
-global.iotData = iotData
 global.publishAsync = promise.promisify(iotData.publish).bind(iotData)
 global.uploadAsync = promise.promisify(s3.upload).bind(s3)
+global.cache = new Cache(ssm)
 
 /**
  * Get port from environment and store in Express.
