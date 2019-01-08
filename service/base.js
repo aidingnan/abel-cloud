@@ -148,6 +148,7 @@ class Server extends EventEmitter {
     new Init(this)
     this.req.on('error', err => this.error(err))
     this.req.on('close', this.close)
+    this.req.on('abort', this.abort)
   }
 
   isTimeOut() {
@@ -173,6 +174,11 @@ class Server extends EventEmitter {
   close() {
     debug(`close trigger`)
     console.log('client req close trigger')
+    this.res.finished = true
+  }
+
+  abort() {
+    console.log('client req abort trigger')
     this.res.finished = true
   }
 }
