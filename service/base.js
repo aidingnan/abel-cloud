@@ -125,9 +125,9 @@ class Err extends State {
     this.name = 'error'
   }
 
-  enter(error, code) {
+  enter(error) {
     console.log(error.message, ' <--in error state')
-    this.ctx.error(error, code)
+    this.ctx.error(error)
   }
 }
 
@@ -165,13 +165,14 @@ class Server extends EventEmitter {
   }
 
   error(err, code) {
-    console.log('in error', err)
+    console.log('task error trigger')
     if (this.finished()) return
     this.res.error(err, code)
   }
 
   close() {
     debug(`close trigger`)
+    console.log('client req close trigger')
     this.res.finished = true
   }
 }

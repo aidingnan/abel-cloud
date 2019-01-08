@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 16:49:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-04 18:25:42
+ * @Last Modified time: 2019-01-08 11:19:14
  */
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
@@ -30,6 +30,3 @@ class TransformJson extends Container {
 }
 
 module.exports = new TransformJson(1024)
-
-
-

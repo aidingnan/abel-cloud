@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-04 18:06:54
+ * @Last Modified time: 2019-01-08 14:54:52
  */
 
 const debug = require('debug')('app:store')
@@ -49,8 +49,9 @@ class StoreFile extends Container {
   }
 
   createServer(req, res) {
+    console.log(`${this.map.size}++`)
     this.schedule()
-    debug('store size: ', this.map.size)
+    console.log(this.map.size)
     if (this.map.size > this.limit)
       throw new E.PipeTooMuchTask()
     new Server(req, res, this, Init)

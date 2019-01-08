@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-29 15:56:33
+ * @Last Modified time: 2019-01-08 13:54:13
  */
 const express = require('express')
 const router = express.Router()
@@ -95,22 +95,6 @@ router.get('/password/token', joiValidator({
   } catch (e) { res.error(e) }
 })
 
-// 使用手机号/验证码登录
-router.get('/smsCode/token', joiValidator({
-  query: {
-    phone: Joi.string().required(),
-    code: Joi.string().required(),
-    clientId: Joi.string().required(),
-    type: Joi.string().required()
-  }
-}), async (req, res) => {
-  try {
-    let { phone, code, clientId, type } = req.query
-    let result = await userService.getTokenWithCode(req.db, phone, code, clientId, type)
-    res.success(result)
-  } catch (error) { res.error(error) }
-})
-
 /**
  * 查询用户信息
  */
@@ -163,9 +147,6 @@ router.post('/deviceInfo', cAuth, joiValidator({
     res.success()
   } catch (e) { console.log(e); res.error(e) }
 })
-
-
-
 
 /**
  * 登录状态下

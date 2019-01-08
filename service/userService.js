@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-29 17:00:45
+ * @Last Modified time: 2019-01-08 14:24:26
  */
 const promise = require('bluebird')
 const uuid = require('uuid')
@@ -42,7 +42,7 @@ const getToken = async (connect, userResult, clientId, type) => {
 class UserService {
 
   /**
-  * ---------------------手机相关api---------------------
+  * ---------------------注册登录---------------------
   */
 
   // 判断手机是否注册
@@ -169,26 +169,6 @@ class UserService {
     } catch (error) { throw error }
   }
 
-  // 使用验证码登录
-  async getTokenWithCode(connect, phone, code, clientId, type) {
-    try {
-      // 检查验证码
-      let smsResult = await Phone.getSmsCode(connect, phone, code, 'login')
-      if (smsResult[2].length == 0) throw new E.SmsCodeError()
-
-      // 获取用户信息
-      let userResult = await User.getUserWithPhone(connect, phone)
-      if (userResult.length !== 1) throw new E.UsernameOrPasswordError()
-
-      // 更新验证码
-      await Phone.updateSmsCode(connect, phone, code, 'login', 1, 'toConsumed')
-
-      return await getToken(connect, userResult, clientId, type)
-
-
-    } catch (error) { throw error }
-  }
-
   // 使用邮箱密码登录
   async getTokenWithMail(connect, mail, password, clientId, type) {
     try {
@@ -201,6 +181,41 @@ class UserService {
     } catch (error) { throw error }
   }
 
+  // 微信登录
+  async loginWithWechat(connect, code, loginType, clientId, type) {
+    try {
+      // 解析code => userinfo
+      let data = await getParameterAsync({ Name: 'wechat' })
+      let config = JSON.parse(data.Parameter.Value)[loginType]
+      let wechatInfo = new WechatInfo(config)
+      let oth = promise.promisify(wechatInfo.oauth2UserInfo).bind(wechatInfo)
+      let userInfo = await oth(null, code)
+      let { unionid, nickname, headimgurl, refresh_token, access_token, openid } = userInfo
+      
+      // 插入或更新微信用户
+      await Wechat.insertIntoWechat(connect, unionid, nickname, headimgurl)
+      
+      // 查询微信用户绑定信息
+      let wechatUserResult = await Wechat.findWechatAndUserByUnionId(connect, unionid)
+      if (wechatUserResult.length !== 1) throw new Error('find wechat user error')
+      let { user } = wechatUserResult[0]
+
+      if (user == null) {
+        // 微信用户没有绑定注册用户
+        let obj = { unionid, access_token, refresh_token, openid }
+        return { wechat: await jwt.encode(obj), user: false }
+      } else {
+        // 微信用户绑定了注册用户
+        let userResult = await User.getUserInfo(connect, user)
+
+        return { ...(await getToken(connect, userResult, clientId, type)), user: true }
+      }
+
+    } catch (error) { throw error }
+  }
+
+  // ---------------------用户设置---------------------
+
   // 查询用户信息
   async getUserInfo(connect, userId) {
     try {
@@ -208,8 +223,6 @@ class UserService {
       return Object.assign(result, { password: undefined })
     } catch (error) { throw error }
   }
-
-  // ---------------------用户设置---------------------
 
   // 设备使用记录
   async recordDeviceUseInfo(connect, userId, clientId, type, sn) {
@@ -237,39 +250,6 @@ class UserService {
       // 添加绑定
       let result = await Wechat.addWechat(connect, id, unionid)
       return result
-    } catch (error) { throw error }
-  }
-
-  // 微信登录
-  async loginWithWechat(connect, code, loginType, clientId, type) {
-    try {
-      // 解析code => userinfo
-      let data = await getParameterAsync({ Name: 'wechat' })
-      let config = JSON.parse(data.Parameter.Value)[loginType]
-      let wechatInfo = new WechatInfo(config)
-      let oth = promise.promisify(wechatInfo.oauth2UserInfo).bind(wechatInfo)
-      let userInfo = await oth(null, code)
-      // console.log(userInfo)
-
-      let { unionid, nickname, headimgurl, refresh_token, access_token, openid } = userInfo
-      // 插入或更新微信用户
-      await Wechat.insertIntoWechat(connect, unionid, nickname, headimgurl)
-      // 查询微信用户绑定信息
-      let wechatUserResult = await Wechat.findWechatAndUserByUnionId(connect, unionid)
-      if (wechatUserResult.length !== 1) throw new Error('find wechat user error')
-      let { user } = wechatUserResult[0]
-
-      if (user == null) {
-        // 微信用户没有绑定注册用户
-        let obj = { unionid, access_token, refresh_token, openid }
-        return { wechat: await jwt.encode(obj), user: false }
-      } else {
-        // 微信用户绑定了注册用户
-        let userResult = await User.getUserInfo(connect, user)
-
-        return { ...(await getToken(connect, userResult, clientId, type)), user: true }
-      }
-
     } catch (error) { throw error }
   }
 
