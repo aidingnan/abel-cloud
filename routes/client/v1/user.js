@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-08 13:54:13
+ * @Last Modified time: 2019-01-09 15:43:46
  */
 const express = require('express')
 const router = express.Router()
@@ -269,7 +269,6 @@ router.post('/mailCode', joiValidator({
 }), async (req, res) => {
   try {
     let { mail, type } = req.body
-
     let result = await userService.createMailCode(req.db, mail, type)
     res.success(result)
   } catch (error) { console.log(error);res.error(error) }

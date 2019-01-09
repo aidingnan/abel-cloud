@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-08 14:54:25
+ * @Last Modified time: 2019-01-09 17:13:13
  */
 
 const debug = require('debug')('app:store')
@@ -45,13 +45,10 @@ class FetchFile extends Container {
   }
 
   createServer(req, res) {
-    console.log(`${this.map.size}++`)
     this.schedule()
-    console.log(this.map.size)
     if (this.map.size > this.limit) throw new E.PipeTooMuchTask()
     debug(this.map.size)
     new Server(req, res, this, Init)
-    
   }
 
   request(req, res) {

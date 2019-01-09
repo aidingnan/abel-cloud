@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-08 14:24:26
+ * @Last Modified time: 2019-01-09 16:25:32
  */
 const promise = require('bluebird')
 const uuid = require('uuid')
@@ -10,6 +10,7 @@ const User = require('../models/user')
 const Station = require('../models/station')
 const Phone = require('../models/phone')
 const Wechat = require('../models/wechat')
+const Mail = require('../models/mail')
 const E = require('../lib/error')
 const jwt = require('../lib/jwt')
 const WechatInfo = require('../lib/wechatInfo')
@@ -191,10 +192,10 @@ class UserService {
       let oth = promise.promisify(wechatInfo.oauth2UserInfo).bind(wechatInfo)
       let userInfo = await oth(null, code)
       let { unionid, nickname, headimgurl, refresh_token, access_token, openid } = userInfo
-      
+
       // 插入或更新微信用户
       await Wechat.insertIntoWechat(connect, unionid, nickname, headimgurl)
-      
+
       // 查询微信用户绑定信息
       let wechatUserResult = await Wechat.findWechatAndUserByUnionId(connect, unionid)
       if (wechatUserResult.length !== 1) throw new Error('find wechat user error')
@@ -214,21 +215,12 @@ class UserService {
     } catch (error) { throw error }
   }
 
-  // ---------------------用户设置---------------------
+  // ---------------------微信绑定---------------------
 
-  // 查询用户信息
-  async getUserInfo(connect, userId) {
+  // 查询微信
+  async getWechatInfo(connect, userId) {
     try {
-      let result = (await User.getUserInfo(connect, userId))[0]
-      return Object.assign(result, { password: undefined })
-    } catch (error) { throw error }
-  }
-
-  // 设备使用记录
-  async recordDeviceUseInfo(connect, userId, clientId, type, sn) {
-    try {
-      // 记录
-      await User.recordUseInfo(connect, userId, clientId, type, sn)
+      return await Wechat.getUserWechat(connect, userId)
     } catch (error) { throw error }
   }
 
@@ -272,13 +264,6 @@ class UserService {
     } catch (error) { throw error }
   }
 
-  // 查询微信
-  async getWechatInfo(connect, userId) {
-    try {
-      return await Wechat.getUserWechat(connect, userId)
-    } catch (error) { throw error }
-  }
-
   // 解绑微信
   async unbindWechat(connect, userId, unionid) {
     try {
@@ -288,6 +273,41 @@ class UserService {
 
       await Wechat.unbindWechat(connect, userId, unionid)
 
+    } catch (error) { throw error }
+  }
+
+  // ---------------------设置查询---------------------
+
+  // 查询用户信息
+  async getUserInfo(connect, userId) {
+    try {
+      let result = (await User.getUserInfo(connect, userId))[0]
+      return Object.assign(result, { password: undefined })
+    } catch (error) { throw error }
+  }
+
+  // 查询手机
+  async getPhone(connect, id) {
+    try {
+      let result = await User.getPhone(connect, id)
+      return result
+
+    } catch (error) { throw error }
+  }
+
+  // 查询绑定邮箱
+  async getUserMail(connect, userId) {
+    try {
+      let result = await User.getUserMail(connect, userId)
+      return result
+    } catch (error) { throw error }
+  }
+
+  // 设备使用记录
+  async recordDeviceUseInfo(connect, userId, clientId, type, sn) {
+    try {
+      // 记录
+      await User.recordUseInfo(connect, userId, clientId, type, sn)
     } catch (error) { throw error }
   }
 
@@ -332,7 +352,7 @@ class UserService {
       }
 
       if (mailTicket) {
-        let mailResult = await User.getMailCodeTicketInfo(connect, mailTicket)
+        let mailResult = await Mail.getMailCodeTicketInfo(connect, mailTicket)
         if (mailResult.length !== 1) throw new E.MailTicketInvalid()
         let { mail } = mailResult[0]
         mailUser = (await User.getUserWithMail(connect, mail))[0]
@@ -358,130 +378,8 @@ class UserService {
     try {
       let mailResult = await User.getUserMail(connect, userId)
       if (safety !== 0 && mailResult.length == 0) throw new E.MailShouldBeBound()
-      let updateResult = await User.updateSafeTy(connect, userId, safety)
+      await User.updateSafeTy(connect, userId, safety)
       return await this.getUserInfo(connect, userId)
-
-    } catch (error) { throw error }
-  }
-
-  // ---------------------邮件---------------------
-
-  // 判断邮箱是否注册
-  async userMailExist(connect, mail) {
-    try {
-      let userResult = await User.getUserWithMail(connect, mail)
-      if (userResult.length == 1) {
-        let { id, avatarUrl, nickName, safety } = userResult[0]
-        return { userExist: true, id, avatarUrl, nickName, safety }
-      }
-      else return { userExist: false }
-    } catch (error) { throw error }
-  }
-
-  // 邮件验证码
-  async createMailCode(connect, mail, type, userId) {
-    try {
-      let obj = await User.getMail(connect, mail)
-      if (type == 'password') {
-        if (obj.length == 0) throw new Error('mail not exist')
-        if (!obj[0].user) throw new Error('mail has not bind user')
-      }
-
-      if (type == 'bind') {
-        // 查询邮箱是否已被绑定
-        let mailResult = await User.getMail(connect, mail)
-        if (mailResult.length !== 0) throw new E.MailAlreadyBound()
-      }
-
-      let id = uuid.v4()
-      let r = (Math.random()).toString()
-      let code = r.slice(-4, r.length)
-      console.log(code)
-
-      await sendMail(mail, code)
-
-      let result = await User.createMailCode(connect, id, mail, code, type)
-      return result
-    } catch (error) { throw error }
-  }
-
-  // 换取ticket
-  async getMailToken(connect, mail, code, type) {
-    try {
-      let codeResult = await User.getMailCode(connect, mail, code, type)
-      let codeRecord = codeResult[2]
-      if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
-
-      await User.getMailToken(connect, mail, code, type, 1, 'toConsumed')
-
-      return codeRecord[0].id
-    } catch (error) { throw error }
-  }
-
-  // 绑定邮箱
-  async bindMail(connect, mail, code, userId) {
-    try {
-      // 查询用户是否已绑定邮箱
-      let userMail = await User.getUserMail(connect, userId)
-      if (userMail.length > 0) throw new E.UserHasBoundMail()
-      // 查询邮箱是否已被绑定
-      let mailResult = await User.getMail(connect, mail)
-      if (mailResult.length !== 0) throw new E.MailAlreadyBound()
-      // 检查验证码
-      let codeResult = await User.getMailCode(connect, mail, code, 'bind')
-      if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
-      // 事务处理，单独建立connect
-      let newConnect = promise.promisifyAll(await connect.getConnectionAsync())
-      // 绑定
-      let result = await User.bindMail(newConnect, mail, code, userId)
-      let codeCheck = result[3].affectedRows == 0
-      let userCheck = result[4].affectedRows == 0
-      if (codeCheck || userCheck) {
-        await newConnect.queryAsync('ROLLBACK;')
-        throw new Error('bind failed')
-      }
-
-      await newConnect.queryAsync('COMMIT;')
-
-      newConnect.release()
-
-    } catch (error) {
-      console.log(error)
-      if (error.errno == 1062) throw new E.MailAlreadyBound()
-      else throw error
-    }
-  }
-
-  // 解绑邮箱
-  async unBindMail(connect, mail, code, userId) {
-    try {
-      // 检查邮箱是否属于用户
-      let userMail = await User.getUserMail(connect, userId)
-      let mailInList = userMail.findIndex(item => item.mail == mail)
-      if (mailInList == -1) throw new Error('mail is not belong to user')
-      // 检查验证码
-      let codeResult = await User.getMailCode(connect, mail, code, 'unbind')
-      if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
-      // 解绑
-      await User.unBindMail(connect, mail, code, userId)
-    } catch (error) { throw error }
-  }
-
-  // 查询绑定邮箱
-  async getUserMail(connect, userId) {
-    try {
-      let result = await User.getUserMail(connect, userId)
-      return result
-    } catch (error) { throw error }
-  }
-
-  // ---------------------短信---------------------
-
-  // 查询手机
-  async getPhone(connect, id) {
-    try {
-      let result = await User.getPhone(connect, id)
-      return result
 
     } catch (error) { throw error }
   }
@@ -533,6 +431,107 @@ class UserService {
       await newConnect.queryAsync('ROLLBACK;')
       throw error;
     }
+  }
+
+  // ---------------------邮件---------------------
+
+  // 查询邮箱用户信息
+  async userMailExist(connect, mail) {
+    try {
+      let userResult = await User.getUserWithMail(connect, mail)
+      if (userResult.length == 1) {
+        let { id, avatarUrl, nickName, safety } = userResult[0]
+        return { userExist: true, id, avatarUrl, nickName, safety }
+      }
+      else return { userExist: false }
+    } catch (error) { throw error }
+  }
+
+  // 发送邮件验证码
+  async createMailCode(connect, mail, type) {
+    try {
+      let mailResult = await Mail.getMail(connect, mail)
+      if (type == 'password' || type == 'unbind') {
+        if (mailResult.length == 0) throw new Error('mail not exist')
+        if (!mailResult[0].user) throw new Error('mail has not bind user')
+      }
+
+      if (type == 'bind') {
+        // 查询邮箱是否已被绑定
+        if (mailResult.length !== 0) throw new E.MailAlreadyBound()
+      }
+
+      let id = uuid.v4()
+      let r = (Math.random()).toString()
+      let code = r.slice(-4, r.length)
+      console.log(code)
+
+      await sendMail(mail, code)
+      await Mail.createMailCode(connect, id, mail, code, type)
+      
+    } catch (error) { throw error }
+  }
+
+  // 邮箱ticket
+  async getMailToken(connect, mail, code, type) {
+    try {
+      let codeResult = await Mail.getMailCode(connect, mail, code, type)
+      let codeRecord = codeResult[2]
+      if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
+
+      await Mail.updateMailCode(connect, mail, code, type, 1, 'toConsumed')
+
+      return codeRecord[0].id
+    } catch (error) { throw error }
+  }
+
+  // 绑定邮箱
+  async bindMail(connect, mail, code, userId) {
+    try {
+      // 查询用户是否已绑定邮箱
+      let userMail = await User.getUserMail(connect, userId)
+      if (userMail.length > 0) throw new E.UserHasBoundMail()
+      // 查询邮箱是否已被绑定
+      let mailResult = await Mail.getMail(connect, mail)
+      if (mailResult.length !== 0) throw new E.MailAlreadyBound()
+      // 检查验证码
+      let codeResult = await Mail.getMailCode(connect, mail, code, 'bind')
+      if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
+      // 事务处理，单独建立connect
+      let newConnect = promise.promisifyAll(await connect.getConnectionAsync())
+      // 绑定
+      let result = await User.bindMail(newConnect, mail, code, userId)
+      let codeCheck = result[3].affectedRows == 0
+      let userCheck = result[4].affectedRows == 0
+      if (codeCheck || userCheck) {
+        await newConnect.queryAsync('ROLLBACK;')
+        throw new Error('bind failed')
+      }
+
+      await newConnect.queryAsync('COMMIT;')
+
+      newConnect.release()
+
+    } catch (error) {
+      console.log(error)
+      if (error.errno == 1062) throw new E.MailAlreadyBound()
+      else throw error
+    }
+  }
+
+  // 解绑邮箱
+  async unBindMail(connect, mail, code, userId) {
+    try {
+      // 检查邮箱是否属于用户
+      let userMail = await User.getUserMail(connect, userId)
+      let mailInList = userMail.findIndex(item => item.mail == mail)
+      if (mailInList == -1) throw new Error('mail is not belong to user')
+      // 检查验证码
+      let codeResult = await Mail.getMailCode(connect, mail, code, 'unbind')
+      if (codeResult[2].length == 0) throw new E.MailCodeInvalid()
+      // 解绑
+      await User.unBindMail(connect, mail, code, userId)
+    } catch (error) { throw error }
   }
 }
 

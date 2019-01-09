@@ -134,7 +134,7 @@ class StationService {
       await Station.recordShare(connect, sn, owner, null, sharedUserId, 'deprive', null, code, 'done')
 
       // 更新ticket 状态
-      await User.updateSmsRecordStatus(connect, ticket, 'consumed')
+      await Phone.updateSmsRecordStatus(connect, ticket, 'consumed')
 
       try {
         await pulishUser(connect, sn)

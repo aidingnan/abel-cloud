@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-12-29 13:26:44 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2018-12-29 15:14:20
+ * @Last Modified time: 2019-01-09 16:50:31
  */
 const phone = {
 
@@ -23,7 +23,7 @@ const phone = {
     return connect.queryAsync(sql)
   },
 
-  // 查询短信验证码有效
+  // 查询短信验证码
   getSmsCode: (connect, phone, code, type) => {
     let sql = `
     SET @end = unix_timestamp(NOW());
@@ -35,14 +35,20 @@ const phone = {
     return connect.queryAsync(sql)
   },
 
-  // 更新验证码状态
+  // 更新手机验证码状态
   updateSmsCode: (connect, phone, code, type, verified, status) => {
     let sql = `
-      SET @end = unix_timestamp(NOW());
-      SET @start = unix_timestamp(SUBTIME(NOW(), 15 * 60));
       UPDATE userSmsCodeRecord SET verified=${verified}, status='${status}'
-      WHERE phone='${phone}' AND code='${code}' AND verified=0 AND type='${type}'
-      AND unix_timestamp(time) BETWEEN @start AND @end;
+      WHERE phone='${phone}' AND code='${code}' AND verified=0 AND type='${type}';
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 更新手机token状态
+  updateSmsRecordStatus: (connect, id, status) => {
+    let sql = `
+      UPDATE userSmsCodeRecord SET status='${status}'
+      WHERE id='${id}'
     `
     return connect.queryAsync(sql)
   },
@@ -79,7 +85,7 @@ const phone = {
       WHERE phone='${phone}' AND id='${ticket}' AND verified=1 AND type='${type}'
       AND unix_timestamp(time) BETWEEN @start AND @end;`
     return connect.queryAsync(sql)
-  },
+  }
 }
 
 module.exports = phone
