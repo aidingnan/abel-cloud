@@ -50,9 +50,8 @@ class StationService {
       let { id } = JSON.parse(decrypted)
 
       // 绑定用户
-      // let device = await Station.findDeviceBySn(connect, sn)
       let user = (await User.getUserInfo(connect, id))[0]
-      let result = await Station.bindUser(connect, sn, id)
+      await Station.bindUser(connect, sn, id)
 
       return Object.assign(user, { password: undefined })
     } catch (error) { throw error }

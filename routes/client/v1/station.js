@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-04 17:29:27
+ * @Last Modified time: 2019-01-10 14:22:51
  */
 
 const express = require('express')
@@ -130,7 +130,7 @@ router.post('/:sn/user', joiValidator({
 
 // 取消分享设备
 router.delete('/:sn/user/:userId', joiValidator({
-  params: { 
+  params: {
     sn: Joi.string().required(),
     userId: Joi.string().required()
   },

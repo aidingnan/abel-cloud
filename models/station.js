@@ -25,7 +25,7 @@ const station = {
     return connect.queryAsync(sql)
   },
 
-  // 查找设备与用户的分享关系
+  // 查找设备的分享用户
   findDeviceShareBySnAndId: (connect, sn, id) => {
     let sql = `
       SELECT * FROM device_user WHERE sn='${sn}' AND user='${id}' AND isDeleted=0
@@ -40,7 +40,6 @@ const station = {
       SET sn='${sn}',user='${id}'
       ON DUPLICATE KEY UPDATE isDeleted=0,deleteCode=null,disable=0
     `
-
     for (let item in setting) {
       sql += `,${item}=${setting[item]}`
     }
