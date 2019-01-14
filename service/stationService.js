@@ -158,7 +158,7 @@ class StationService {
       let sharedStation = sharedStations.find(item => item.sn == sn && !item.isDeleted)
       if (!ownStation && !sharedStation) throw new E.StationNotExist()
       if (ownStation) {
-        // 需要删除用户下所有设备
+        // 需要删除用户下所有设备 todo
 
         await Station.unbindUser(connect, sn)
         await Station.recordShare(connect, sn, userId, null, userId, 'unbind')
@@ -187,18 +187,6 @@ class StationService {
     } catch (error) { throw error }
   }
 
-  async confirmDelete(connect, sn, userId, operationCode) {
-    try {
-      let recordResult = await Station.getDeleteRecord(connect, sn, userId, operationCode)
-      
-      if (recordResult.length == 0) throw new Error('delete not exist')
-      let { id } = recordResult[0]
-      
-      await Station.confirmDelete(connect, sn, userId, operationCode)
-      await Station.updateShareRecord(connect, id, 'done')
-    } catch (error) { throw error }
-  }
-
   // 恢复出厂设置
   async resetStation(connect, sn, owner, tickets, req, res) {
     try {
@@ -224,11 +212,11 @@ class StationService {
         }
       }
 
-      let taskId = uuid.v4()
+      let sessionId = uuid.v4()
       let cookie = req.headers['cookie']
-      let manifest = { users, cookie, taskId }
+      let manifest = { users, headers: { cookie }, sessionId }
 
-      container.add(res, sn, manifest, taskId)
+      container.add(req, res, sn, manifest, sessionId)
     } catch (error) { console.log(error);res.error(error) }
   }
 
@@ -255,12 +243,6 @@ class StationService {
     } catch (error) { throw error }
   }
 
-  // 查询设备下某用户记录
-  async getStationRecord(connect, sn, userId) {
-    try {
-      return await Station.getStationRecord(connect, sn, userId)
-    } catch (error) { throw error}
-  }
 
   // 更新设备下用户设置
   async updateStationUser(connect, ownerId, sn, userId, setting) {

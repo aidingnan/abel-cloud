@@ -82,14 +82,6 @@ const station = {
     return connect.queryAsync(sql)
   },
 
-  getStationRecord: (connect, sn, userId) => {
-    let sql = `
-      SELECT * FROM device_userRecord
-      WHERE sn='${sn}' AND user='${userId}'
-    `
-    return connect.queryAsync(sql)
-  },
-
   getDeleteRecord: (connect, sn, userId, operationCode) => {
     let sql = `
       SELECT * FROM device_userRecord
@@ -138,24 +130,6 @@ const station = {
     return connect.queryAsync(sql)
   },
 
-  cleanShare: (connect, sn) => {
-    let sql = `
-      DELETE FROM device_user
-      WHERE sn='${sn}'
-    `
-    return connect.queryAsync(sql)
-  },
-
-  // 确认删除
-  confirmDelete: (connect, sn, userId, code) => {
-    let sql = `
-      UPDATE device_user
-      SET deleteCode='${code}'
-      WHERE sn='${sn}' AND user='${userId}'
-    `
-    return connect.queryAsync(sql)
-  },
-
   // 查询设备拥有者
   getStationOwner: (connect, sn) => {
     let sql = `
@@ -199,6 +173,16 @@ const station = {
       JOIN device AS d ON du.sn=d.sn
       LEFT JOIN deviceInfo as i ON du.sn=i.sn
       WHERE user='${id}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 更新签名
+  updateSignature: (connect, sn, signature) => {
+    let sql = `
+      UPDATE deviceInfo 
+      SET signature='${signature}'
+      WHERE sn='${sn}'
     `
     return connect.queryAsync(sql)
   }

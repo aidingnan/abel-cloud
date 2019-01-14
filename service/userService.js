@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-09 16:25:32
+ * @Last Modified time: 2019-01-11 10:22:44
  */
 const promise = require('bluebird')
 const uuid = require('uuid')
@@ -41,10 +41,7 @@ const getToken = async (connect, userResult, clientId, type) => {
 }
 
 class UserService {
-
-  /**
-  * ---------------------注册登录---------------------
-  */
+  //---------------------注册登录---------------------
 
   // 判断手机是否注册
   async userPhoneExist(connect, phone) {

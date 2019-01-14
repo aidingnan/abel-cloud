@@ -94,11 +94,12 @@ module.exports = {
 	 * @param {any} next 
 	 */
   async sAuth(req, res, next) {
-
+    return next()
 
     try {
       const aut = req.headers.authorization
 
+      if (!aut) throw new Error()
       // decode
       const decoded = await jwt.decode(aut)
       if (!decoded)

@@ -65,9 +65,14 @@ router.post('/:id/response/:jobId/pipe/fetch', (req, res) => {
 })
 
 // task 返回
-router.post('/:id/task/:taskId', (req, res) => {
+router.post('/:sn/reset/:jobId', joiValidator({
+  body: {
+    data: Joi.object().optional(),
+    error: Joi.object().optional()
+  }
+}), (req, res) => {
   try {
-
+    container.response(req, res)
   } catch (error) { res.error(error) }
 })
 

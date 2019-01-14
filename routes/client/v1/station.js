@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-10 14:22:51
+ * @Last Modified time: 2019-01-11 13:24:00
  */
 
 const express = require('express')
@@ -34,6 +34,20 @@ router.get('/:sn/pipe', joiValidator({
   query: { data: Joi.string().required() }
 }), checkUserAndStation, (req, res) => {
   fetchFile.createServer(req, res)
+})
+
+// 恢复出厂设置
+router.post('/:sn/reset', joiValidator({
+  body: {
+    tickets: Joi.array().required()
+  }
+}), async (req, res) => {
+  try {
+    let { id } = req.auth
+    let { sn } = req.params
+    let { tickets } = req.body
+    await stationService.resetStation(req.db, sn, id, tickets, req, res)
+  } catch (error) { res.error(error) }
 })
 
 router.use(timeout('15s'))
@@ -71,19 +85,6 @@ router.delete('/', joiValidator({
     let { sn, ticket } = req.body
     let result = await stationService.deleteStation(req.db, sn, id, ticket)
     res.success(result)
-  } catch (error) { res.error(error) }
-})
-
-router.post('/:sn/reset', joiValidator({
-  body: {
-    tickets: Joi.array().required()
-  }
-}), async (req, res) => {
-  try {
-    let { id } = req.auth
-    let { sn } = req.params
-    let { tickets } = req.body
-    await stationService.resetStation(req.db, sn, id, tickets, req, res)
   } catch (error) { res.error(error) }
 })
 
@@ -175,32 +176,6 @@ router.patch('/:sn/user', joiValidator({
     let { setting, sharedUserId } = req.body
     if (Object.getOwnPropertyNames(setting).length == 0) throw new Error('invalid params')
     let result = await stationService.updateStationUser(req.db, id, sn, sharedUserId, setting)
-    res.success(result)
-  } catch (error) { res.error(error) }
-})
-
-// 查询设备下某用户记录
-router.get('/:sn/user/record', async (req, res) => {
-  try {
-    let { sn } = req.params
-    let { id } = req.auth
-    let result = await stationService.getStationRecord(req.db, sn, id)
-    res.success(result)
-  } catch (error) { res.error(error) }
-})
-
-// 确认删除
-router.patch('/:sn/user/record', joiValidator({
-  params: { sn: Joi.string() },
-  body: {
-    code: Joi.string().required()
-  }
-}), async (req, res) => {
-  try {
-    let { sn } = req.params
-    let { id } = req.auth
-    let { code } = req.body
-    let result = await stationService.confirmDelete(req.db, sn, id, code)
     res.success(result)
   } catch (error) { res.error(error) }
 })
