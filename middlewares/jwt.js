@@ -94,30 +94,16 @@ module.exports = {
 	 * @param {any} next 
 	 */
   async sAuth(req, res, next) {
-    // return next()
-
     try {
       const aut = req.headers.authorization
-
       if (!aut) throw new Error()
+      
       // decode
       const decoded = await jwt.decode(aut)
       if (!decoded)
         return res.error(new Error('decode failed'), 401, false)
-
-      // no expire
-      // if (!decoded.station)
-      //   return res.error(new Error('authentication failed'), 401, false)
-
-      // let station = await Station.find({
-      //   where: {
-      //     id: decoded.station.id
-      //   },
-      //   raw: true
-      // })
-      // if (!station) return res.error(new E.StationNotExist(), 401, false)
-
       req.auth = decoded
+
       next()
 
     } catch (error) {

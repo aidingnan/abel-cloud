@@ -181,7 +181,6 @@ router.patch('/:sn/user', joiValidator({
 })
 
 async function checkUserAndStation(req, res, next) {
-  // return next()
   try {
     let userId = req.auth.id
     let sn = req.params.sn
