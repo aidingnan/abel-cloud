@@ -40,6 +40,16 @@ const getToken = async (connect, userResult, clientId, type) => {
   return { token, ...obj }
 }
 
+const pulishUser = async (connect, sn) => {
+  let owner = await Station.getStationOwner(connect, sn)
+  let sharer = await Station.getStationSharer(connect, sn)
+  let topic = `cloud/${sn}/users`
+  let qos = 1
+  let payload = JSON.stringify({ owner, sharer })
+  let obj = { topic, qos, payload }
+  let r = await publishAsync(obj)
+}
+
 class UserService {
   //---------------------注册登录---------------------
 
@@ -143,6 +153,7 @@ class UserService {
           let { id, owner, sn, phone, setting } = shareRecord[i]
           await stationService.addUser(connect, owner, sn, phone, JSON.parse(setting), false)
           await Station.updateShareRecord(connect, id, 'done')
+          try { await pulishUser(connect, sn) } catch (error) { console.log(error) }
         } catch (error) { console.log(error) }
       }
 
