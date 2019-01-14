@@ -39,7 +39,6 @@ class Server {
     if (this.finished()) return
     this.res.error(err, code)
   }
-
 }
 
 class Container {

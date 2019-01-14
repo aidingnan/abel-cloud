@@ -94,7 +94,7 @@ module.exports = {
 	 * @param {any} next 
 	 */
   async sAuth(req, res, next) {
-    return next()
+    // return next()
 
     try {
       const aut = req.headers.authorization
