@@ -194,7 +194,6 @@ async function checkUserAndStation(req, res, next) {
     if (!sameOwnStation && !sameSharedStations) throw new Error('sn not belong to user')
 
     let station = sameOwnStation || sharedStations
-    console.log(station)
 
     next()
   } catch (e) { res.error(e) }
