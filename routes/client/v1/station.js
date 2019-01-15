@@ -193,7 +193,9 @@ async function checkUserAndStation(req, res, next) {
     let sameSharedStations = sharedStations.find(item => item.sn == sn  && !item.disable)
     if (!sameOwnStation && !sameSharedStations) throw new Error('sn not belong to user')
 
-    let station = sameOwnStation || sharedStations
+    let station = sameOwnStation || sameSharedStations
+    // console.log(station)
+    if (!station.online) throw new Error('Station is not online')
 
     next()
   } catch (e) { res.error(e) }
