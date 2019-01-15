@@ -28,7 +28,7 @@ const station = {
   // 查找设备的分享用户
   findDeviceShareBySnAndId: (connect, sn, id) => {
     let sql = `
-      SELECT * FROM device_user WHERE sn='${sn}' AND user='${id}' AND isDeleted=0
+      SELECT * FROM device_user WHERE sn='${sn}' AND user='${id}' AND delete=0
     `
     return connect.queryAsync(sql)
   },
@@ -38,7 +38,7 @@ const station = {
     let sql = `
       INSERT INTO device_user
       SET sn='${sn}',user='${id}'
-      ON DUPLICATE KEY UPDATE isDeleted=0,deleteCode=null,disable=0
+      ON DUPLICATE KEY UPDATE delete=0,deleteCode=null,disable=0
     `
     for (let item in setting) {
       sql += `,${item}=${setting[item]}`
@@ -114,7 +114,7 @@ const station = {
     let deleteCode = code? `'${code}'`: `null`
     let sql = `
       UPDATE device_user
-      SET isDeleted=1,deleteCode=${deleteCode}
+      SET delete=1,deleteCode=${deleteCode}
       WHERE sn='${sn}' AND user='${user}'
     `
     return connect.queryAsync(sql)
@@ -168,7 +168,7 @@ const station = {
     let sql = `
       SELECT d.sn,d.owner,
       i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name,
-      du.createdAt, du.isDeleted, du.deleteCode
+      du.createdAt, du.delete, du.deleteCode
       FROM device_user AS du
       JOIN device AS d ON du.sn=d.sn
       LEFT JOIN deviceInfo as i ON du.sn=i.sn

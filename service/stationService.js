@@ -99,7 +99,7 @@ class StationService {
       if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
       // 检查分享用户ID
       let shareResult = await Station.getStationSharer(connect, sn)
-      let user = shareResult.find(item => item.id == sharedUserId && item.isDeleted == 0)
+      let user = shareResult.find(item => item.id == sharedUserId && item.delete == 0)
       if (!user) throw new E.UserNotExistInStation()
 
       // disable
@@ -117,7 +117,7 @@ class StationService {
       if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
       // 检查分享用户ID
       let shareResult = await Station.getStationSharer(connect, sn)
-      let user = shareResult.find(item => item.id == sharedUserId && item.isDeleted == 0)
+      let user = shareResult.find(item => item.id == sharedUserId && item.delete == 0)
       if (!user) throw new E.UserNotExistInStation()
       
       // 校验验证码
@@ -155,7 +155,7 @@ class StationService {
       let ownStations = await Station.getStationBelongToUser(connect, userId)
       let sharedStations = await Station.getStationSharedToUser(connect, userId)
       let ownStation = ownStations.find(item => item.sn == sn)
-      let sharedStation = sharedStations.find(item => item.sn == sn && !item.isDeleted)
+      let sharedStation = sharedStations.find(item => item.sn == sn && !item.delete)
       if (!ownStation && !sharedStation) throw new E.StationNotExist()
       if (ownStation) {
         // 需要删除用户下所有设备 todo
@@ -165,7 +165,7 @@ class StationService {
         let userResult = await Station.getStationSharer(connect, sn)
         
         for(let i = 0; i < userResult.length; i++) {
-          if (userResult[i].isDeleted) return
+          if (userResult[i].delete) return
           let r = (Math.random()).toString()
           let c = r.slice(-4, r.length)
           await Station.deleteShare(connect, sn, userResult[i].id)
