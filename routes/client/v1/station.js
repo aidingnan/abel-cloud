@@ -180,6 +180,7 @@ router.patch('/:sn/user', joiValidator({
   } catch (error) { res.error(error) }
 })
 
+
 async function checkUserAndStation(req, res, next) {
   try {
     let userId = req.auth.id
@@ -193,7 +194,7 @@ async function checkUserAndStation(req, res, next) {
     if (!sameOwnStation && !sameSharedStations) throw new Error('sn not belong to user')
 
     let station = sameOwnStation || sharedStations
-    if (!station.online) throw new Error('Station is not online')
+    console.log(station)
 
     next()
   } catch (e) { res.error(e) }
