@@ -193,8 +193,8 @@ class StationService {
       // 检查owner 与 device 关系
       let deviceResult = await Station.findDeviceBySn(connect, sn)
       if (deviceResult.length !== 1) throw new E.StationNotExist()
-      if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
-      let station = deviceResult[0]
+      // if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
+      // let station = deviceResult[0]
       // 获取设备的用户
       let users = (await Station.getStationSharer(connect, sn)).map(item => { 
         return {id: item.id, username: item.username, hasCode: false, code: null}})
@@ -202,10 +202,10 @@ class StationService {
       for (let i = 0; i < tickets.length; i++) {
         
         let ticketResult = await Phone.getSmsCodeTicketInfo(connect, tickets[i])
-        if (ticketResult.length !== 1) throw new Error(`ticket ${tickest[i]} error`)
+        if (ticketResult.length !== 1) throw new Error(`ticket ${tickets[i]} error`)
         let ticket = ticketResult[0]
         let user = users.find(item => item.username == ticket.phone)
-        if (!user) throw new Error(`ticket ${tickest[i]} error`)
+        if (!user) throw new Error(`ticket ${tickets[i]} error`)
         else {
           user.hasCode = true
           user.code = ticket.code

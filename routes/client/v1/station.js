@@ -18,21 +18,21 @@ const Station = require('../../../models/station')
 var timeout = require('connect-timeout')
 
 // json操作
-router.post('/:sn/json', checkUserAndStation, (req, res) => {
+router.post('/:sn/json', checkSn(true), (req, res) => {
   transformJson.createServer(req, res)
 })
 
 // 上传文件
 router.post('/:sn/pipe', joiValidator({
   query: { data: Joi.string().required() }
-}), checkUserAndStation, (req, res) => {
+}), checkSn(true), (req, res) => {
   storeFile.createServer(req, res)
 })
 
 // 下载文件
 router.get('/:sn/pipe', joiValidator({
   query: { data: Joi.string().required() }
-}), checkUserAndStation, (req, res) => {
+}), checkSn(true), (req, res) => {
   fetchFile.createServer(req, res)
 })
 
@@ -41,7 +41,7 @@ router.post('/:sn/reset', joiValidator({
   body: {
     tickets: Joi.array().required()
   }
-}), async (req, res) => {
+}), checkSn(true, true), async (req, res) => {
   try {
     let { id } = req.auth
     let { sn } = req.params
@@ -89,7 +89,7 @@ router.delete('/', joiValidator({
 })
 
 // 查询某台station下用户
-router.get('/:sn/user', async (req, res) => {
+router.get('/:sn/user', checkSn(), async (req, res) => {
   try {
     let { id } = req.auth
     let { sn } = req.params
@@ -180,25 +180,26 @@ router.patch('/:sn/user', joiValidator({
   } catch (error) { res.error(error) }
 })
 
+function checkSn(checkOnline, checkOwner) {
+  return async function(req, res, next) {
+    try {
+      let userId = req.auth.id
+      let sn = req.params.sn
+      let connect = req.db
+      // 查询station
+      let ownStations = await Station.getStationBelongToUser(connect, userId)
+      let sharedStations = await Station.getStationSharedToUser(connect, userId)
+      let sameOwnStation = ownStations.find(item => item.sn == sn)
+      let sameSharedStations = sharedStations.find(item => item.sn == sn  && !item.disable)
+      if (!sameOwnStation && !sameSharedStations) throw new Error('sn not belong to user')
+      if (checkOwner && !sameOwnStation) throw new Error('user is not the owner of station')
+      // 判断在线
+      let station = sameOwnStation || sameSharedStations
+      if (!station.online && checkOnline) throw new Error('Station is not online')
 
-async function checkUserAndStation(req, res, next) {
-  try {
-    let userId = req.auth.id
-    let sn = req.params.sn
-    let connect = req.db
-    // 查询station
-    let ownStations = await Station.getStationBelongToUser(connect, userId)
-    let sharedStations = await Station.getStationSharedToUser(connect, userId)
-    let sameOwnStation = ownStations.find(item => item.sn == sn)
-    let sameSharedStations = sharedStations.find(item => item.sn == sn  && !item.disable)
-    if (!sameOwnStation && !sameSharedStations) throw new Error('sn not belong to user')
-
-    let station = sameOwnStation || sameSharedStations
-    // console.log(station)
-    if (!station.online) throw new Error('Station is not online')
-
-    next()
-  } catch (e) { res.error(e) }
+      next()  
+    } catch (error) { res.error(error) }
+  }
 }
 
 module.exports = router
