@@ -61,10 +61,6 @@ class StationService {
   async addUser(connect, owner, sn, phone, setting, record) {
     try {
       let userExist = true, id
-      // 检查owner 与 device 关系
-      let deviceResult = await Station.findDeviceBySn(connect, sn)
-      if (deviceResult.length !== 1) throw new E.StationNotExist()
-      if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
       // 检查user
       let userResult = await User.getUserWithPhone(connect, phone)
       if (userResult.length !== 1) userExist = false
@@ -93,10 +89,6 @@ class StationService {
   // 禁用设备
   async disableUser(connect, owner, sn, sharedUserId, disable) {
     try {
-      // 检查owner 与 device 关系
-      let deviceResult = await Station.findDeviceBySn(connect, sn)
-      if (deviceResult.length !== 1) throw new E.StationNotExist()
-      if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
       // 检查分享用户ID
       let shareResult = await Station.getStationSharer(connect, sn)
       let user = shareResult.find(item => item.id == sharedUserId && item.delete == 0)
@@ -111,10 +103,6 @@ class StationService {
   // 取消分享
   async deleteUser(connect, owner, sn, sharedUserId, ticket) {
     try {
-      // 检查owner 与 device 关系
-      let deviceResult = await Station.findDeviceBySn(connect, sn)
-      if (deviceResult.length !== 1) throw new E.StationNotExist()
-      if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
       // 检查分享用户ID
       let shareResult = await Station.getStationSharer(connect, sn)
       let user = shareResult.find(item => item.id == sharedUserId && item.delete == 0)
@@ -188,13 +176,8 @@ class StationService {
   }
 
   // 恢复出厂设置
-  async resetStation(connect, sn, owner, tickets, req, res) {
+  async resetStation(connect, sn, tickets, req, res) {
     try {
-      // 检查owner 与 device 关系
-      let deviceResult = await Station.findDeviceBySn(connect, sn)
-      if (deviceResult.length !== 1) throw new E.StationNotExist()
-      // if (deviceResult[0].owner !== owner) throw new E.StationNotBelongToUser()
-      // let station = deviceResult[0]
       // 获取设备的用户
       let users = (await Station.getStationSharer(connect, sn)).map(item => { 
         return {id: item.id, username: item.username, hasCode: false, code: null}})
@@ -245,17 +228,11 @@ class StationService {
 
 
   // 更新设备下用户设置
-  async updateStationUser(connect, ownerId, sn, userId, setting) {
+  async updateStationUser(connect, sn, userId, setting) {
     try {
-      let ownerResult = await Station.getStationOwner(connect, sn)
-      let shareResult = await Station.getStationSharer(connect, sn)
-      if (!ownerResult.find(item => item.id == ownerId)) throw new E.StationNotBelongToUser()
-      if (!shareResult.find(item => item.id == userId)) throw new E.UserNotExistInStation()
       await Station.updateStationUser(connect, sn, userId, setting)
 
-      try {
-        await pulishUser(connect, sn)
-      } catch (error) { console.log(error) }
+      try { await pulishUser(connect, sn) } catch (error) {}
 
       return await Station.getStationSharer(connect, sn)
     } catch (error) { throw error }

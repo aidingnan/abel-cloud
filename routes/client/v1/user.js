@@ -14,7 +14,6 @@ const { weAuth, cAuth } = require('../../../middlewares/jwt')
 
 var timeout = require('connect-timeout')
 
-
 router.use(timeout('15s'))
 
 /**

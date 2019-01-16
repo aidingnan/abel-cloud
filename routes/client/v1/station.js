@@ -43,10 +43,9 @@ router.post('/:sn/reset', joiValidator({
   }
 }), checkSn(true, true), async (req, res) => {
   try {
-    let { id } = req.auth
     let { sn } = req.params
     let { tickets } = req.body
-    await stationService.resetStation(req.db, sn, id, tickets, req, res)
+    await stationService.resetStation(req.db, sn, tickets, req, res)
   } catch (error) { res.error(error) }
 })
 
@@ -91,14 +90,13 @@ router.delete('/', joiValidator({
 // 查询某台station下用户
 router.get('/:sn/user', checkSn(), async (req, res) => {
   try {
-    let { id } = req.auth
     let { sn } = req.params
     let result = await stationService.getStationUsers(req.db, sn)
     res.success(result)
   } catch (e) { res.error(e) }
 })
 
-// 查询所有设备
+// 查询用户设备
 router.get('/', async (req, res) => {
   try {
     let { id, clientId, type } = req.auth
@@ -117,11 +115,9 @@ router.post('/:sn/user', joiValidator({
       publicSpace: Joi.number().valid(0, 1).required()
     }).required()
   }
-}), async (req, res) => {
+}), checkSn(false, true), async (req, res) => {
   try {
-    // 获取owner
     let { id } = req.auth
-    // 获取设备ID & 对象ID
     let { sn } = req.params
     let { phone, setting } = req.body
     let result = await stationService.addUser(req.db, id, sn, phone, setting, true)
@@ -138,7 +134,7 @@ router.delete('/:sn/user/:userId', joiValidator({
   body: {
     ticket: Joi.string().required()
   }
-}), async (req, res) => {
+}), checkSn(false, true), async (req, res) => {
   try {
     let { id } = req.auth
     let { sn, userId } = req.params
@@ -155,7 +151,7 @@ router.patch('/:sn/user/:userId', joiValidator({
     userId: Joi.string().required()
   },
   body: { disable: Joi.number().required() }
-}), async (req, res) => {
+}), checkSn(false, true), async (req, res) => {
   let { sn, userId } = req.params
   let { id } = req.auth
   let { disable } = req.body
@@ -169,13 +165,12 @@ router.patch('/:sn/user', joiValidator({
   body: { 
     sharedUserId: Joi.string().required(),
     setting: Joi.object({ publicSpace: Joi.number().valid(0, 1) }).required() }
-}), async (req, res) => {
+}), checkSn(false, true), async (req, res) => {
   try {
-    let { id } = req.auth
     let { sn } = req.params
     let { setting, sharedUserId } = req.body
     if (Object.getOwnPropertyNames(setting).length == 0) throw new Error('invalid params')
-    let result = await stationService.updateStationUser(req.db, id, sn, sharedUserId, setting)
+    let result = await stationService.updateStationUser(req.db, sn, sharedUserId, setting)
     res.success(result)
   } catch (error) { res.error(error) }
 })
@@ -192,6 +187,7 @@ function checkSn(checkOnline, checkOwner) {
       let sameOwnStation = ownStations.find(item => item.sn == sn)
       let sameSharedStations = sharedStations.find(item => item.sn == sn  && !item.disable)
       if (!sameOwnStation && !sameSharedStations) throw new Error('sn not belong to user')
+      // 判断owner
       if (checkOwner && !sameOwnStation) throw new Error('user is not the owner of station')
       // 判断在线
       let station = sameOwnStation || sameSharedStations
