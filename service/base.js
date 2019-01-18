@@ -63,7 +63,7 @@ class Init extends State {
     this.ctx.manifest = Object.assign({
       sessionId: jobId,
       user: { id: this.ctx.req.auth.id },
-      headers: { 'cookie': SetCookie },
+      headers: { 'cookie': SetCookie, range },
       requestType: this.ctx.ctx.requestType
     }, body)
 
