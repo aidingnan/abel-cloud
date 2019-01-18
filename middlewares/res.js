@@ -83,7 +83,7 @@ module.exports = (req, res, next) => {
       message: message
     }
     
-    console.error(error.message)
+    console.log(error.message)
     debug(`error: ${error}`)
     return res.status(status).json(response)
   }

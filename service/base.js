@@ -10,8 +10,6 @@ const E = require('../lib/error')
  *  a. json 可以使用超时时间
  *  b. fetch 可以使用超时时间
  *  c. store 不能使用超时时间(没有响应头)
- * 3. 上传文件
- *  a. 文件传输成功后重置超时时间
  */
 
 

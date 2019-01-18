@@ -107,7 +107,7 @@ module.exports = {
       next()
 
     } catch (error) {
-      console.log(error)
+      // console.log(error)
       return res.error(new Error('authentication failed'), 401, false)
     }
   }
