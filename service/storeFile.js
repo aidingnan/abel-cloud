@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-28 14:25:18
+ * @Last Modified time: 2019-01-28 17:56:46
  */
 
 const debug = require('debug')('app:store')
@@ -39,6 +39,8 @@ class Pipe extends State {
     let userId = req.auth.id
     
     let flow = new Flow({}, db, userId, 'flowUp')
+    req.on('error', () => flow.clean())
+    res.on('error', () => flow.clean())
     req.pipe(flow).pipe(res)
 
     // this.ctx.req.pipe(res)
