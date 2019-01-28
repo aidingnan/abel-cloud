@@ -2,12 +2,13 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-09 17:13:07
+ * @Last Modified time: 2019-01-28 14:25:18
  */
 
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
 const { State, Init, Err, Server, Container } = require('./base')
+const Flow = require('../lib/flow')
 
 /**
  * 状态机
@@ -33,7 +34,14 @@ class Pipe extends State {
       debug('store file station res close')
     })
 
-    this.ctx.req.pipe(res)
+    let req = this.ctx.req
+    let db = req.db
+    let userId = req.auth.id
+    
+    let flow = new Flow({}, db, userId, 'flowUp')
+    req.pipe(flow).pipe(res)
+
+    // this.ctx.req.pipe(res)
   }
 }
 

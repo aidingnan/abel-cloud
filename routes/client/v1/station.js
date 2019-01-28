@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-11 13:24:00
+ * @Last Modified time: 2019-01-28 11:56:04
  */
 
 const express = require('express')
@@ -177,6 +177,7 @@ router.patch('/:sn/user', joiValidator({
 
 function checkSn(checkOnline, checkOwner) {
   return async function(req, res, next) {
+    // return next()
     try {
       let userId = req.auth.id
       let sn = req.params.sn

@@ -2,13 +2,14 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-09 17:13:13
+ * @Last Modified time: 2019-01-28 14:26:37
  */
 
 const debug = require('debug')('app:store')
 const E = require('../lib/error')
 const { State, Init, Err, Server, Container } = require('./base')
 const Limit = require('../lib/speedLimit')
+const Flow = require('../lib/flow')
 
 /**
  * 状态机
@@ -33,7 +34,12 @@ class Pipe extends State {
 
     // let limit = new Limit({readableHighWaterMark: 16000, writableHighWaterMark: 16000})
 
-    req.pipe(this.ctx.res)
+
+    let db = this.ctx.req.db
+    let userId = this.ctx.req.auth.id
+    
+    let flow = new Flow({}, db, userId, 'flowDown')
+    req.pipe(flow).pipe(this.ctx.res)
 
   }
 }
