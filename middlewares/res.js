@@ -33,7 +33,7 @@ module.exports = (req, res, next) => {
   * @param {number} status - default 200
   */
 
-  req.on('close', () => {  })
+  req.on('close', () => { res.finished = true })
 
   res.success = (data, status) => {
 
