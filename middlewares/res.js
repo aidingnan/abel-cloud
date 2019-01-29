@@ -33,10 +33,7 @@ module.exports = (req, res, next) => {
   * @param {number} status - default 200
   */
 
-  req.on('close', () => { 
-    console.log('esolc')
-    res.finished = true
-   })
+  req.on('close', () => {  })
 
   res.success = (data, status) => {
 
