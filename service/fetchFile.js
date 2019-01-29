@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-29 14:01:33
+ * @Last Modified time: 2019-01-29 14:09:23
  */
 
 const debug = require('debug')('app:store')
@@ -52,7 +52,7 @@ class Pipe extends State {
     flow.on('end', () => console.log('flow end'))
 
     this.ctx.res.on('close', () => console.log('res close'))
-    this.ctx.res.on('error', () => console.log('res error'))
+    this.ctx.res.on('error', (err) => {console.log('res error');console.log(err)})
     this.ctx.res.on('finish', () => console.log('res finish'))
     
     this.ctx.res.on('close', () => flow.clean())
