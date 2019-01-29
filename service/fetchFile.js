@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-29 15:24:40
+ * @Last Modified time: 2019-01-29 15:30:32
  */
 
 const debug = require('debug')('app:store')
@@ -40,10 +40,15 @@ class Pipe extends State {
     
     let flow = new Flow({}, db, userId, 'flowDown')
     
-    req.on('close', () => flow.clean())
+    req.on('close', () => {
+      console.log('...close0')
+      flow.clean()
+      flow.destroy()
+      this.ctx.res.destroy()
+    })
     
     this.ctx.res.on('close', () => {
-      console.log('...close')
+      console.log('...close1')
       flow.clean()
       flow.destroy()
       req.destroy()
