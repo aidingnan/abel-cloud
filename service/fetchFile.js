@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-29 13:43:38
+ * @Last Modified time: 2019-01-29 13:58:29
  */
 
 const debug = require('debug')('app:store')
@@ -41,6 +41,14 @@ class Pipe extends State {
     let flow = new Flow({}, db, userId, 'flowDown')
     
     req.on('close', () => flow.clean())
+
+    req.on('close', () => console.log('req close'))
+    req.on('error', () => console.log('req error'))
+    req.on('finish', () => console.log('req finish'))
+    this.ctx.res.on('close', () => console.log('res close'))
+    this.ctx.res.on('error', () => console.log('res error'))
+    this.ctx.res.on('finish', () => console.log('res finish'))
+    
     this.ctx.res.on('close', () => flow.clean())
     
     req.pipe(flow).pipe(this.ctx.res)
