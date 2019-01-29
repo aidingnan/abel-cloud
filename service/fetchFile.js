@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-29 14:30:32
+ * @Last Modified time: 2019-01-29 15:15:56
  */
 
 const debug = require('debug')('app:store')
@@ -57,7 +57,7 @@ class Pipe extends State {
     
     this.ctx.res.on('close', () => {
       flow.clean()
-      flow.destroy()
+      // flow.destroy()
       req.destroy()
     })
     
