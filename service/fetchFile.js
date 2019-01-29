@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-28 17:56:20
+ * @Last Modified time: 2019-01-29 13:39:40
  */
 
 const debug = require('debug')('app:store')
@@ -40,7 +40,10 @@ class Pipe extends State {
     
     let flow = new Flow({}, db, userId, 'flowDown')
     req.on('error', () => flow.clean())
-    this.ctx.res.on('error', () => flow.clean())
+    this.ctx.res.on('error', () => {console.log('res error');flow.clean()})
+    this.ctx.res.on('close', () => console.log('res close'))
+    this.ctx.res.on('finish', () => console.log('res finish'))
+    
     req.pipe(flow).pipe(this.ctx.res)
 
   }
