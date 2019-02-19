@@ -167,7 +167,7 @@ const station = {
   getStationSharedToUser: (connect, id) => {
     console.log(id)
     let sql = `
-      SELECT d.sn,d.owner,d.type
+      SELECT d.sn,d.owner,d.type,
       i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name,
       du.createdAt, du.delete, du.deleteCode, ui.time
       FROM device_user AS du
