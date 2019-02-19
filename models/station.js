@@ -155,9 +155,9 @@ const station = {
   // 查询用户拥有的设备
   getStationBelongToUser: (connect, id) => {
     let sql = `
-      SELECT d.sn,i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name FROM device AS d 
-      LEFT JOIN deviceInfo AS i
-      ON d.sn=i.sn
+      SELECT d.sn,i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name, ui.time FROM device AS d 
+      LEFT JOIN deviceInfo AS i ON d.sn=i.sn
+      LEFT JOIN (SELECT * FROM  userDeviceUseInfo GROUP BY userId,sn ORDER BY time DESC ) AS ui ON d.sn=ui.sn AND ui.userId='${id}'
       WHERE owner='${id}'
     `
     return connect.queryAsync(sql)
@@ -165,14 +165,19 @@ const station = {
 
   // 查询分享给用户的设备
   getStationSharedToUser: (connect, id) => {
+    console.log(id)
     let sql = `
       SELECT d.sn,d.owner,
       i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name,
-      du.createdAt, du.delete, du.deleteCode
+      du.createdAt, du.delete, du.deleteCode, ui.time
       FROM device_user AS du
       JOIN device AS d ON du.sn=d.sn
       LEFT JOIN deviceInfo as i ON du.sn=i.sn
-      WHERE user='${id}'
+      LEFT JOIN (SELECT * FROM  userDeviceUseInfo GROUP BY userId,sn ORDER BY time DESC ) AS ui ON d.sn=ui.sn AND ui.userId='${id}'
+      WHERE du.user='${id}'
+      
+
+
     `
     return connect.queryAsync(sql)
   },
@@ -189,3 +194,5 @@ const station = {
 }
 
 module.exports = station
+
+// userDeviceUseInfo AS ui ON d.sn=ui.sn AND ui.userId='${id}'
