@@ -155,7 +155,7 @@ const station = {
   // 查询用户拥有的设备
   getStationBelongToUser: (connect, id) => {
     let sql = `
-      SELECT d.sn,i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name, ui.time FROM device AS d 
+      SELECT d.sn,d.type,i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name, ui.time FROM device AS d 
       LEFT JOIN deviceInfo AS i ON d.sn=i.sn
       LEFT JOIN (SELECT * FROM  userDeviceUseInfo GROUP BY userId,sn ORDER BY time DESC ) AS ui ON d.sn=ui.sn AND ui.userId='${id}'
       WHERE owner='${id}'
@@ -167,7 +167,7 @@ const station = {
   getStationSharedToUser: (connect, id) => {
     console.log(id)
     let sql = `
-      SELECT d.sn,d.owner,
+      SELECT d.sn,d.owner,d.type
       i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name,
       du.createdAt, du.delete, du.deleteCode, ui.time
       FROM device_user AS du
@@ -175,9 +175,6 @@ const station = {
       LEFT JOIN deviceInfo as i ON du.sn=i.sn
       LEFT JOIN (SELECT * FROM  userDeviceUseInfo GROUP BY userId,sn ORDER BY time DESC ) AS ui ON d.sn=ui.sn AND ui.userId='${id}'
       WHERE du.user='${id}'
-      
-
-
     `
     return connect.queryAsync(sql)
   },
