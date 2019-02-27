@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-09 15:43:46
+ * @Last Modified time: 2019-02-27 18:07:18
  */
 const express = require('express')
 const router = express.Router()
@@ -92,6 +92,37 @@ router.get('/password/token', joiValidator({
     let result = await userService.getTokenWithPhone(req.db, username, password, clientId, type)
     res.success(result)
   } catch (e) { res.error(e) }
+})
+
+router.post('/password/token', joiValidator({
+  body: {
+    username: Joi.string().required(),
+    password: Joi.string().min(6).required(),
+    clientId: Joi.string().required(),
+    type: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { username, password, clientId, type } = req.body
+    let result = await userService.getTokenWithPhone(req.db, username, password, clientId, type)
+    res.success(result)
+  } catch (e) { res.error(e) }
+})
+
+// 使用手机号/验证码登录
+router.get('/smsCode/token', joiValidator({
+  query: {
+    phone: Joi.string().required(),
+    code: Joi.string().required(),
+    clientId: Joi.string().required(),
+    type: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { phone, code, clientId, type } = req.query
+    let result = await userService.getTokenWithCode(req.db, phone, code, clientId, type)
+    res.success(result)
+  } catch (error) { res.error(error) }
 })
 
 /**

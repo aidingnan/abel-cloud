@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-02-27 17:08:11
+ * @Last Modified time: 2019-02-27 17:34:15
  */
 
 const express = require('express')
@@ -83,7 +83,7 @@ router.delete('/', async (req, res) => {
 })
 
 // 查询某台station下用户
-router.get('/:sn/user', checkSn(), async (req, res) => {
+router.get('/:sn/user', checkSn(false, true), async (req, res) => {
   try {
     let { sn } = req.params
     let result = await stationService.getStationUsers(req.db, sn)

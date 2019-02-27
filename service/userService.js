@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-11 10:22:44
+ * @Last Modified time: 2019-02-27 18:15:02
  */
 const promise = require('bluebird')
 const uuid = require('uuid')
@@ -221,6 +221,30 @@ class UserService {
       }
 
     } catch (error) { throw error }
+  }
+
+  // 使用验证码登录
+  async getTokenWithCode(connect, phone, code, clientId, type) {
+    try {
+      // 检查验证码
+      let smsResult = await Phone.getSmsCode(connect, phone, code, 'login')
+      // 验证码失败
+      if (smsResult[2].length == 0) throw new E.SmsCodeError()
+
+      // 获取用户信息
+      let userResult = await User.getUserWithPhone(connect, phone)
+      if (userResult.length !== 1) throw new E.UserNotExist()
+
+      // 记录登录信息
+      await User.recordLoginInfo(connect, userResult[0].id, clientId, type)
+
+      // 更新验证码
+      await Phone.updateSmsCode(connect, phone, code, 'login', 1, 'consumed')
+
+      return getToken(connect, userResult, clientId, type)
+
+
+    } catch (error) { console.log(error);throw error }
   }
 
   // ---------------------微信绑定---------------------
