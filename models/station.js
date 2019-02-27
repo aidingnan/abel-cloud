@@ -4,16 +4,21 @@ const station = {
   // 绑定
   bindUser: (connect, sn, userId) => {
     let sql = `
-      UPDATE device SET owner='${userId}' WHERE sn='${sn}' AND owner IS NULL
+      UPDATE device SET owner='${userId}' 
+      WHERE sn='${sn}'
     `
     return connect.queryAsync(sql)
   },
 
   // 解绑
-  unbindUser: (connect, sn, userId) => {
+  unbindUser: (connect, sn, newUser) => {
     let sql = `
-      UPDATE device SET owner=null WHERE sn='${sn}'
+      UPDATE device SET owner=
     `
+    if (newUser) sql += `'${newUser}'`
+    else sql += `null`
+    sql += ` WHERE sn='${sn}';`
+
     return connect.queryAsync(sql)
   },
 
@@ -28,21 +33,44 @@ const station = {
   // 查找设备的分享用户
   findDeviceShareBySnAndId: (connect, sn, id) => {
     let sql = `
-      SELECT * FROM device_user WHERE sn='${sn}' AND user='${id}' AND device_user.delete=0
+      SELECT * FROM device_user 
+      WHERE sn='${sn}' AND user='${id}' AND device_user.delete=0 AND isOwner=0
     `
     return connect.queryAsync(sql)
   },
 
-  // 创建设备与用户的分享关系
-  createShare: (connect, sn, id, setting) => {
+  // 创建设备与用户的关系
+  createRelation: (connect, sn, id, setting, isOwner) => {
     let sql = `
       INSERT INTO device_user
-      SET sn='${sn}',user='${id}'
-      ON DUPLICATE KEY UPDATE device_user.delete=0,deleteCode=null,disable=0
+      SET sn='${sn}',user='${id}',isOwner='${isOwner}'
+      ON DUPLICATE KEY UPDATE 
+      device_user.delete=0,deleteCode=null,disable=0,isOwner='${isOwner}'
     `
     for (let item in setting) {
       sql += `,${item}=${setting[item]}`
     }
+    return connect.queryAsync(sql)
+  },
+
+  // 删除关系
+  deleteRelation: (connect, sn, user, code) => {
+    let deleteCode = code? `'${code}'`: `null`
+    let sql = `
+      UPDATE device_user
+      SET device_user.delete=1,deleteCode=${deleteCode}
+      WHERE sn='${sn}' AND user='${user}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  // 禁用/启用
+  disableUser: (connect, sn, user, disable) => {
+    let sql = `
+      UPDATE device_user
+      SET disable='${disable}'
+      WHERE sn='${sn}' AND user='${user}'
+    `
     return connect.queryAsync(sql)
   },
 
@@ -64,9 +92,10 @@ const station = {
     let s = state? state: userId? 'done': 'todo'
     let sql = `
       INSERT INTO device_userRecord
-      SET sn='${sn}',owner='${owner}', phone='${phone}',
+      SET sn='${sn}',owner='${owner}', 
       type='${type}', state='${s}'
     `
+    if (phone) sql += `, phone='${phone}'`
     if (userId) sql+= `, user='${userId}'`
     if (setting) sql += `, setting='${setting}'`
     if (operationCode) sql += `, operationCode='${operationCode}'`
@@ -109,34 +138,13 @@ const station = {
     return connect.queryAsync(sql)
   },
 
-  // 删除分享
-  deleteShare: (connect, sn, user, code) => {
-    let deleteCode = code? `'${code}'`: `null`
-    let sql = `
-      UPDATE device_user
-      SET device_user.delete=1,deleteCode=${deleteCode}
-      WHERE sn='${sn}' AND user='${user}'
-    `
-    return connect.queryAsync(sql)
-  },
-
-  // 禁用/启用
-  disableUser: (connect, sn, user, disable) => {
-    let sql = `
-      UPDATE device_user
-      SET disable='${disable}'
-      WHERE sn='${sn}' AND user='${user}'
-    `
-    return connect.queryAsync(sql)
-  },
-
   // 查询设备拥有者
   getStationOwner: (connect, sn) => {
     let sql = `
-      SELECT u.id, u.username,u.avatarUrl,u.nickName from device as d 
-      LEFT JOIN user AS u
-      ON d.owner = u.id
-      where sn='${sn}' AND owner IS NOT NULL
+    SELECT u.id, u.username,u.avatarUrl,u.nickName, du.isOwner, du.delete from device_user AS du
+    LEFT JOIN user AS u
+    on du.user=u.id
+    where sn='${sn}' AND isOwner=1
     `
     return connect.queryAsync(sql)
   },
@@ -144,10 +152,10 @@ const station = {
   // 查询设备分享者
   getStationSharer: (connect, sn) => {
     let sql = `
-      SELECT du.*, u.id, u.username,u.avatarUrl,u.nickName from device_user AS du
+      SELECT u.id, u.username,u.avatarUrl,u.nickName, du.isOwner, du.cloud, du.publicSpace, du.disable, du.delete from device_user AS du
       LEFT JOIN user AS u
       on du.user=u.id
-      where sn='${sn}'
+      where sn='${sn}' AND isOwner=0
     `
     return connect.queryAsync(sql)
   },
@@ -155,17 +163,20 @@ const station = {
   // 查询用户拥有的设备
   getStationBelongToUser: (connect, id) => {
     let sql = `
-      SELECT d.sn,d.type,i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name, ui.time FROM device AS d 
-      LEFT JOIN deviceInfo AS i ON d.sn=i.sn
-      LEFT JOIN (SELECT * FROM  userDeviceUseInfo GROUP BY userId,sn ORDER BY time DESC ) AS ui ON d.sn=ui.sn AND ui.userId='${id}'
-      WHERE owner='${id}'
+    SELECT d.sn,d.owner,d.type,
+    i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name,
+    du.createdAt, du.delete, du.deleteCode, ui.time
+    FROM device_user AS du
+    JOIN device AS d ON du.sn=d.sn
+    LEFT JOIN deviceInfo as i ON du.sn=i.sn
+    LEFT JOIN (SELECT * FROM  userDeviceUseInfo GROUP BY userId,sn ORDER BY time DESC ) AS ui ON d.sn=ui.sn AND ui.userId='${id}'
+    WHERE du.user='${id}' AND du.delete <> 1 AND du.isOwner=1
     `
     return connect.queryAsync(sql)
   },
 
   // 查询分享给用户的设备
   getStationSharedToUser: (connect, id) => {
-    console.log(id)
     let sql = `
       SELECT d.sn,d.owner,d.type,
       i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name,
@@ -174,7 +185,7 @@ const station = {
       JOIN device AS d ON du.sn=d.sn
       LEFT JOIN deviceInfo as i ON du.sn=i.sn
       LEFT JOIN (SELECT * FROM  userDeviceUseInfo GROUP BY userId,sn ORDER BY time DESC ) AS ui ON d.sn=ui.sn AND ui.userId='${id}'
-      WHERE du.user='${id}'
+      WHERE du.user='${id}' AND du.delete <> 1 AND du.isOwner=0
     `
     return connect.queryAsync(sql)
   },

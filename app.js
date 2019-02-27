@@ -3,6 +3,7 @@ const promise = require('bluebird')
 const cookieParser = require('cookie-parser')
 const E = require('./lib/error')
 const app = express()
+const methodOverride = require('method-override');
 
 // 为请求 request添加数据库句柄
 app.use(async (req, res, next) => {
@@ -10,7 +11,6 @@ app.use(async (req, res, next) => {
     req.db = pool
     next()
   } catch (error) {
-    console.error(error)
     res.error(error)
   }
 })
@@ -29,6 +29,8 @@ app.all('*', function(req, res, next) {
       next(); 
   }
 });
+
+app.use(methodOverride('_method'))
 
 app.use(express.json({ limit: '5mb', extended: false }))
 app.use(cookieParser())

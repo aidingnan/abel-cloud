@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-28 11:56:04
+ * @Last Modified time: 2019-02-27 17:08:11
  */
 
 const express = require('express')
@@ -73,16 +73,11 @@ router.post('/', async (req, res) => {
 })
 
 // 删除设备
-router.delete('/', joiValidator({
-  body: {
-    sn: Joi.string().required(),
-    ticket: Joi.string().required()
-  }
-}), async (req, res) => {
+router.delete('/', async (req, res) => {
   try {
     let { id } = req.auth
-    let { sn, ticket } = req.body
-    let result = await stationService.deleteStation(req.db, sn, id, ticket)
+    let { sn, ticket, manager } = req.body
+    let result = await stationService.deleteStation(req.db, sn, id, ticket, manager)
     res.success(result)
   } catch (error) { res.error(error) }
 })
@@ -92,6 +87,8 @@ router.get('/:sn/user', checkSn(), async (req, res) => {
   try {
     let { sn } = req.params
     let result = await stationService.getStationUsers(req.db, sn)
+    result.owner = result.owner.filter(item => !item.delete)
+    result.sharer = result.sharer.filter(item => !item.delete)
     res.success(result)
   } catch (e) { res.error(e) }
 })
@@ -152,11 +149,13 @@ router.patch('/:sn/user/:userId', joiValidator({
   },
   body: { disable: Joi.number().required() }
 }), checkSn(false, true), async (req, res) => {
-  let { sn, userId } = req.params
-  let { id } = req.auth
-  let { disable } = req.body
-  let result = await stationService.disableUser(req.db, id, sn, userId, disable)
-  res.success(result)
+  try {
+    let { sn, userId } = req.params
+    let { id } = req.auth
+    let { disable } = req.body
+    let result = await stationService.disableUser(req.db, id, sn, userId, disable)
+    res.success(result)
+  } catch (error) { res.error(error) }
 })
 
 // 设备下用户设置
@@ -187,6 +186,7 @@ function checkSn(checkOnline, checkOwner) {
       let sharedStations = await Station.getStationSharedToUser(connect, userId)
       let sameOwnStation = ownStations.find(item => item.sn == sn)
       let sameSharedStations = sharedStations.find(item => item.sn == sn  && !item.disable)
+      
       if (!sameOwnStation && !sameSharedStations) throw new Error('sn not belong to user')
       // 判断owner
       if (checkOwner && !sameOwnStation) throw new Error('user is not the owner of station')
