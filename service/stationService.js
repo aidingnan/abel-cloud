@@ -247,8 +247,10 @@ class StationService {
   // 查询设备所有用户
   async getStationUsers(connect, sn) {
     try {
+      let owner = await Station.getStationOwner(connect, sn)
+      let sharer = await Station.getStationSharer(connect, sn)
       let users = await Station.getStationUsers(connect, sn)
-      return { users }
+      return { owner, sharer, users }
     } catch (error) { throw error }
   }
 
