@@ -53,9 +53,17 @@ const station = {
     return connect.queryAsync(sql)
   },
 
+  // 更新关系
+  updateRelation: (connect, sn, user, isOwner, isDelete) => {
+    let sql = `
+    
+    `
+    return connect.queryAsync(sql)
+  },
+
   // 删除关系
   deleteRelation: (connect, sn, user, code) => {
-    let deleteCode = code? `'${code}'`: `null`
+    let deleteCode = code ? `'${code}'` : `null`
     let sql = `
       UPDATE device_user
       SET device_user.delete=1,deleteCode=${deleteCode}
@@ -89,14 +97,14 @@ const station = {
 
   // 记录设备与手机号分享
   recordShare: (connect, sn, owner, phone, userId, type, setting, operationCode, state) => {
-    let s = state? state: userId? 'done': 'todo'
+    let s = state ? state : userId ? 'done' : 'todo'
     let sql = `
       INSERT INTO device_userRecord
       SET sn='${sn}',owner='${owner}', 
       type='${type}', state='${s}'
     `
     if (phone) sql += `, phone='${phone}'`
-    if (userId) sql+= `, user='${userId}'`
+    if (userId) sql += `, user='${userId}'`
     if (setting) sql += `, setting='${setting}'`
     if (operationCode) sql += `, operationCode='${operationCode}'`
     return connect.queryAsync(sql)
@@ -156,6 +164,16 @@ const station = {
       LEFT JOIN user AS u
       on du.user=u.id
       where sn='${sn}' AND isOwner=0
+    `
+    return connect.queryAsync(sql)
+  },
+
+  getStationUsers: (connect, sn) => {
+    let sql = `
+    SELECT u.id, u.username,u.avatarUrl,u.nickName, du.isOwner, du.cloud, du.publicSpace, du.disable, du.delete from device_user AS du
+      LEFT JOIN user AS u
+      on du.user=u.id
+      where sn='${sn}'
     `
     return connect.queryAsync(sql)
   },
