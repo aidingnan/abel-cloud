@@ -220,5 +220,3 @@ const station = {
 }
 
 module.exports = station
-
-// userDeviceUseInfo AS ui ON d.sn=ui.sn AND ui.userId='${id}'

@@ -16,7 +16,7 @@ router.post('/bind', joiValidator({
 }), async (req, res) => {
   try {
     let { encrypted, signature } = req.body
-    req.auth = { sn: 'test_de3-2909-41b9-9849-bbca457d8844' }
+    // req.auth = { sn: 'test_de3-2909-41b9-9849-bbca457d8844' }
     let { sn, certId } = req.auth
     let result = await stationService.bindUser(req.db, sn, certId, signature, encrypted)
     res.success(result)

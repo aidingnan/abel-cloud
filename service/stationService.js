@@ -254,7 +254,6 @@ class StationService {
     } catch (error) { throw error }
   }
 
-
   // 更新设备下用户设置
   async updateStationUser(connect, sn, userId, setting) {
     try {

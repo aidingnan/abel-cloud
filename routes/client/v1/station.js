@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-02-27 17:34:15
+ * @Last Modified time: 2019-03-04 15:37:03
  */
 
 const express = require('express')
@@ -51,7 +51,7 @@ router.post('/:sn/reset', joiValidator({
 
 router.use(timeout('15s'))
 
-// 绑定设备
+// 申请绑定设备
 router.post('/', async (req, res) => {
   try {
     // 获取 user id
@@ -73,10 +73,11 @@ router.post('/', async (req, res) => {
 })
 
 // 删除设备
-router.delete('/', async (req, res) => {
+router.delete('/:sn', checkSn(true, false), async (req, res) => {
   try {
     let { id } = req.auth
-    let { sn, ticket, manager } = req.body
+    let { sn } = req.params
+    let { ticket, manager } = req.body
     let result = await stationService.deleteStation(req.db, sn, id, ticket, manager)
     res.success(result)
   } catch (error) { res.error(error) }
