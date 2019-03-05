@@ -48,7 +48,7 @@ app.use(function(req, res, next) {
 // error handler
 app.use(function(err, req, res, next) {
 
-  console.error(err.message, res.error)
+  console.error(err.message)
   if (err.message == 'Response timeout') res.error(new E.RequestTimeOut(), 504)
   else res.error(err)
 })
