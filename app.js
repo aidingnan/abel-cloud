@@ -30,13 +30,13 @@ app.all('*', function(req, res, next) {
   }
 });
 
+// 为response添加 success, error 方法
+app.use(require('./middlewares/res'))
+
 app.use(methodOverride('_method'))
 
 app.use(express.json({ limit: '5mb', extended: false }))
 app.use(cookieParser())
-
-// 为response添加 success, error 方法
-app.use(require('./middlewares/res'))
 
 app.use('/', require('./routes'))
 
