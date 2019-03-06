@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-03-06 17:22:10
+ * @Last Modified time: 2019-03-06 17:22:49
  */
 const promise = require('bluebird')
 const uuid = require('uuid')
@@ -296,6 +296,7 @@ class UserService {
 
       let wechatResult = await Wechat.findWechatAndUserByUnionId(connect, wechat.unionid)
       let wechatInfo = wechatResult[0]
+      console.log(wechatInfo)
       let { avatarUrl } = wechatInfo
       console.log(avatarUrl, '...........................', url)
       if (!url) await User.updateAvatar(connect, userId, avatarUrl)
