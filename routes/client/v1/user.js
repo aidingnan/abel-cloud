@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-02-27 18:07:18
+ * @Last Modified time: 2019-03-06 16:41:34
  */
 const express = require('express')
 const router = express.Router()
@@ -190,9 +190,9 @@ router.post('/wechat', joiValidator({
   }
 }), cAuth, async (req, res) => {
   try {
-    let { id } = req.auth
+    let { id, avatarUrl } = req.auth
     let { code, type } = req.body
-    let result = await userService.addWechat(req.db, id, code, type)
+    let result = await userService.addWechat(req.db, id, code, type, avatarUrl)
     res.success(result)
   } catch (e) {
     res.error(e)

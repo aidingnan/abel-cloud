@@ -50,6 +50,7 @@ module.exports = {
 
       // 附加验证结果
       req.auth = decoded
+      req.avatarUrl = user[0].avatarUrl
       next()
 
     } catch (error) {
