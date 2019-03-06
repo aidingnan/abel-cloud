@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-03-06 17:05:28
+ * @Last Modified time: 2019-03-06 17:17:53
  */
 const promise = require('bluebird')
 const uuid = require('uuid')
@@ -281,7 +281,7 @@ class UserService {
   }
 
   // 关联微信
-  async wechatAssociateUser(connect, userId, wechat) {
+  async wechatAssociateUser(connect, userId, wechat, avatarUrl) {
     /**
     * 微信账号关联用户
     * 账号存在则关联、不存在则创建
@@ -293,6 +293,9 @@ class UserService {
 
       // 关联
       let result = await Wechat.addWechat(connect, userId, wechat.unionid)
+
+      console.log(avatarUrl, '...........................')
+      if (!avatarUrl) await User.updateAvatar(connect, id, avatarUrl)
 
       return {}
 
