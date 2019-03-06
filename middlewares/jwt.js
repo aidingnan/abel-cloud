@@ -47,11 +47,9 @@ module.exports = {
         return res.error(new E.UserNotExist(), 401, false)
 
       if (decoded.password !== user[0].password) return res.error(new Error('authentication failed'), 401, false)
-      console.log(user[0], '.....')
       // 附加验证结果
       req.auth = decoded
-      req.avatarUrl = user[0].avatarUrl
-      console.log(req.avatarUrl, '123456')
+      req.auth.avatarUrl = user[0].avatarUrl
       next()
 
     } catch (error) {

@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-03-06 16:43:47
+ * @Last Modified time: 2019-03-06 17:05:28
  */
 const promise = require('bluebird')
 const uuid = require('uuid')
@@ -273,7 +273,7 @@ class UserService {
 
       // 添加绑定
       let result = await Wechat.addWechat(connect, id, unionid)
-
+      console.log(avatarUrl, '...........................')
       if (!avatarUrl) await User.updateAvatar(connect, id, avatarUrl)
       
       return result
