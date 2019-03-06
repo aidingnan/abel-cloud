@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-12-29 13:26:30 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-03-06 17:23:57
+ * @Last Modified time: 2019-03-06 17:26:21
  */
 
 
@@ -20,7 +20,7 @@ const wechat = {
   // 查找微信用户及关联用户信息
   findWechatAndUserByUnionId: (connect, unionid) => {
     let sql = `
-      SELECT unionid,user,avatarUrl FROM wechat as w
+      SELECT unionid,user,w.avatarUrl FROM wechat as w
       LEFT JOIN user as u on w.user=u.id
       WHERE unionid='${unionid}'
     `
