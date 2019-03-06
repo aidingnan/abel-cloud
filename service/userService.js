@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-02-27 18:15:02
+ * @Last Modified time: 2019-03-06 16:31:50
  */
 const promise = require('bluebird')
 const uuid = require('uuid')
@@ -432,7 +432,7 @@ class UserService {
       let oldPhone = oldTicketResult[0].phone
       // 新手机
       let newTicketResult = await Phone.getSmsCodeTicketInfo(connect, newTicket)
-      if (newTicketResult.length == 0 || newTicketResult[0].type !== 'replace')
+      if (newTicketResult.length == 0 || newTicketResult[0].type !== 'register')
         throw new E.PhoneTicketInvalid()
       let newPhone = newTicketResult[0].phone
       let newPhoneUsers = await Phone.checkPhone(connect, newPhone)
