@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-10 17:39:00 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-03-07 17:36:35
+ * @Last Modified time: 2019-03-07 17:44:07
  */
 
 const debug = require('debug')('app:store')
@@ -41,6 +41,7 @@ class Pipe extends State {
     let flow = new Flow({}, db, userId, 'flowDown', this)
     
     req.on('close', () => {
+      console.log(`req close trigger`)
       flow.clean()
       flow.destroy()
       this.ctx.res.destroy()
