@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:21 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-03-06 17:24:29
+ * @Last Modified time: 2019-03-06 18:01:07
  */
 const promise = require('bluebird')
 const uuid = require('uuid')
@@ -273,8 +273,8 @@ class UserService {
 
       // 添加绑定
       let result = await Wechat.addWechat(connect, id, unionid)
-      console.log(avatarUrl, '...........................')
-      if (!avatarUrl) await User.updateAvatar(connect, id, avatarUrl)
+
+      if (!avatarUrl) await User.updateAvatar(connect, id, headimgurl)
       
       return result
     } catch (error) { throw error }
@@ -296,9 +296,7 @@ class UserService {
 
       let wechatResult = await Wechat.findWechatAndUserByUnionId(connect, wechat.unionid)
       let wechatInfo = wechatResult[0]
-      console.log(wechatInfo)
       let { avatarUrl } = wechatInfo
-      console.log(avatarUrl, '...........................', url)
       if (!url && !!avatarUrl) await User.updateAvatar(connect, userId, avatarUrl)
 
       return {}
