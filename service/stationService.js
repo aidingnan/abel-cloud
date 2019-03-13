@@ -8,6 +8,9 @@ const sendSmsCode = require('../lib/sendSmsCode')
 const container = require('../service/task')
 const uuid = require('uuid')
 const promise = require('bluebird')
+const request = require('request')
+
+promise.promisifyAll(request)
 
 const pulishUser = async (connect, sn) => {
   let owner = await Station.getStationOwner(connect, sn)
@@ -132,15 +135,16 @@ class StationService {
   }
 
   // 删除设备
-  async deleteStation(connect, sn, userId, ticket, manager) {
+  async deleteStation(req, sn, userId, ticket, color, manager) {
+    let connect = req.db
     // 事务处理，单独建立connect
     let newConnect = promise.promisifyAll(await connect.getConnectionAsync())
     try {
       // 验证ticket
       let ticketResult = await Phone.getSmsCodeTicketInfo(connect, ticket)
-      if (!ticketResult.length) throw new E.PhoneTicketInvalid()
-      if (ticketResult[0].type !== 'deviceChange') throw new E.PhoneTicketInvalid()
-      let { code } = ticketResult[0]
+      // if (!ticketResult.length) throw new E.PhoneTicketInvalid()
+      // if (ticketResult[0].type !== 'deviceChange') throw new E.PhoneTicketInvalid()
+      // let { code } = ticketResult[0]
 
       // 检查设备类型(owner or share)
       let ownStations = await Station.getStationBelongToUser(connect, userId)
@@ -154,21 +158,40 @@ class StationService {
         let shareUsers = (await Station.getStationSharer(connect, sn)).filter(item => !item.delete)
         let newManager = shareUsers.find(item => item.id == manager)
         if (shareUsers.length != 0 && !manager) throw new Error('new manager is required')
-        if (shareUsers.length != 0 && !newManager) throw new Error('new manager is not belong to station')
+        // if (shareUsers.length != 0 && !newManager) throw new Error('new manager is not belong to station')
         
-        if (shareUsers.length == 0) {
+        if (true) {
           // 不存在其他用户 --> 标记管理员为删除
           console.log('不存在其他用户')
-          
+
+          // 验证灯
+          let base = 'https://test.nodetribe.com/c/v1'
+          let cookieResult = await request.getAsync('https://test.nodetribe.com')
+          let cookie = cookieResult.headers['set-cookie'][0]
+          let authorization = req.headers.authorization
+
+          let url = `${base}/station/${sn}/json`
+          let options = {
+            url,
+            headers: { authorization,cookie, 'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              urlPath: '/users',
+              verb: 'GET'
+            })
+          }
+
+          let lampResult = await request.postAsync(options)
+
+          return
           await newConnect.queryAsync('BEGIN;')
           let updateRelationResult = await Station.deleteRelation(newConnect, sn, userId, code)
           let updateStationResult = await Station.unbindUser(newConnect, sn)
 
           if (updateRelationResult.affectedRows !== 1) {
-            console.log('删除关系失败')
+            console.log('删除关系失败，回退')
             await newConnect.queryAsync('ROLLBACK;')
           } else if (updateStationResult.affectedRows !== 1) {
-            console.log('更新用户失败')
+            console.log('更新用户失败，回退')
             await newConnect.queryAsync('ROLLBACK;')
           } else await newConnect.queryAsync('COMMIT;')
           
@@ -198,7 +221,8 @@ class StationService {
 
     } catch (error) { 
       await newConnect.queryAsync('ROLLBACK;')
-      console.log(error);throw error }
+      console.log(error);throw error 
+    }
   }
 
   // 恢复出厂设置

@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-03-05 10:26:23
+ * @Last Modified time: 2019-03-11 17:05:23
  */
 
 const express = require('express')
@@ -77,8 +77,8 @@ router.delete('/:sn', checkSn(true, false), async (req, res) => {
   try {
     let { id } = req.auth
     let { sn } = req.params
-    let { ticket, manager } = req.body
-    let result = await stationService.deleteStation(req.db, sn, id, ticket, manager)
+    let { ticket, color, manager } = req.body
+    let result = await stationService.deleteStation(req, sn, id, ticket, color, manager)
     res.success(result)
   } catch (error) { res.error(error) }
 })
