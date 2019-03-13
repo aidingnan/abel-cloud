@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-10-11 13:30:14 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-03-05 10:27:11
+ * @Last Modified time: 2019-03-13 15:40:13
  */
 
 const debug = require('debug')('app:store')
@@ -38,7 +38,7 @@ class Pipe extends State {
     let db = req.db
     let userId = req.auth.id
     
-    let flow = new Flow({}, db, userId, 'flowUp')
+    let flow = new Flow({}, db, userId, 'flowUp', this)
     req.on('close', () => {
       flow.clean()
       flow.destroy()
