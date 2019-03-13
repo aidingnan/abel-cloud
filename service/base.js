@@ -65,8 +65,6 @@ class Init extends State {
       requestType: this.ctx.ctx.requestType
     }, body)
 
-    console.log(this.ctx.manifest)
-
     this.setState(Notice)
   }
 }
