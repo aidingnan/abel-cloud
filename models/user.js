@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-06 14:51:25 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-01-09 16:20:31
+ * @Last Modified time: 2019-03-19 14:45:06
  */
 
 const user = {
@@ -74,10 +74,10 @@ const user = {
   // 使用邮箱查询用户
   getUserWithMail: (connect, mail) => {
     let sql = `
-          SELECT * FROM mail as m
-          LEFT JOIN user as u ON m.user=u.id
-          WHERE m.mail='${mail}'
-        `
+      SELECT * FROM mail as m
+      LEFT JOIN user as u ON m.user=u.id
+      WHERE m.mail='${mail}'
+    `
     return connect.queryAsync(sql)
   },
 
