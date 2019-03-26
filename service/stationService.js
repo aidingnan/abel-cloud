@@ -42,7 +42,8 @@ class StationService {
         let updateRelationResult = await Station.createRelation(newConnect, sn, id, {}, 1)
         let updateStationResult = await Station.bindUser(newConnect, sn, id)
         let updateSignResult = await Station.updateSignature(newConnect, sn, signature, raw)
-        // 删除关系失败，回退
+        console.log(updateRelationResult.affectedRows, updateStationResult.affectedRows, updateSignResult.affectedRows)
+        // 创建关系失败，回退
         if (updateRelationResult.affectedRows !== 1) throw new Error('udpate device_user failed')
         // 更新用户失败，回退
         if (updateStationResult.affectedRows !== 1) throw new Error('update station failed')
