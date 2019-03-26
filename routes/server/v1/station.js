@@ -52,7 +52,6 @@ router.get('/user', async (req, res) => {
 // json 返回
 router.post('/:id/response/:jobId/json', async (req, res) => {
   try {
-    console.log(req.headers.authorization)
     transformJson.response(req, res)
   } catch(e) { res.error(e) }
 })
