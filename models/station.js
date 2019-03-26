@@ -209,10 +209,10 @@ const station = {
   },
 
   // 更新签名
-  updateSignature: (connect, sn, signature) => {
+  updateSignature: (connect, sn, signature, raw) => {
     let sql = `
       UPDATE deviceInfo 
-      SET signature='${signature}'
+      SET signature='${signature}', raw='${raw}'
       WHERE sn='${sn}'
     `
     return connect.queryAsync(sql)

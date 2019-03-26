@@ -11,14 +11,15 @@ const container = require('../../../service/task')
 router.post('/bind', joiValidator({
   body: {
     encrypted: Joi.string().required(),
-    signature: Joi.string().required()
+    signature: Joi.string().required(),
+    raw: Joi.string().required()
   }
 }), async (req, res) => {
   try {
-    let { encrypted, signature } = req.body
+    let { encrypted, signature, raw } = req.body
     // req.auth = { sn: 'test_de3-2909-41b9-9849-bbca457d8844' }
     let { sn, certId } = req.auth
-    let result = await stationService.bindUser(req.db, sn, certId, signature, encrypted)
+    let result = await stationService.bindUser(req.db, sn, certId, signature, encrypted, raw)
     res.success(result)
 
   } catch (error) { res.error(error) }
@@ -28,13 +29,14 @@ router.post('/bind', joiValidator({
 router.post('/unbind', joiValidator({
   body: {
     encrypted: Joi.string().required(),
-    signature: Joi.string().required()
+    signature: Joi.string().required(),
+    raw: Joi.string().required()
   }
 }), async (req, res) => {
   try {
-    let { encrypted, signature } = req.body
+    let { encrypted, signature, raw } = req.body
     let { sn, certId } = req.auth
-    let result = await stationService.unbindUser(req.db, sn, certId, encrypted, signature)
+    let result = await stationService.unbindUser(req.db, sn, certId, encrypted, signature, raw)
     res.success()
   } catch (error) {
     console.log(error)

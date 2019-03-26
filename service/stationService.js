@@ -23,7 +23,7 @@ const pulishUser = async (connect, sn) => {
 }
 
 class StationService {
-  async bindUser(connect, sn, certId, signature, encrypted) {
+  async bindUser(connect, sn, certId, signature, encrypted, raw) {
     try {
       // 通过sn查找设备
       let device = (await Station.findDeviceBySn(connect, sn))[0]
@@ -34,7 +34,7 @@ class StationService {
       let { certificatePem, status } = certResult.certificateDescription
 
       // 通过公钥验证签名
-      let verify = crypto.createVerify('SHA256').update(encrypted)
+      let verify = crypto.createVerify('SHA256').update(raw)
       let verifyResult = verify.verify(certificatePem, signature, 'hex')
 
       if (status !== 'ACTIVE') throw new E.StationCertInactive()
@@ -58,21 +58,22 @@ class StationService {
       let user = (await User.getUserInfo(connect, id))[0]
       await Station.createRelation(connect, sn, id, {}, 1)
       await Station.bindUser(connect, sn, id)
-
+      // TODO: transaction
       // 更新device signature   TODO！
+      await Station.updateSignature(newConnect, sn, signature, raw)
 
       return Object.assign(user, { password: undefined })
     } catch (error) { throw error }
   }
 
-  async unbindUser(connect, sn, certId, encrypted, signature) {
+  async unbindUser(connect, sn, certId, encrypted, signature, raw) {
     try {
       let newConnect = promise.promisifyAll(await connect.getConnectionAsync())
       // 通过sn查找设备
       let device = (await Station.findDeviceBySn(connect, sn))[0]
 
       // 验证encrypted签名
-      await verifySignature(certId, encrypted, signature)
+      await verifySignature(certId, signature, raw)
 
       // 解密encrypted
       let { id } = await decipher(encrypted)
@@ -89,7 +90,7 @@ class StationService {
         await newConnect.queryAsync('BEGIN;')
         let updateRelationResult = await Station.deleteRelation(newConnect, sn, id)
         let updateStationResult = await Station.unbindUser(newConnect, sn)
-        let updateSignResult = await Station.updateSignature(newConnect, sn, signature)
+        let updateSignResult = await Station.updateSignature(newConnect, sn, signature, raw)
 
         // 删除关系失败，回退
         if (updateRelationResult.affectedRows !== 1) throw new Error('udpate device_user failed')
@@ -311,13 +312,13 @@ class StationService {
   }
 }
 
-const verifySignature = async (certId, encrypted, signature) => {
+const verifySignature = async (certId, signature, raw) => {
   // 通过证书ID获取设备公钥
   let certResult = await describeCertificateAsync({ certificateId: certId })
   let { certificatePem, status } = certResult.certificateDescription
 
   // 通过公钥验证签名
-  let verify = crypto.createVerify('SHA256').update(encrypted)
+  let verify = crypto.createVerify('SHA256').update(raw)
   let verifyResult = verify.verify(certificatePem, signature, 'hex')
 
   if (status !== 'ACTIVE') throw new E.StationCertInactive()
