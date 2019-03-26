@@ -67,6 +67,7 @@ class StationService {
 
   async unbindUser(connect, sn, certId, encrypted, signature) {
     try {
+      let newConnect = promise.promisifyAll(await connect.getConnectionAsync())
       // 通过sn查找设备
       let device = (await Station.findDeviceBySn(connect, sn))[0]
 
@@ -75,11 +76,36 @@ class StationService {
 
       // 解密encrypted
       let { id } = await decipher(encrypted)
-
       // 检查device 与userId
-      console.log(sn, id)
-      
-      
+      let deviceOwner = await Station.getStationOwner(connect, sn).filter(item => !item.delete)
+      let deviceSharer = (await Station.getStationSharer(connect, sn)).filter(item => !item.delete)
+
+      if (deviceOwner.length !== 1) throw new Error('station has no owner')
+      if (deviceOwner[0].id !== id) throw new Error('encrypted user is not the owner of station')
+      if (deviceSharer.length !== 0) throw new Error('station exist sharers')
+
+      // 删除数据库关系
+      try {
+        await newConnect.queryAsync('BEGIN;')
+        let updateRelationResult = await Station.deleteRelation(newConnect, sn, id)
+        let updateStationResult = await Station.unbindUser(newConnect, sn)
+        let updateSignResult = await Station.updateSignature(newConnect, sn, signature)
+
+        // 删除关系失败，回退
+        if (updateRelationResult.affectedRows !== 1) throw new Error('udpate device_user failed')
+        
+        // 更新用户失败，回退
+        if (updateStationResult.affectedRows !== 1) throw new Error('update station failed')
+
+        if (updateSignResult.affectedRows !== 1) throw new Error('update station failed')
+        
+        await newConnect.queryAsync('COMMIT;')
+      } catch (error) {
+        await newConnect.queryAsync('ROLLBACK;')
+        throw error
+      }
+
+    
     } catch (error) { throw error }
   }
 
@@ -155,26 +181,27 @@ class StationService {
     } catch (error) { throw error }
   }
 
-  // 删除设备
-  async deleteStation(req, sn, userId, ticket, color, manager) {
+  // sharer删除设备
+  async deleteStation(req, sn, userId, ticket) {
     let connect = req.db
     // 事务处理，单独建立connect
     let newConnect = promise.promisifyAll(await connect.getConnectionAsync())
     try {
       // 验证ticket
       let ticketResult = await Phone.getSmsCodeTicketInfo(connect, ticket)
-      // if (!ticketResult.length) throw new E.PhoneTicketInvalid()
-      // if (ticketResult[0].type !== 'deviceChange') throw new E.PhoneTicketInvalid()
-      // let { code } = ticketResult[0]
+      if (!ticketResult.length) throw new E.PhoneTicketInvalid()
+      if (ticketResult[0].type !== 'deviceChange') throw new E.PhoneTicketInvalid()
+      let { code } = ticketResult[0]
 
       // 检查设备类型(owner or share)
       let ownStations = await Station.getStationBelongToUser(connect, userId)
       let sharedStations = await Station.getStationSharedToUser(connect, userId)
       let ownStation = ownStations.find(item => item.sn == sn)
       let sharedStation = sharedStations.find(item => item.sn == sn && !item.delete)
-      if (!ownStation && !sharedStation) throw new E.StationNotExist()
+      // if (!ownStation && !sharedStation) throw new E.StationNotExist()
+      if (!sharedStation) throw new E.StationNotExist()
 
-      if (ownStation) {
+      if (false) {
         // 管理员删设备
         let shareUsers = (await Station.getStationSharer(connect, sn)).filter(item => !item.delete)
         let newManager = shareUsers.find(item => item.id == manager)
@@ -185,36 +212,8 @@ class StationService {
           // 不存在其他用户 --> 标记管理员为删除
           console.log('不存在其他用户')
 
-          // 验证灯
-          let base = 'https://test.nodetribe.com/c/v1'
-          let cookieResult = await request.getAsync('https://test.nodetribe.com')
-          let cookie = cookieResult.headers['set-cookie'][0]
-          let authorization = req.headers.authorization
-
-          let url = `${base}/station/${sn}/json`
-          let options = {
-            url,
-            headers: { authorization, cookie, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              urlPath: '/users',
-              verb: 'GET'
-            })
-          }
-
-          let lampResult = await request.postAsync(options)
-
           return
-          await newConnect.queryAsync('BEGIN;')
-          let updateRelationResult = await Station.deleteRelation(newConnect, sn, userId, code)
-          let updateStationResult = await Station.unbindUser(newConnect, sn)
 
-          if (updateRelationResult.affectedRows !== 1) {
-            console.log('删除关系失败，回退')
-            await newConnect.queryAsync('ROLLBACK;')
-          } else if (updateStationResult.affectedRows !== 1) {
-            console.log('更新用户失败，回退')
-            await newConnect.queryAsync('ROLLBACK;')
-          } else await newConnect.queryAsync('COMMIT;')
 
         } else if (shareUsers.length > 0) {
           // 存在其他用户 --> 标记管理员为删除，转让管理员
@@ -322,7 +321,7 @@ const verifySignature = async (certId, encrypted, signature) => {
   let verifyResult = verify.verify(certificatePem, signature, 'hex')
 
   if (status !== 'ACTIVE') throw new E.StationCertInactive()
-  if (!verifyResult) throw new E.StationVerifyFailed()
+  // if (!verifyResult) throw new E.StationVerifyFailed()
 }
 
 const decipher = async (encrypted) => {

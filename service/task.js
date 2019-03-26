@@ -107,7 +107,7 @@ class Container {
         // if (status !== 'ACTIVE') throw new E.StationCertInactive()
         // if (!verifyResult) throw new E.StationVerifyFailed()
         // 标记signature
-        Station.updateSignature(req.db, sn, signature)
+        await Station.updateSignature(req.db, sn, signature)
         // 删除用户
         let owner = server.req.auth.id
         let { users } = server.manifest
