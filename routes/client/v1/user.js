@@ -2,8 +2,10 @@
  * @Author: harry.liu 
  * @Date: 2018-09-05 13:25:16 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-03-06 17:06:22
+ * @Last Modified time: 2019-03-26 14:52:30
  */
+
+const crypto = require('crypto')
 const express = require('express')
 const router = express.Router()
 
@@ -15,6 +17,27 @@ const { weAuth, cAuth } = require('../../../middlewares/jwt')
 var timeout = require('connect-timeout')
 
 router.use(timeout('15s'))
+
+// 申请绑定/解绑设备, 对用户ID进行加密
+router.post('/encrypted', cAuth, async (req, res) => {
+  try {
+    // 获取 user id
+    let { id } = req.auth
+    let user = { id }
+    // 获取 cloud key
+    let cloudKey = await getParameterAsync({ Name: 'cloudKeys' })
+    let value = JSON.parse(cloudKey.Parameter.Value)
+    let { keys, latest } = value
+    let key = keys[latest]
+    // 加密user
+    let cipher = crypto.createCipher('aes128', key)
+    let encrypted = cipher.update(JSON.stringify(user), 'utf8', 'hex')
+    encrypted += cipher.final('hex')
+
+    let result = { encrypted: `${latest}@${encrypted}` }
+    res.success(result)
+  } catch (error) { console.log(error); res.error(error) }
+})
 
 /**
  * 手机相关api
@@ -41,7 +64,7 @@ router.post('/smsCode', joiValidator({
     let { phone, type } = req.body
     let result = await userService.requestSmsCode(req.db, phone, type)
     res.success(result)
-  } catch (e) { console.log(e);res.error(e) }
+  } catch (e) { console.log(e); res.error(e) }
 })
 
 /**
@@ -151,7 +174,7 @@ router.get('/phone', cAuth, async (req, res) => {
 router.patch('/phone', joiValidator({
   body: {
     oldTicket: Joi.string().required(),
-    newTicket: Joi.string().required() 
+    newTicket: Joi.string().required()
   }
 }), cAuth, async (req, res) => {
   try {
@@ -159,7 +182,7 @@ router.patch('/phone', joiValidator({
     let { id } = req.auth
     let result = await userService.replacePhone(req.db, id, oldTicket, newTicket)
     res.success(result)
-  } catch (error) { console.log(error);res.error(error)}
+  } catch (error) { console.log(error); res.error(error) }
 })
 
 /**
@@ -303,7 +326,7 @@ router.post('/mailCode', joiValidator({
     let { mail, type } = req.body
     let result = await userService.createMailCode(req.db, mail, type)
     res.success(result)
-  } catch (error) { console.log(error);res.error(error) }
+  } catch (error) { console.log(error); res.error(error) }
 })
 
 /**
@@ -320,7 +343,7 @@ router.post('/mail', cAuth, joiValidator({
     let { mail, code } = req.body
     let result = await userService.bindMail(req.db, mail, code, id)
     res.success(result)
-  } catch (error) { res.error(error)}
+  } catch (error) { res.error(error) }
 })
 
 /**
@@ -360,7 +383,7 @@ router.post('/mail/ticket', joiValidator({
     code: Joi.string().required(),
     type: ['password']
   }
-}),async (req, res) => {
+}), async (req, res) => {
   try {
     let { mail, code, type } = req.body
     let result = await userService.getMailToken(req.db, mail, code, type)
@@ -383,7 +406,7 @@ router.get('/mail/token', joiValidator({
     let { mail, password, clientId, type } = req.query
     let result = await userService.getTokenWithMail(req.db, mail, password, clientId, type)
     res.success(result)
-  } catch(error) { throw error; }
+  } catch (error) { throw error; }
 })
 
 console.log(process.env.NODE_ENV)
@@ -399,7 +422,7 @@ if (process.env.NODE_ENV == 'test') {
       let sql = `DELETE FROM user WHERE username='${phone}'`
       let result = await req.db.queryAsync(sql)
       res.success(result)
-    } catch (error) { res.error(error)}
+    } catch (error) { res.error(error) }
   })
 }
 
