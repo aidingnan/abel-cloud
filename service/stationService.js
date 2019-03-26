@@ -25,6 +25,7 @@ const pulishUser = async (connect, sn) => {
 class StationService {
   async bindUser(connect, sn, certId, signature, encrypted) {
     try {
+      // 通过sn查找设备
       let device = (await Station.findDeviceBySn(connect, sn))[0]
       if (device.owner !== null) throw new E.StationHasOwner()
 
@@ -58,7 +59,26 @@ class StationService {
       await Station.createRelation(connect, sn, id, {}, 1)
       await Station.bindUser(connect, sn, id)
 
+      // 更新device signature   TODO！
+
       return Object.assign(user, { password: undefined })
+    } catch (error) { throw error }
+  }
+
+  async unbindUser(connect, sn, certId, encrypted, signature) {
+    try {
+      // 通过sn查找设备
+      let device = (await Station.findDeviceBySn(connect, sn))[0]
+
+      // 验证encrypted签名
+      await verifySignature(certId, encrypted, signature)
+
+      // 解密encrypted
+      let { id } = await decipher(encrypted)
+
+      // 检查device 与userId
+      
+      
     } catch (error) { throw error }
   }
 
@@ -159,7 +179,7 @@ class StationService {
         let newManager = shareUsers.find(item => item.id == manager)
         if (shareUsers.length != 0 && !manager) throw new Error('new manager is required')
         // if (shareUsers.length != 0 && !newManager) throw new Error('new manager is not belong to station')
-        
+
         if (true) {
           // 不存在其他用户 --> 标记管理员为删除
           console.log('不存在其他用户')
@@ -173,7 +193,7 @@ class StationService {
           let url = `${base}/station/${sn}/json`
           let options = {
             url,
-            headers: { authorization,cookie, 'Content-Type': 'application/json'},
+            headers: { authorization, cookie, 'Content-Type': 'application/json' },
             body: JSON.stringify({
               urlPath: '/users',
               verb: 'GET'
@@ -194,7 +214,7 @@ class StationService {
             console.log('更新用户失败，回退')
             await newConnect.queryAsync('ROLLBACK;')
           } else await newConnect.queryAsync('COMMIT;')
-          
+
         } else if (shareUsers.length > 0) {
           // 存在其他用户 --> 标记管理员为删除，转让管理员
           console.log('存在其他用户')
@@ -219,9 +239,10 @@ class StationService {
         } catch (error) { console.log(error) }
       }
 
-    } catch (error) { 
+    } catch (error) {
       await newConnect.queryAsync('ROLLBACK;')
-      console.log(error);throw error 
+      console.log(error)
+      throw error
     }
   }
 
@@ -288,6 +309,35 @@ class StationService {
       return await Station.getStationSharer(connect, sn)
     } catch (error) { throw error }
   }
+}
+
+const verifySignature = async (certId, encrypted, signature) => {
+  // 通过证书ID获取设备公钥
+  let certResult = await describeCertificateAsync({ certificateId: certId })
+  let { certificatePem, status } = certResult.certificateDescription
+
+  // 通过公钥验证签名
+  let verify = crypto.createVerify('SHA256').update(encrypted)
+  let verifyResult = verify.verify(certificatePem, signature, 'hex')
+
+  if (status !== 'ACTIVE') throw new E.StationCertInactive()
+  if (!verifyResult) throw new E.StationVerifyFailed()
+}
+
+const decipher = async (encrypted) => {
+  // 解密encrypted
+  let arr = encrypted.split('@')
+  let latest = arr[0]
+  let encrypted2 = arr[1]
+  let cloudKey = await getParameterAsync({ Name: 'cloudKeys' })
+  let { keys } = JSON.parse(cloudKey.Parameter.Value)
+  let key = keys[latest]
+
+  let decipher = crypto.createDecipher('aes128', key)
+  let decrypted = decipher.update(encrypted2, 'hex', 'utf8')
+  decrypted += decipher.final('utf8')
+
+  return JSON.parse(decrypted)
 }
 
 module.exports = new StationService()

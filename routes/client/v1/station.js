@@ -2,7 +2,7 @@
  * @Author: harry.liu 
  * @Date: 2018-09-10 11:02:15 
  * @Last Modified by: harry.liu
- * @Last Modified time: 2019-03-11 17:05:23
+ * @Last Modified time: 2019-03-25 17:21:25
  */
 
 const express = require('express')
@@ -51,7 +51,7 @@ router.post('/:sn/reset', joiValidator({
 
 router.use(timeout('15s'))
 
-// 申请绑定设备
+// 申请绑定/解绑设备, 对用户ID进行加密
 router.post('/', async (req, res) => {
   try {
     // 获取 user id

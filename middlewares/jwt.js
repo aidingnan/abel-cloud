@@ -97,7 +97,7 @@ module.exports = {
     try {
       const aut = req.headers.authorization
       if (!aut) throw new Error()
-      
+      console.log(aut)
       // decode
       const decoded = await jwt.decode(aut)
       if (!decoded)

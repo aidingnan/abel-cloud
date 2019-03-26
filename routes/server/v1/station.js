@@ -24,6 +24,23 @@ router.post('/bind', joiValidator({
   } catch (error) { res.error(error) }
 })
 
+
+router.post('/unbind', joiValidator({
+  body: {
+    encrypted: Joi.string().required(),
+    signature: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { encrypted, signature } = req.body
+    let { sn, certId } = req.auth
+    let result = await stationService.unbindUser(req.db, sn. certId, signature, encrypted)
+  } catch (error) {
+    console.log(error)
+    res.error(error)
+  }
+})
+
 router.get('/user', async (req, res) => {
   try {
     let { sn } = req.auth
