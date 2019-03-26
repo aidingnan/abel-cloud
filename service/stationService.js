@@ -30,41 +30,35 @@ class StationService {
       let device = (await Station.findDeviceBySn(connect, sn))[0]
       if (device.owner !== null) throw new E.StationHasOwner()
 
-      // 通过证书ID获取设备公钥
-      let certResult = await describeCertificateAsync({ certificateId: certId })
-      let { certificatePem, status } = certResult.certificateDescription
-
       // 通过公钥验证签名
-      let verify = crypto.createVerify('SHA256').update(raw)
-      let verifyResult = verify.verify(certificatePem, signature, 'hex')
-
-      if (status !== 'ACTIVE') throw new E.StationCertInactive()
-      if (!verifyResult) throw new E.StationVerifyFailed()
+      await verifySignature(certId, signature, raw)
 
       // 解密encrypted
-      let arr = encrypted.split('@')
-      let latest = arr[0]
-      let encrypted2 = arr[1]
-      let cloudKey = await getParameterAsync({ Name: 'cloudKeys' })
-      let { keys } = JSON.parse(cloudKey.Parameter.Value)
-      let key = keys[latest]
-
-      let decipher = crypto.createDecipher('aes128', key)
-      let decrypted = decipher.update(encrypted2, 'hex', 'utf8')
-      decrypted += decipher.final('utf8')
-
-      let { id } = JSON.parse(decrypted)
-
-      // 绑定用户
+      let { id } = await decipher(encrypted)
       let user = (await User.getUserInfo(connect, id))[0]
-      await Station.createRelation(connect, sn, id, {}, 1)
-      await Station.bindUser(connect, sn, id)
-      // TODO: transaction
-      // 更新device signature   TODO！
-      await Station.updateSignature(newConnect, sn, signature, raw)
+
+      // 更新数据库关系
+      try {
+        let updateRelationResult = await Station.createRelation(newConnect, sn, id, {}, 1)
+        let updateStationResult = await Station.bindUser(newConnect, sn, id)
+        let updateSignResult = await Station.updateSignature(newConnect, sn, signature, raw)
+        // 删除关系失败，回退
+        if (updateRelationResult.affectedRows !== 1) throw new Error('udpate device_user failed')
+        // 更新用户失败，回退
+        if (updateStationResult.affectedRows !== 1) throw new Error('update station failed')
+        // 更新设备签名失败，回退
+        if (updateSignResult.affectedRows !== 1) throw new Error('update station failed')
+        await newConnect.queryAsync('COMMIT;')
+      } catch (error) {
+        await newConnect.queryAsync('ROLLBACK;')
+        throw error
+      }      
 
       return Object.assign(user, { password: undefined })
-    } catch (error) { throw error }
+    } catch (error) { 
+      console.log(error)
+      throw error
+     }
   }
 
   async unbindUser(connect, sn, certId, encrypted, signature, raw) {
@@ -92,13 +86,11 @@ class StationService {
         let updateRelationResult = await Station.deleteRelation(newConnect, sn, id)
         let updateStationResult = await Station.unbindUser(newConnect, sn)
         let updateSignResult = await Station.updateSignature(newConnect, sn, signature, raw)
-
         // 删除关系失败，回退
         if (updateRelationResult.affectedRows !== 1) throw new Error('udpate device_user failed')
-        
         // 更新用户失败，回退
         if (updateStationResult.affectedRows !== 1) throw new Error('update station failed')
-
+        // 更新设备签名失败，回退
         if (updateSignResult.affectedRows !== 1) throw new Error('update station failed')
         
         await newConnect.queryAsync('COMMIT;')
