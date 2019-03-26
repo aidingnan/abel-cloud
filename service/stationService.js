@@ -39,12 +39,13 @@ class StationService {
 
       // 更新数据库关系
       try {
+        await newConnect.queryAsync('BEGIN;')
         let updateRelationResult = await Station.createRelation(newConnect, sn, id, {}, 1)
         let updateStationResult = await Station.bindUser(newConnect, sn, id)
         let updateSignResult = await Station.updateSignature(newConnect, sn, signature, raw)
         console.log(updateRelationResult.affectedRows, updateStationResult.affectedRows, updateSignResult.affectedRows)
         // 创建关系失败，回退
-        if (updateRelationResult.affectedRows !== 1) throw new Error('udpate device_user failed')
+        if (updateRelationResult.affectedRows !== 1 && updateRelationResult.affectedRows !== 2) throw new Error('udpate device_user failed')
         // 更新用户失败，回退
         if (updateStationResult.affectedRows !== 1) throw new Error('update station failed')
         // 更新设备签名失败，回退
