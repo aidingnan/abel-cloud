@@ -95,8 +95,6 @@ module.exports = {
 	 */
   async sAuth(req, res, next) {
     try {
-      console.log('in s auth')
-      console.log(req.headers.authorization)
       const aut = req.headers.authorization
       if (!aut) throw new Error()
       // decode

@@ -77,6 +77,7 @@ class StationService {
       let { id } = await decipher(encrypted)
 
       // 检查device 与userId
+      console.log(sn, id)
       
       
     } catch (error) { throw error }
