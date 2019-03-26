@@ -24,6 +24,7 @@ const pulishUser = async (connect, sn) => {
 
 class StationService {
   async bindUser(connect, sn, certId, signature, encrypted, raw) {
+    let newConnect = promise.promisifyAll(await connect.getConnectionAsync())
     try {
       // 通过sn查找设备
       let device = (await Station.findDeviceBySn(connect, sn))[0]
