@@ -357,7 +357,7 @@ class UserService {
       let id = uuid.v4()
 
       let result = await uploadAsync({
-        Bucket: 'wisnuc', Key: `avatar/${id}`, Body: req, ACL: 'public-read'
+        Bucket: 'dingnan', Key: `avatar/${id}`, Body: req, ACL: 'public-read'
       })
 
       let { Location } = result
