@@ -234,6 +234,7 @@ router.delete('/wechat', cAuth, joiValidator({
   try {
     let { id } = req.auth
     let { unionid } = req.body
+    console.log(id, unionid)
     let result = await userService.unbindWechat(req.db, id, unionid)
     res.success(result)
   } catch (error) { res.error(error) }
