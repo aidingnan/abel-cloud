@@ -33,6 +33,7 @@ module.exports = (schema, options) => {
 
     return Joi.validate(toValidate, schema, options, (err) => {
       if (err) {
+        console.log(err)
         let details = err && err.details || []
         let failures = []
         for (let detail of details) {
