@@ -213,13 +213,12 @@ router.post('/wechat', joiValidator({
   }
 }), cAuth, async (req, res) => {
   try {
-    console.log('123')
     let { id, avatarUrl } = req.auth
     let { code, type } = req.body
     let result = await userService.addWechat(req.db, id, code, type, avatarUrl)
-    console.log('456')
     res.success(result)
   } catch (e) {
+    console.log(e)
     res.error(e)
   }
 })

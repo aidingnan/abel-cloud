@@ -260,7 +260,9 @@ class UserService {
   async addWechat(connect, id, code, type, avatarUrl) {
     try {
       // 解析code => userinfo
-      let wechatInfo = new WechatInfo(type)
+      let data = await getParameterAsync({ Name: 'wechat' })
+      let config = JSON.parse(data.Parameter.Value)[type]
+      let wechatInfo = new WechatInfo(Object.assign({type}, config))
       let oth = promise.promisify(wechatInfo.oauth2UserInfo).bind(wechatInfo)
       let userInfo = await oth(null, code)
       let { unionid, nickname, headimgurl } = userInfo
@@ -313,7 +315,10 @@ class UserService {
 
       await Wechat.unbindWechat(connect, userId, unionid)
 
-    } catch (error) { throw error }
+    } catch (error) {
+      console.log(error)
+      throw error
+    }
   }
 
   // ---------------------设置查询---------------------
