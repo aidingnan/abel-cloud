@@ -227,12 +227,12 @@ router.post('/wechat', joiValidator({
  * 解绑微信
  */
 router.delete('/wechat', cAuth, joiValidator({
-  body: {
-    unionid: Joi.string().required()
-  }
+  body: { unionid: Joi.string() },
+  query: { unionid: Joi.string() }
 }), async (req, res) => {
   try {
     let { id } = req.auth
+    let unionid = req.body.unionid || req.body.unionid
     let { unionid } = req.body
     console.log(id, unionid)
     let result = await userService.unbindWechat(req.db, id, unionid)

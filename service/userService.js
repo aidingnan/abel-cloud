@@ -310,18 +310,12 @@ class UserService {
   async unbindWechat(connect, userId, unionid) {
     try {
       let userResult = await Wechat.getUserWechat(connect, userId)
-      console.log(userResult)
       let result = userResult.find(item => item.unionid == unionid)
-      console.log(result)
       if (!result) throw new Error('unionid error')
 
       await Wechat.unbindWechat(connect, userId, unionid)
-      console.log('after update')
 
-    } catch (error) {
-      console.log(error)
-      throw error
-    }
+    } catch (error) { throw error }
   }
 
   // ---------------------设置查询---------------------
