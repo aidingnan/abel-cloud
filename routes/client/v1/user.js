@@ -232,7 +232,7 @@ router.delete('/wechat', cAuth, joiValidator({
 }), async (req, res) => {
   try {
     let { id } = req.auth
-    let unionid = req.body.unionid || req.body.unionid
+    let unionid = req.body.unionid || req.query.unionid
     console.log(id, unionid)
     let result = await userService.unbindWechat(req.db, id, unionid)
     res.success(result)
