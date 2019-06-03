@@ -182,7 +182,7 @@ const station = {
   getStationBelongToUser: (connect, id) => {
     let sql = `
     SELECT d.sn,d.owner,d.type,
-    i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name,
+    i.online,i.onTime,i.offTime,i.LANIP,i.name,
     du.createdAt, du.delete, du.deleteCode, ui.time
     FROM device_user AS du
     JOIN device AS d ON du.sn=d.sn
@@ -197,7 +197,7 @@ const station = {
   getStationSharedToUser: (connect, id) => {
     let sql = `
       SELECT d.sn,d.owner,d.type,
-      i.online,i.onlineTime,i.offlineTime,i.LANIP,i.name,
+      i.online,i.onTime,i.offTime,i.LANIP,i.name,
       du.createdAt, du.delete, du.deleteCode, ui.time
       FROM device_user AS du
       JOIN device AS d ON du.sn=d.sn
