@@ -54,7 +54,7 @@ module.exports = (req, res, next) => {
   res.error = (error, status) => {
 
     let code, message
-    status = status || DEFAULT_ERROR_STATUS
+    status = status || error.status || DEFAULT_ERROR_STATUS
     if (error) {
       if (error instanceof Error) {
         code = error.code || status
