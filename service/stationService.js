@@ -305,6 +305,13 @@ class StationService {
       return await Station.getStationSharer(connect, sn)
     } catch (error) { throw error }
   }
+
+  // 查询升级
+  async getStationUpgrade(connect) {
+    try {
+      return await Station.getStationUpgrade(connect)
+    } catch (error) { throw error}
+  }
 }
 
 const verifySignature = async (certId, signature, raw) => {

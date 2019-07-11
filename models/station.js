@@ -216,6 +216,13 @@ const station = {
       WHERE sn='${sn}'
     `
     return connect.queryAsync(sql)
+  },
+
+  getStationUpgrade: (connect) => {
+    let sql = `
+      SELECT * FROM upgrade
+    `
+    return connect.queryAsync(sql)
   }
 }
 
