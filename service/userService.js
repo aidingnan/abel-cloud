@@ -266,13 +266,14 @@ class UserService {
   // refresh access token
   async refreshAccessToken(connect, rToken, clientId, type) {
     try {
+      // 验证refreshToken
       let queryResult = await User.queryRefreshToken(connect, rToken, clientId)
       if (queryResult.length !== 1) throw new E.RefreshTokenError()
       let { id } = queryResult[0]
-
+      // 查询用户
       let userResult = await User.getUserInfo(connect, id)
       if (userResult.length !== 1) throw new E.UsernameOrPasswordError()
-
+  
        // 创建accessToken
        let accessToken = await getToken(connect, userResult, clientId, type)
        // 创建refreshToken
