@@ -117,7 +117,7 @@ router.get('/password/token', joiValidator({
   } catch (e) { res.error(e) }
 })
 
-router.post('/password/token', joiValidator({
+router.post('/password', joiValidator({
   body: {
     username: Joi.string().required(),
     password: Joi.string().min(6).required(),
@@ -405,6 +405,20 @@ router.get('/mail/token', joiValidator({
     let result = await userService.getTokenWithMail(req.db, mail, password, clientId, type)
     res.success(result)
   } catch (error) { throw error; }
+})
+
+router.post('/refreshToken', joiValidator({
+  body: {
+    refreshToken: Joi.string().required(),
+    clientId: Joi.string().required(),
+    type: Joi.string().required()
+  }
+}), async (req, res) => {
+  try {
+    let { refreshToken, clientId, type } = req.body
+    let result = await userService.refreshAccessToken(req.db, refreshToken, clientId, type)
+    res.success(result)
+  } catch (e) { res.error(e) }
 })
 
 console.log(process.env.NODE_ENV)

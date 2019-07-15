@@ -206,7 +206,28 @@ const user = {
       COMMIT;
     `
     return connect.queryAsync(sql)
+  },
+
+  // updateRefreshToken
+  updateRefreshToken: (connect, id, refreshToken, clientId) => {
+    let sql = `
+      INSERT INTO refreshToken
+      SET id='${id}', refreshToken='${refreshToken}', clientId='${clientId}'
+      ON DUPLICATE KEY UPDATE
+      refreshToken='${refreshToken}'
+    `
+    return connect.queryAsync(sql)
+  },
+
+  queryRefreshToken: (connect, refreshToken, clientId) => {
+    let sql = `
+      SELECT * FROM refreshToken
+      WHERE refreshToken='${refreshToken}' AND clientId='${clientId}'
+    `
+    return connect.queryAsync(sql)
   }
+
+
 }
 
 module.exports = user

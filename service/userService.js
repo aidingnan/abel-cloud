@@ -40,6 +40,14 @@ const getToken = async (connect, userResult, clientId, type) => {
   return { token, ...obj }
 }
 
+const createRefreshToken = async (connect, id, clientId) => {
+  // refresh user's client refreshToken
+  let refreshTokenObj = { id, clientId, createTime: (new Date()).getTime()}
+  let refreshToken = await jwt.encode(refreshTokenObj)
+  await User.updateRefreshToken(connect, id, refreshToken, clientId)
+  return { refreshToken }
+}
+
 const pulishUser = async (connect, sn) => {
   let owner = await Station.getStationOwner(connect, sn)
   let sharer = await Station.getStationSharer(connect, sn)
@@ -168,14 +176,17 @@ class UserService {
   // 使用手机号密码登录
   async getTokenWithPhone(connect, u, p, clientId, type) {
     try {
-
       // 判断用户名密码
       let userResult = await User.loginWithPhone(connect, u, p)
       if (userResult.length !== 1) throw new E.UsernameOrPasswordError()
+      console.log(userResult)
+      // 创建accessToken
+      let accessToken = await getToken(connect, userResult, clientId, type)
+      // 创建refreshToken
+      let refreshToken = await createRefreshToken(connect, userResult[0].id,clientId)
+      return Object.assign(accessToken, refreshToken)
 
-      return await getToken(connect, userResult, clientId, type)
-
-    } catch (error) { throw error }
+    } catch (error) { console.log(error);throw error }
   }
 
   // 使用邮箱密码登录
@@ -241,10 +252,35 @@ class UserService {
       // 更新验证码
       await Phone.updateSmsCode(connect, phone, code, 'login', 1, 'consumed')
 
-      return getToken(connect, userResult, clientId, type)
+      // 创建accessToken
+      let accessToken = getToken(connect, userResult, clientId, type)
+      // 创建refreshToken
+      let refreshToken = await createRefreshToken(connect, userResult[0].id. clientId)
+      console.log('...')
+      return Object.assign(accessToken, refreshToken)
 
 
-    } catch (error) { console.log(error);throw error }
+    } catch (error) { console.log(error, '......................................');throw error }
+  }
+
+  // refresh access token
+  async refreshAccessToken(connect, rToken, clientId, type) {
+    try {
+      let queryResult = await User.queryRefreshToken(connect, rToken, clientId)
+      if (queryResult.length !== 1) throw new E.RefreshTokenError()
+      let { id } = queryResult[0]
+
+      let userResult = await User.getUserInfo(connect, id)
+      if (userResult.length !== 1) throw new E.UsernameOrPasswordError()
+
+       // 创建accessToken
+       let accessToken = await getToken(connect, userResult, clientId, type)
+       // 创建refreshToken
+       let refreshToken = await createRefreshToken(connect, userResult[0].id,clientId)
+
+      console.log(accessToken, refreshToken)
+      return Object.assign(accessToken, refreshToken)
+    } catch (error) { console.log(error);throw error}
   }
 
   // ---------------------微信绑定---------------------
