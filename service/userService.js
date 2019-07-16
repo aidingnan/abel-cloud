@@ -179,7 +179,6 @@ class UserService {
       // 判断用户名密码
       let userResult = await User.loginWithPhone(connect, u, p)
       if (userResult.length !== 1) throw new E.UsernameOrPasswordError()
-      console.log(userResult)
       // 创建accessToken
       let accessToken = await getToken(connect, userResult, clientId, type)
       // 创建refreshToken
@@ -268,7 +267,10 @@ class UserService {
     try {
       // 验证refreshToken
       let queryResult = await User.queryRefreshToken(connect, rToken, clientId)
-      if (queryResult.length !== 1) throw new E.RefreshTokenError()
+      if (queryResult.length !== 1) {
+        console.log('can not find query result', queryResult.length)
+        throw new E.RefreshTokenError()
+      }
       let { id } = queryResult[0]
       // 查询用户
       let userResult = await User.getUserInfo(connect, id)
