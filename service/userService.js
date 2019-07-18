@@ -168,7 +168,11 @@ class UserService {
       // 获取用户信息
       let userResult = await User.getUserInfo(connect, userId)
 
-      return await getToken(connect, userResult, clientId, type)
+      // 创建accessToken
+      let accessToken = await getToken(connect, userResult, clientId, type)
+      // 创建refreshToken
+      let refreshToken = await createRefreshToken(connect, userResult[0].id,clientId)
+      return Object.assign(accessToken, refreshToken)
 
     } catch (error) { console.log(error); throw error }
   }
