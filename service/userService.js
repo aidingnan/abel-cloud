@@ -171,7 +171,7 @@ class UserService {
       // 创建accessToken
       let accessToken = await getToken(connect, userResult, clientId, type)
       // 创建refreshToken
-      let refreshToken = await createRefreshToken(connect, userResult[0].id,clientId)
+      let refreshToken = await createRefreshToken(connect, userResult[0].id, clientId)
       return Object.assign(accessToken, refreshToken)
 
     } catch (error) { console.log(error); throw error }
@@ -186,7 +186,7 @@ class UserService {
       // 创建accessToken
       let accessToken = await getToken(connect, userResult, clientId, type)
       // 创建refreshToken
-      let refreshToken = await createRefreshToken(connect, userResult[0].id,clientId)
+      let refreshToken = await createRefreshToken(connect, userResult[0].id, clientId)
       return Object.assign(accessToken, refreshToken)
 
     } catch (error) { console.log(error);throw error }
@@ -233,7 +233,7 @@ class UserService {
          // 创建accessToken
         let accessToken = { ...(await getToken(connect, userResult, clientId, type)), user: true }
         // 创建refreshToken
-        let refreshToken = await createRefreshToken(connect, userResult[0].id,clientId)
+        let refreshToken = await createRefreshToken(connect, userResult[0].id, clientId)
         return Object.assign(accessToken, refreshToken)
       }
 
@@ -261,7 +261,7 @@ class UserService {
       // 创建accessToken
       let accessToken = await getToken(connect, userResult, clientId, type)
       // 创建refreshToken
-      let refreshToken = await createRefreshToken(connect, userResult[0].id. clientId)
+      let refreshToken = await createRefreshToken(connect, userResult[0].id, clientId)
       return Object.assign(accessToken, refreshToken)
 
 
@@ -285,7 +285,7 @@ class UserService {
        // 创建accessToken
        let accessToken = await getToken(connect, userResult, clientId, type)
        // 创建refreshToken
-       let refreshToken = await createRefreshToken(connect, userResult[0].id,clientId)
+       let refreshToken = await createRefreshToken(connect, userResult[0].id, clientId)
 
       console.log(accessToken, refreshToken)
       return Object.assign(accessToken, refreshToken)
