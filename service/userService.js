@@ -255,7 +255,7 @@ class UserService {
       await Phone.updateSmsCode(connect, phone, code, 'login', 1, 'consumed')
 
       // 创建accessToken
-      let accessToken = getToken(connect, userResult, clientId, type)
+      let accessToken = await getToken(connect, userResult, clientId, type)
       // 创建refreshToken
       let refreshToken = await createRefreshToken(connect, userResult[0].id. clientId)
       return Object.assign(accessToken, refreshToken)
