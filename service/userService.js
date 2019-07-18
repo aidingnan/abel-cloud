@@ -226,8 +226,11 @@ class UserService {
       } else {
         // 微信用户绑定了注册用户
         let userResult = await User.getUserInfo(connect, user)
-
-        return { ...(await getToken(connect, userResult, clientId, type)), user: true }
+         // 创建accessToken
+        let accessToken = { ...(await getToken(connect, userResult, clientId, type)), user: true }
+        // 创建refreshToken
+        let refreshToken = await createRefreshToken(connect, userResult[0].id,clientId)
+        return Object.assign(accessToken, refreshToken)
       }
 
     } catch (error) { throw error }
@@ -255,7 +258,6 @@ class UserService {
       let accessToken = getToken(connect, userResult, clientId, type)
       // 创建refreshToken
       let refreshToken = await createRefreshToken(connect, userResult[0].id. clientId)
-      console.log('...')
       return Object.assign(accessToken, refreshToken)
 
 
