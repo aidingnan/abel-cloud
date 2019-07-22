@@ -287,7 +287,7 @@ class UserService {
        // 创建refreshToken
        let refreshToken = await createRefreshToken(connect, userResult[0].id, clientId)
 
-      console.log(accessToken, refreshToken)
+      // console.log(accessToken, refreshToken)
       return Object.assign(accessToken, refreshToken)
     } catch (error) { console.log(error);throw error}
   }
