@@ -153,6 +153,39 @@ router.patch('/:sn/user', joiValidator({
   } catch (error) { res.error(error) }
 })
 
+// 发送消息给设备
+router.post('/:sn/publish', joiValidator({
+  params: { sn: Joi.string()},
+  body: { 
+    message:['checkout', 'download'],
+    content: Joi.object().required(),
+    tag: Joi.string()
+  }
+}), checkSn(true, false), async(req, res) => {
+  try {
+    let { message, content, tag } = req.body
+    let { sn } = req.params.sn
+    let topic = `cloud/${sn}/${message}`
+    let qos = 1
+    let payload
+    // generate payload
+    if (message == 'checkout') {
+      // checkout
+      payload = JSON.stringify(content)
+    } else if (message == 'download') {
+      // download
+      if (!tag) res.error('tag is necessary')
+      let result = await Station.getUpgradeInfoWithTag(req.db, tag)
+      if (result.length !== 1) throw new Error('tag not match')
+      payload = JSON.stringify(result[0])
+    }
+
+    let obj = { topic, qos, payload }
+    await publishAsync(obj)
+    res.success()
+  } catch(err) { res.error(err)}
+})
+
 function checkSn(checkOnline, checkOwner) {
   return async function(req, res, next) {
     // return next()

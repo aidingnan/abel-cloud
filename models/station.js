@@ -223,6 +223,13 @@ const station = {
       SELECT * FROM upgrade
     `
     return connect.queryAsync(sql)
+  },
+
+  getUpgradeInfoWithTag: (connect, tag) => {
+    let sql = `
+      SELECT * FROM upgrade WHERE tag='${tag}'
+    `
+    return connect.queryAsync(sql)
   }
 }
 

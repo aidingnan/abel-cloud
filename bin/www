@@ -63,7 +63,7 @@ ssm.getParameters({ Names: ['iot', 'rds', 'rds-test'] }, (err, data) => {
 
     global.pool = promise.promisifyAll(pool)
 
-  } catch (error) { 
+  } catch (error) {
     console.log(error)
     throw error
   }
