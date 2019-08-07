@@ -42,7 +42,7 @@ router.post('/:sn/reset', joiValidator({
   }
 }), checkSn(true, true), async (req, res) => {
   try {
-    let { sn } = req.params
+    let { sn } = rams
     let { tickets } = req.body
     await stationService.resetStation(req.db, sn, tickets, req, res)
   } catch (error) { res.error(error) }

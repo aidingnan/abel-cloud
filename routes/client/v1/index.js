@@ -5,12 +5,14 @@ const { cAuth } = require('../../../middlewares/jwt')
 const stationService = require('../../../service/stationService')
 
 router.get('/', (req, res) => res.success({}))
+
+// 升级查询
 router.get('/station/upgrade', async (req, res) => {
     try {
       let result = await stationService.getStationUpgrade(req.db)
       res.success(result)
     } catch (error) {
-      res.error
+      res.error(error)
     }
   })
 router.use(logger(':remote-addr [:date[clf]] ":method :url :status :response-time ms', {

@@ -8,12 +8,24 @@ router.use(logger(':remote-addr [:date[clf]] ":method :url :status :response-tim
   skip: (req, res) => { return res.statusCode == 200 }
 }))
 
+// 升级查询
 router.get('/station/upgrade', async (req, res) => {
   try {
     let result = await stationService.getStationUpgrade(req.db)
     res.success(result)
   } catch (error) {
-    res.error
+    res.error(error)
+  }
+})
+
+router.get('/station/:sn/cert', async (req, res) => {
+  try {
+    let { sn } = req.params
+    if (!sn) throw new Error('sn is required')
+    let result = await stationService.getCert(req.db, sn)
+    res.success(result)
+  } catch (error) {
+    res.error(error)
   }
 })
 router.use('*', sAuth)

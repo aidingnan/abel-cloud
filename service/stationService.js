@@ -312,6 +312,18 @@ class StationService {
       return await Station.getStationUpgrade(connect)
     } catch (error) { throw error}
   }
+
+  // 查询证书
+  async getCert(connect, sn) {
+    try {
+      let device = await Station.findDeviceBySn(connect, sn)
+      if (device.length !== 1) throw new Error('sn error')
+      let { certId } = device[0]
+      let certResult = await describeCertificateAsync({ certificateId: certId })
+      let { certificatePem, status } = certResult.certificateDescription
+      return certificatePem
+    } catch (error) { throw error }
+  }
 }
 
 const verifySignature = async (certId, signature, raw) => {
