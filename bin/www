@@ -7,11 +7,13 @@ const app = require('../app')
 const debug = require('debug')('abel:server')
 const http = require('http')
 const db = require('mysql')
-const config = require('getconfig')
+const config = require('config')
 const promise = require('bluebird')
 const AWS = require('aws-sdk')
 const Cache = require('../lib/cache')
 
+
+// console.log(config.get('db'))
 /**
  * 初始化各类SDK
  */
@@ -21,20 +23,9 @@ const ssm = new AWS.SSM({
   region: 'cn-north-1'
 })
 
-// 获取设备公钥
-const iot = new AWS.Iot({
-  region: 'cn-north-1'
-})
-
 // 上传头像
 const s3 = new AWS.S3({
   region: 'cn-north-1'
-})
-
-// 推送消息
-const iotData = new AWS.IotData({
-  region: 'cn-north-1',
-  endpoint: 'a3dc7azfqxif0n.iot.cn-north-1.amazonaws.com.cn'
 })
 
 /**
@@ -45,7 +36,7 @@ const iotData = new AWS.IotData({
 ssm.getParameters({ Names: ['iot', 'rds', 'rds-test'] }, (err, data) => {
   try {
     if (err) throw err
-    let type = process.env.NODE_ENV == 'test' ? 'rds-test' : 'rds'
+    let type = config.get('db')
     let mysql = JSON.parse(data.Parameters.find(item => item.Name == type).Value)
     // 初始化数据库池
     var pool = db.createPool({
@@ -63,6 +54,24 @@ ssm.getParameters({ Names: ['iot', 'rds', 'rds-test'] }, (err, data) => {
 
     global.pool = promise.promisifyAll(pool)
 
+    // 初始化iot
+    let iotResult = JSON.parse(data.Parameters.find(item => item.Name == 'iot').Value)
+    let address = iotResult.address
+
+    // for 获取设备公钥
+    var iot = new AWS.Iot({
+      region: 'cn-north-1'
+    })
+
+    // for 推送消息
+    const iotData = new AWS.IotData({
+      region: 'cn-north-1',
+      endpoint: address
+    })
+
+    global.describeCertificateAsync = promise.promisify(iot.describeCertificate).bind(iot)
+    global.publishAsync = promise.promisify(iotData.publish).bind(iotData)
+
   } catch (error) {
     console.log(error)
     throw error
@@ -71,8 +80,6 @@ ssm.getParameters({ Names: ['iot', 'rds', 'rds-test'] }, (err, data) => {
 
 // sdk添加到全局
 global.getParameterAsync = promise.promisify(ssm.getParameter).bind(ssm)
-global.describeCertificateAsync = promise.promisify(iot.describeCertificate).bind(iot)
-global.publishAsync = promise.promisify(iotData.publish).bind(iotData)
 global.uploadAsync = promise.promisify(s3.upload).bind(s3)
 global.cache = new Cache(ssm)
 
@@ -80,8 +87,8 @@ global.cache = new Cache(ssm)
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || config.port);
-app.set('port', config.port);
+var port = normalizePort(process.env.PORT || config.get('port'));
+// app.set('port', config.get('port'))
 
 /**
  * Create HTTP server.

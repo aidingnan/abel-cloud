@@ -9,3 +9,4 @@ files/
 app/.DS_Store
 assets/.DS_Store
 .leancloud/
+package-lock.json
