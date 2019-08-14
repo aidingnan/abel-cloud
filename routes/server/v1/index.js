@@ -22,7 +22,7 @@ router.get('/station/:sn/cert', async (req, res) => {
   try {
     let { sn } = req.params
     if (!sn) throw new Error('sn is required')
-    let result = await stationService.getCert(req.db, sn)
+    let result = await stationService.getCert(sn, req.hostname)
     res.success(result)
   } catch (error) {
     res.error(error)

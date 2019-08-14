@@ -9,6 +9,7 @@ const container = require('../service/task')
 const uuid = require('uuid')
 const promise = require('bluebird')
 const request = require('request')
+const AWS = require('aws-sdk')
 
 promise.promisifyAll(request)
 
@@ -314,14 +315,33 @@ class StationService {
   }
 
   // 查询证书
-  async getCert(connect, sn) {
+  async getCert(sn, hostname) {
     try {
-      let device = await Station.findDeviceBySn(connect, sn)
-      if (device.length !== 1) throw new Error('sn error')
-      let { certId } = device[0]
-      let certResult = await describeCertificateAsync({ certificateId: certId })
-      let { certificatePem, status } = certResult.certificateDescription
-      return certificatePem
+      // let device = await Station.findDeviceBySn(connect, sn)
+      // if (device.length !== 1) throw new Error('sn error')
+      // let { certId } = device[0]
+      // let certResult = await describeCertificateAsync({ certificateId: certId })
+      // let { certificatePem, status } = certResult.certificateDescription
+      // return certificatePem
+      let domain
+      if (hostname.indexOf('aws-cn') !== -1) domain = 'aws-cn'
+      else if (hostname.indexOf('test') !== -1) domain = 'test'
+      console.log(domain)
+      if (!domain) domain = 'aws-cn'
+      const params = {
+        TableName: 'winas-cert',
+        Key: {
+            sn,
+            domain
+        }
+      }
+
+      let awsConfig = new AWS.Config({region: 'cn-north-1'})
+      let docClient = new AWS.DynamoDB.DocumentClient(awsConfig)
+      let getSync = promise.promisify(docClient.get).bind(docClient)
+      let result = await getSync(params)
+      return result && result.Item
+      
     } catch (error) { throw error }
   }
 }
