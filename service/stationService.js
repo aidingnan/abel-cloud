@@ -340,7 +340,7 @@ class StationService {
       let docClient = new AWS.DynamoDB.DocumentClient(awsConfig)
       let getSync = promise.promisify(docClient.get).bind(docClient)
       let result = await getSync(params)
-      return result && result.Item
+      return result && Object.assign(result.Item, {pcode: undefined})
       
     } catch (error) { throw error }
   }
