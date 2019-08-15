@@ -341,8 +341,8 @@ class StationService {
       let result = await getSync(params)
       console.log(result)
 
-      if (!result.item) throw new E.CountNotFoundCert()
-      else return result.item && Object.assign(result.Item, {pcode: undefined})
+      if (!result.Item) throw new E.CountNotFoundCert()
+      else return result.Item && Object.assign(result.Item, {pcode: undefined})
       
     } catch (error) { console.log(error);throw error }
   }
