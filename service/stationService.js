@@ -326,7 +326,6 @@ class StationService {
       let domain
       if (hostname.indexOf('aws-cn') !== -1) domain = 'aws-cn'
       else if (hostname.indexOf('test') !== -1) domain = 'test'
-      console.log(domain)
       if (!domain) domain = 'aws-cn'
       const params = {
         TableName: 'winas-cert',
@@ -340,9 +339,12 @@ class StationService {
       let docClient = new AWS.DynamoDB.DocumentClient(awsConfig)
       let getSync = promise.promisify(docClient.get).bind(docClient)
       let result = await getSync(params)
-      return result && Object.assign(result.Item, {pcode: undefined})
+      console.log(result)
+
+      if (!result.item) throw new E.CountNotFoundCert()
+      else return result.item && Object.assign(result.Item, {pcode: undefined})
       
-    } catch (error) { throw error }
+    } catch (error) { console.log(error);throw error }
   }
 }
 

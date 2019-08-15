@@ -3,7 +3,10 @@ const promise = require('bluebird')
 const cookieParser = require('cookie-parser')
 const E = require('./lib/error')
 const app = express()
-const methodOverride = require('method-override');
+const methodOverride = require('method-override')
+
+// 为response添加 success, error 方法
+app.use(require('./middlewares/res'))
 
 // 为请求 request添加数据库句柄
 app.use(async (req, res, next) => {
@@ -15,6 +18,7 @@ app.use(async (req, res, next) => {
   }
 })
 
+// 跨域处理
 app.all('*', function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "X-Requested-With, Authorization,Content-Type");
@@ -29,9 +33,6 @@ app.all('*', function(req, res, next) {
       next(); 
   }
 });
-
-// 为response添加 success, error 方法
-app.use(require('./middlewares/res'))
 
 app.use(methodOverride('_method'))
 
