@@ -149,13 +149,16 @@ class UserService {
       // 判断数据是否正确
       if (userCheck || phoneCheck || codeCheck) {
         newConnect.queryAsync('ROLLBACK;')
+        newConnect.release()
         throw new Error('register failed')
+      } else {
+        newConnect.queryAsync('COMMIT;')
+        newConnect.release()
       }
-      newConnect.queryAsync('COMMIT;')
-      newConnect.release()
+      
 
       // 查询用户手机号是否存在分享记录
-      let shareRecord = await Station.getShareRecord(newConnect, phone, 'invite', 'todo')
+      let shareRecord = await Station.getShareRecord(connect, phone, 'invite', 'todo')
       for (let i = 0; i < shareRecord.length; i++) {
         try {
           let { id, owner, sn, phone, setting } = shareRecord[i]
@@ -492,7 +495,6 @@ class UserService {
       let newPhone = newTicketResult[0].phone
       let newPhoneUsers = await Phone.checkPhone(connect, newPhone)
 
-      console.log(user)
       console.log(oldPhone)
       console.log(newPhone)
       // 换手机条件
@@ -504,19 +506,19 @@ class UserService {
       let addCheck = result[2].affectedRows == 1
       let updateCheck = result[3].affectedRows == 1
 
-      if (!deleteCheck || !addCheck || !updateCheck) await newConnect.queryAsync('ROLLBACK;')
+      if (!deleteCheck || !addCheck || !updateCheck) {
+        await newConnect.queryAsync('ROLLBACK;')
+        newConnect.release()
+        throw new Error('replace phone failed')
+      }
       else {
         await newConnect.queryAsync('COMMIT;')
-        return new Error('replace phone failed')
+        newConnect.release()  
       }
-
-      console.log(result)
-
-      newConnect.release()
-
+      
     } catch (error) {
-      await newConnect.queryAsync('ROLLBACK;')
-      throw error;
+      console.log(error)
+      throw error
     }
   }
 
@@ -592,12 +594,16 @@ class UserService {
       let userCheck = result[4].affectedRows == 0
       if (codeCheck || userCheck) {
         await newConnect.queryAsync('ROLLBACK;')
+        newConnect.release()
         throw new Error('bind failed')
+      } else {
+        await newConnect.queryAsync('COMMIT;')
+        newConnect.release()
       }
 
-      await newConnect.queryAsync('COMMIT;')
+      
 
-      newConnect.release()
+      
 
     } catch (error) {
       console.log(error)
