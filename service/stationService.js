@@ -52,8 +52,10 @@ class StationService {
         // 更新设备签名失败，回退
         if (updateSignResult.affectedRows !== 1) throw new Error('update station failed')
         await newConnect.queryAsync('COMMIT;')
+        newConnect.release()
       } catch (error) {
         await newConnect.queryAsync('ROLLBACK;')
+        newConnect.release()
         throw error
       }      
 
@@ -97,8 +99,10 @@ class StationService {
         if (updateSignResult.affectedRows !== 1) throw new Error('update station failed')
         
         await newConnect.queryAsync('COMMIT;')
+        newConnect.release()
       } catch (error) {
         await newConnect.queryAsync('ROLLBACK;')
+        newConnect.release()
         throw error
       }
 
@@ -238,6 +242,7 @@ class StationService {
 
     } catch (error) {
       await newConnect.queryAsync('ROLLBACK;')
+      newConnect.release()
       console.log(error)
       throw error
     }
