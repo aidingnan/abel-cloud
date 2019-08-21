@@ -1,9 +1,13 @@
+const path = require('path')
 const express = require('express')
 const promise = require('bluebird')
 const cookieParser = require('cookie-parser')
 const E = require('./lib/error')
 const app = express()
 const methodOverride = require('method-override')
+
+// 静态资源
+app.use(express.static(path.join(__dirname, 'public')))
 
 // 为response添加 success, error 方法
 app.use(require('./middlewares/res'))
