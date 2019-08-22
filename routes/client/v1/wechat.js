@@ -42,7 +42,6 @@ router.patch('/user', cAuth,  joiValidator({
     let result = await userService.wechatAssociateUser(req.db, id, req.wechat, avatarUrl)
     res.success(result)
   } catch (error) {
-    console.log(error)
     res.error(error)
   }
 })

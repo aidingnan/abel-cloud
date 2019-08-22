@@ -82,7 +82,7 @@ class FetchFile extends Container {
     }
 
     req.on('error', err => {
-      console.log('fetchfile in request error', error)
+      console.error('fetchfile in request error', error)
       // response
       res.error(err)
       server.error(err)

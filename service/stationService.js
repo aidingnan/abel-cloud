@@ -60,8 +60,7 @@ class StationService {
       }      
 
       return Object.assign(user, { password: undefined })
-    } catch (error) { 
-      console.log(error)
+    } catch (error) {
       throw error
      }
   }
@@ -133,7 +132,7 @@ class StationService {
       // 记录
       if (record) await Station.recordShare(connect, sn, owner, phone, id, 'invite', JSON.stringify(setting))
 
-      try { await pulishUser(connect, sn) } catch (error) { console.log(error) }
+      try { await pulishUser(connect, sn) } catch (error) { console.error(error) }
 
       return { userExist }
     } catch (error) { throw error }
@@ -164,7 +163,7 @@ class StationService {
 
       try {
         await pulishUser(connect, sn)
-      } catch (error) { console.log(error) }
+      } catch (error) { console.error(error) }
 
     } catch (error) { throw error }
   }
@@ -211,14 +210,12 @@ class StationService {
 
         if (true) {
           // 不存在其他用户 --> 标记管理员为删除
-          console.log('不存在其他用户')
 
           return
 
 
         } else if (shareUsers.length > 0) {
           // 存在其他用户 --> 标记管理员为删除，转让管理员
-          console.log('存在其他用户')
           await newConnect.queryAsync('BEGIN;')
           let deleteResult = await Station.deleteRelation(newConnect, sn, userId, code)
           let createResult = await Station.createRelation(newConnect, sn, manager, {}, 1)
@@ -274,7 +271,7 @@ class StationService {
       let manifest = { users, headers: { cookie }, sessionId }
 
       container.add(req, res, sn, manifest, sessionId)
-    } catch (error) { console.log(error); res.error(error) }
+    } catch (error) { res.error(error) }
   }
 
   // 查询用户所有设备
@@ -344,7 +341,6 @@ class StationService {
       let docClient = new AWS.DynamoDB.DocumentClient(awsConfig)
       let getSync = promise.promisify(docClient.get).bind(docClient)
       let result = await getSync(params)
-      console.log(result)
 
       if (!result.Item) throw new E.CountNotFoundCert()
       else return result.Item && Object.assign(result.Item, {pcode: undefined})

@@ -80,7 +80,7 @@ module.exports = (req, res, next) => {
       message: message
     }
     
-    console.error(error)
+    console.log(error)
     return res.status(status).json(response)
   }
   next()

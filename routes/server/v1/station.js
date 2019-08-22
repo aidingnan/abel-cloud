@@ -39,7 +39,6 @@ router.post('/unbind', joiValidator({
     let result = await stationService.unbindUser(req.db, sn, certId, encrypted, signature, raw)
     res.success()
   } catch (error) {
-    console.log(error)
     res.error(error)
   }
 })

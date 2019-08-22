@@ -160,7 +160,6 @@ class Server extends EventEmitter {
   }
 
   error(err, code) {
-    console.log('task error trigger')
     if (this.finished()) return
     this.res.error(err, code)
   }

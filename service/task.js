@@ -47,7 +47,6 @@ class Container {
   }
 
   schedule() {
-    console.log(this.map.size)
     this.map.forEach((v, k) => {
       if (v.finished()) this.map.delete(k)
     })
@@ -55,7 +54,6 @@ class Container {
 
   add(req, res, sn, manifest, taskId) {
     try {
-      console.log(taskId)
       this.schedule()
       let server = new Server(req, res, sn, manifest)
       this.map.set(taskId, server)
@@ -111,7 +109,6 @@ class Container {
         // 删除用户
         let owner = server.req.auth.id
         let { users } = server.manifest
-        console.log(owner, sn, users)
         // 
 
         for(let i = 0; i < users.length; i++) {

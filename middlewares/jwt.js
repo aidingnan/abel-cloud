@@ -81,7 +81,7 @@ module.exports = {
       next()
 
     } catch (error) {
-      console.log(error)
+      console.error(error)
       res.error(new Error('authentication failed'), 401, false)
     }
 

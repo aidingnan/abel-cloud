@@ -185,7 +185,7 @@ router.patch('/phone', joiValidator({
     let { id } = req.auth
     let result = await userService.replacePhone(req.db, id, oldTicket, newTicket)
     res.success(result)
-  } catch (error) { console.log(error); res.error(error) }
+  } catch (error) { res.error(error) }
 })
 
 /**
@@ -201,7 +201,7 @@ router.post('/deviceInfo', cAuth, joiValidator({
     let { id, clientId, type } = req.auth
     await userService.recordDeviceUseInfo(req.db, id, clientId, type, sn)
     res.success()
-  } catch (e) { console.log(e); res.error(e) }
+  } catch (e) { res.error(e) }
 })
 
 /**
@@ -221,7 +221,6 @@ router.post('/wechat', joiValidator({
     let result = await userService.addWechat(req.db, id, code, type, avatarUrl)
     res.success(result)
   } catch (e) {
-    console.log(e)
     res.error(e)
   }
 })
@@ -327,7 +326,7 @@ router.post('/mailCode', joiValidator({
     let { mail, type } = req.body
     let result = await userService.createMailCode(req.db, mail, type)
     res.success(result)
-  } catch (error) { console.log(error); res.error(error) }
+  } catch (error) { res.error(error) }
 })
 
 /**

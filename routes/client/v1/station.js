@@ -178,11 +178,9 @@ router.post('/:sn/publish', joiValidator({
       let result = await Station.getUpgradeInfoWithTag(req.db, tag)
       if (result.length !== 1) throw new Error('tag not match')
       payload = JSON.stringify(result[0])
-      // console.log(payload)
     }
 
     let obj = { topic, qos, payload }
-    console.log(obj)
     await publishAsync(obj)
     res.success()
   } catch(err) { res.error(err)}

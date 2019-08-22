@@ -12,8 +12,6 @@ const promise = require('bluebird')
 const AWS = require('aws-sdk')
 const Cache = require('../lib/cache')
 
-
-// console.log(config.get('db'))
 /**
  * 初始化各类SDK
  */
@@ -73,7 +71,7 @@ ssm.getParameters({ Names: ['iot', 'rds', 'rds-test'] }, (err, data) => {
     global.publishAsync = promise.promisify(iotData.publish).bind(iotData)
 
   } catch (error) {
-    console.log(error)
+    console.error(error)
     throw error
   }
 })
@@ -147,7 +145,7 @@ function onError(error) {
       process.exit(1);
       break;
     default:
-      console.log(error)
+      console.error(error)
       throw error;
   }
 }

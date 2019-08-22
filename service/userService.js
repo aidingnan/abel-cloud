@@ -127,7 +127,7 @@ class UserService {
       await Phone.updateSmsCode(connect, phone, code, type, 1, 'toConsumed')
       return codeRecord[0].id
 
-    } catch (error) { ; console.log(error); throw error }
+    } catch (error) { throw error }
   }
 
   // 注册
@@ -275,7 +275,7 @@ class UserService {
       return Object.assign(accessToken, refreshToken)
 
 
-    } catch (error) { console.log(error, '......................................');throw error }
+    } catch (error) { throw error }
   }
 
   // refresh access token
@@ -283,10 +283,8 @@ class UserService {
     try {
       // 验证refreshToken
       let queryResult = await User.queryRefreshToken(connect, rToken, clientId)
-      if (queryResult.length !== 1) {
-        console.log('can not find query result', queryResult.length)
-        throw new E.RefreshTokenError()
-      }
+      if (queryResult.length !== 1) throw new E.RefreshTokenError()
+      
       let { id } = queryResult[0]
       // 查询用户
       let userResult = await User.getUserInfo(connect, id)
@@ -524,7 +522,6 @@ class UserService {
       }
       
     } catch (error) {
-      console.log(error)
       throw error
     }
   }
@@ -613,7 +610,6 @@ class UserService {
       
 
     } catch (error) {
-      console.log(error)
       if (error.errno == 1062) throw new E.MailAlreadyBound()
       else throw error
     }
