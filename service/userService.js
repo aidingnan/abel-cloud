@@ -152,24 +152,26 @@ class UserService {
         newConnect.release()
         throw new Error('register failed')
       } else {
+        console.log(phone)
         newConnect.queryAsync('COMMIT;')
-        newConnect.release()
+        
       }
       
 
       // 查询用户手机号是否存在分享记录
-      let shareRecord = await Station.getShareRecord(connect, phone, 'invite', 'todo')
-      for (let i = 0; i < shareRecord.length; i++) {
-        try {
-          let { id, owner, sn, phone, setting } = shareRecord[i]
-          await stationService.addUser(connect, owner, sn, phone, JSON.parse(setting), false)
-          await Station.updateShareRecord(connect, id, 'done')
-          try { await pulishUser(connect, sn) } catch (error) { console.log(error) }
-        } catch (error) { console.log(error) }
-      }
+      // let shareRecord = await Station.getShareRecord(connect, phone, 'invite', 'todo')
+      // for (let i = 0; i < shareRecord.length; i++) {
+      //   try {
+      //     let { id, owner, sn, phone, setting } = shareRecord[i]
+      //     await stationService.addUser(connect, owner, sn, phone, JSON.parse(setting), false)
+      //     await Station.updateShareRecord(connect, id, 'done')
+      //     try { await pulishUser(connect, sn) } catch (error) { console.log(error) }
+      //   } catch (error) { console.log(error) }
+      // }
 
       // 获取用户信息
-      let userResult = await User.getUserInfo(connect, userId)
+      let userResult = await User.getUserInfo(newConnect, userId)
+      newConnect.release()
 
       // 创建accessToken
       let accessToken = await getToken(connect, userResult, clientId, type)
