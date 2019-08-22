@@ -179,7 +179,7 @@ class UserService {
       let refreshToken = await createRefreshToken(connect, userResult[0].id, clientId)
       return Object.assign(accessToken, refreshToken)
 
-    } catch (error) { console.log(error); throw error }
+    } catch (error) { console.error(error); throw error }
   }
 
   // 使用手机号密码登录
@@ -194,7 +194,7 @@ class UserService {
       let refreshToken = await createRefreshToken(connect, userResult[0].id, clientId)
       return Object.assign(accessToken, refreshToken)
 
-    } catch (error) { console.log(error);throw error }
+    } catch (error) { console.error(error);throw error }
   }
 
   // 使用邮箱密码登录
