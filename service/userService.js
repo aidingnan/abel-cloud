@@ -18,6 +18,7 @@ const sendMail = require('../lib/sendMail')
 const sendSmsCode = require('../lib/sendSmsCode')
 const stationService = require('./stationService')
 
+// 根据user object 创建token
 const getToken = async (connect, userResult, clientId, type) => {
   // 提取id, password, clientId, type 作为token
   let { id, password, nickName, avatarUrl, safety, username } = userResult[0]
@@ -40,6 +41,7 @@ const getToken = async (connect, userResult, clientId, type) => {
   return { token, ...obj }
 }
 
+// 创建用户refresh token
 const createRefreshToken = async (connect, id, clientId) => {
   // refresh user's client refreshToken
   let refreshTokenObj = { id, clientId, createTime: (new Date()).getTime()}
@@ -48,6 +50,7 @@ const createRefreshToken = async (connect, id, clientId) => {
   return { refreshToken }
 }
 
+// 分享设备后通知设备更新用户
 const pulishUser = async (connect, sn) => {
   let owner = await Station.getStationOwner(connect, sn)
   let sharer = await Station.getStationSharer(connect, sn)
@@ -59,7 +62,9 @@ const pulishUser = async (connect, sn) => {
 }
 
 class UserService {
-  //---------------------注册登录---------------------
+  /**
+   * 注册登录api
+   */
 
   // 判断手机是否注册
   async userPhoneExist(connect, phone) {
@@ -179,7 +184,7 @@ class UserService {
       let refreshToken = await createRefreshToken(connect, userResult[0].id, clientId)
       return Object.assign(accessToken, refreshToken)
 
-    } catch (error) { console.error(error); throw error }
+    } catch (error) { throw error }
   }
 
   // 使用手机号密码登录

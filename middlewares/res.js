@@ -10,9 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-
-const debug = require('debug')('app:res')
-
 const DEFAULT_SUCCESS_STATUS = 200
 const DEFAULT_ERROR_STATUS = 403
 
@@ -83,8 +80,7 @@ module.exports = (req, res, next) => {
       message: message
     }
     
-    console.log(error.message)
-    debug(`error: ${error}`)
+    console.error(error)
     return res.status(status).json(response)
   }
   next()

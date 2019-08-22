@@ -12,7 +12,7 @@ const router = express.Router()
 const Joi = require('joi')
 const joiValidator = require('../../../middlewares/joiValidator')
 const userService = require('../../../service/userService')
-const { weAuth, cAuth } = require('../../../middlewares/jwt')
+const { cAuth } = require('../../../middlewares/jwt')
 
 var timeout = require('connect-timeout')
 
@@ -36,7 +36,7 @@ router.post('/encrypted', cAuth, async (req, res) => {
 
     let result = { encrypted: `${latest}@${encrypted}` }
     res.success(result)
-  } catch (error) { console.log(error); res.error(error) }
+  } catch (error) { res.error(error) }
 })
 
 /**
@@ -45,12 +45,15 @@ router.post('/encrypted', cAuth, async (req, res) => {
 // 查询手机号是否注册
 router.get('/phone/check', joiValidator({
   query: {
-    phone: Joi.string().required()
+    phone: Joi.string().length(11).required()
   }
 }), async (req, res) => {
-  let { phone } = req.query
-  let result = await userService.userPhoneExist(req.db, phone)
-  res.success(result)
+  try {
+    let { phone } = req.query
+    let result = await userService.userPhoneExist(req.db, phone)
+    res.success(result)
+  } catch (err) { res.error(err)}
+  
 })
 
 // 发送手机验证码
@@ -64,7 +67,7 @@ router.post('/smsCode', joiValidator({
     let { phone, type } = req.body
     let result = await userService.requestSmsCode(req.db, phone, type)
     res.success(result)
-  } catch (e) { console.log(e); res.error(e) }
+  } catch (err) { res.error(err) }
 })
 
 /**
