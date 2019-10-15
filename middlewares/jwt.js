@@ -96,7 +96,7 @@ module.exports = {
   async sAuth(req, res, next) {
     try {
       const aut = req.headers.authorization
-      if (!aut) throw new Error()
+      if (!aut) throw new Error('aut not exist')
       // decode
       const decoded = await jwt.decode(aut)
       if (!decoded)

@@ -605,10 +605,6 @@ class UserService {
         newConnect.release()
       }
 
-      
-
-      
-
     } catch (error) {
       if (error.errno == 1062) throw new E.MailAlreadyBound()
       else throw error
