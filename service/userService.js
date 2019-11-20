@@ -159,7 +159,6 @@ class UserService {
       } else {
         console.log(phone)
         newConnect.queryAsync('COMMIT;')
-        
       }
       
 
