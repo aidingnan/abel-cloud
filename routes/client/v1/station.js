@@ -17,21 +17,21 @@ const Station = require('../../../models/station')
 var timeout = require('connect-timeout')
 
 // json操作
-router.post('/:sn/json', checkSn(false), (req, res) => {
+router.post('/:sn/json', (req, res) => {
   transformJson.createServer(req, res)
 })
 
 // 上传文件
 router.post('/:sn/pipe', joiValidator({
   query: { data: Joi.string().required() }
-}), checkSn(false), (req, res) => {
+}), (req, res) => {
   storeFile.createServer(req, res)
 })
 
 // 下载文件
 router.get('/:sn/pipe', joiValidator({
   query: { data: Joi.string().required() }
-}), checkSn(false), (req, res) => {
+}), (req, res) => {
   fetchFile.createServer(req, res)
 })
 
